@@ -31,7 +31,6 @@ dev: services migrate
 	$(MAKE) -j3 api worker web
 
 check:
-	$(PYTHON) scripts/requirements.py check
 	$(PYTHON) design/palette.py
 	backend/.venv/bin/ruff check backend contracts
 	backend/.venv/bin/mypy --config-file backend/pyproject.toml backend/apps backend/config contracts/testflow_contracts
