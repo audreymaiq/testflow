@@ -1,10 +1,20 @@
 """Catalog HTTP input and output contracts."""
 
+from django.db.models import Count
+from drf_spectacular.utils import extend_schema_field
 from pydantic import ValidationError as ContractValidationError
 from rest_framework import serializers
 from testflow_contracts.exam import ExamDraft
 
-from .models import Chapter, Exam, Section, Subject
+from .models import (
+    Chapter,
+    Exam,
+    PublishRequest,
+    PublishRequestStatus,
+    Section,
+    Subject,
+    Visibility,
+)
 
 
 class ManualCreateSerializer(serializers.Serializer):
@@ -76,15 +86,54 @@ class SectionSerializer(serializers.ModelSerializer):
         fields = ("id", "order", "title", "kind")
 
 
+class SectionStatsSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    title = serializers.CharField()
+    count = serializers.IntegerField()
+
+
+class ChapterStatsSerializer(serializers.Serializer):
+    id = serializers.IntegerField()
+    name = serializers.CharField()
+    count = serializers.IntegerField()
+
+
 class ExamDetailSerializer(ExamListSerializer):
     chapters = ChapterSerializer(many=True, read_only=True)
     sections = SectionSerializer(many=True, read_only=True)
+    section_stats = serializers.SerializerMethodField()
+    chapter_stats = serializers.SerializerMethodField()
+    is_owner = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.BooleanField())
+    def get_is_owner(self, exam):
+        user = self.context.get("request").user if self.context.get("request") else None
+        return bool(user and user.is_authenticated and exam.owner_id == user.pk)
+
+    @extend_schema_field(SectionStatsSerializer(many=True))
+    def get_section_stats(self, exam):
+        return list(
+            exam.sections.order_by("order")
+            .annotate(count=Count("questions"))
+            .values("id", "title", "count")
+        )
+
+    @extend_schema_field(ChapterStatsSerializer(many=True))
+    def get_chapter_stats(self, exam):
+        return list(
+            exam.chapters.order_by("order")
+            .annotate(count=Count("question"))
+            .values("id", "name", "count")
+        )
 
     class Meta(ExamListSerializer.Meta):
         fields: tuple[str, ...] = (
             *ExamListSerializer.Meta.fields,
             "chapters",
             "sections",
+            "section_stats",
+            "chapter_stats",
+            "is_owner",
             "source",
         )
 
@@ -116,3 +165,62 @@ class SubjectSerializer(serializers.ModelSerializer):
     class Meta:
         model = Subject
         fields = ("code", "name", "levels", "has_formula")
+
+
+class VisibilityChangeSerializer(serializers.Serializer):
+    visibility = serializers.CharField()
+
+    def validate_visibility(self, value):
+        if value not in (Visibility.PRIVATE, Visibility.PUBLIC):
+            raise serializers.ValidationError("Chỉ có thể chọn PRIVATE hoặc PUBLIC.")
+        return value
+
+
+class VisibilityResponseSerializer(serializers.Serializer):
+    visibility = serializers.CharField()
+    request_id = serializers.IntegerField(allow_null=True)
+
+
+class PublicationRequestSerializer(serializers.ModelSerializer):
+    exam_title = serializers.CharField(source="exam.title", read_only=True)
+    source = serializers.CharField(source="exam.source", read_only=True)
+    owner_name = serializers.CharField(source="requested_by.username", read_only=True)
+
+    class Meta:
+        model = PublishRequest
+        fields: tuple[str, ...] = (
+            "id",
+            "exam",
+            "exam_title",
+            "source",
+            "owner_name",
+            "status",
+            "reason",
+            "created_at",
+            "decided_at",
+        )
+
+
+class PublicationDetailSerializer(PublicationRequestSerializer):
+    draft = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.JSONField())
+    def get_draft(self, request):
+        from .services import export_exam
+
+        return export_exam(request.exam).model_dump(mode="json")
+
+    class Meta(PublicationRequestSerializer.Meta):
+        fields: tuple[str, ...] = (*PublicationRequestSerializer.Meta.fields, "draft")
+
+
+class PublicationFilterSerializer(serializers.Serializer):
+    status = serializers.ChoiceField(
+        choices=(PublishRequestStatus.PENDING,),
+        required=False,
+        default=PublishRequestStatus.PENDING,
+    )
+
+
+class PublicationDecisionSerializer(serializers.Serializer):
+    reason = serializers.CharField(required=False, allow_blank=True, max_length=2000)

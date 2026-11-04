@@ -17,6 +17,7 @@ frontend/test-results/
 media/
 data/private/
 eval/gold/
+eval/predictions/
 eval/results/
 .cache/
 .validation/

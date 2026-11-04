@@ -36,3 +36,18 @@ type = independence
 modules =
     apps.accounts
     apps.practice
+
+[importlinter:contract:imports]
+name = Imports depends on catalog and common
+type = layers
+layers =
+    apps.imports
+    apps.catalog
+    apps.common
+
+[importlinter:contract:identity_imports]
+name = Identity and imports remain independent
+type = independence
+modules =
+    apps.accounts
+    apps.imports

@@ -11,13 +11,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 
 from .schemas import SessionConfig
+from .selectors import exam_practice_summary, personal_stats, visible_history
 from .serializers import (
     AnswerResponseSerializer,
     CreateSessionSerializer,
     EmptySerializer,
+    ExamPracticeSummarySerializer,
+    HistorySerializer,
     ResultResponseSerializer,
     SaveAnswerSerializer,
     SessionResponseSerializer,
+    StatsSerializer,
 )
 from .services import (
     create_session,
@@ -93,3 +97,28 @@ class ResultView(GenericAPIView):
 
     def get(self, request, session_id):
         return Response(result_payload(session_id, request.user))
+
+
+class HistoryView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = HistorySerializer
+
+    def get(self, request):
+        page = self.paginate_queryset(visible_history(request.user))
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+
+class StatsView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = StatsSerializer
+
+    def get(self, request):
+        return Response(self.get_serializer(personal_stats(request.user)).data)
+
+
+class ExamPracticeSummaryView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ExamPracticeSummarySerializer
+
+    def get(self, request, exam_id):
+        return Response(self.get_serializer(exam_practice_summary(request.user, exam_id)).data)

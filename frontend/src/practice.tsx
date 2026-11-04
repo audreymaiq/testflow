@@ -21,6 +21,12 @@ type Result = {
   counts: Record<string, number>
   questions: (Feedback & { question_id: string; value: Record<string, unknown> })[]
 }
+type HistoryItem = {
+  id: string; exam_id: string; exam_title: string; mode: string; status: string
+  started_at: string; submitted_at: string | null; total_score: string | null; max_score: string | null
+}
+type HistoryPageData = { count: number; next: string | null; previous: string | null; results: HistoryItem[] }
+type PersonalStats = { total_sessions: number; completed_sessions: number; timed_sessions: number; practice_sessions: number }
 
 const statusName: Record<string, string> = {
   CORRECT: 'Đúng', PARTIAL: 'Đúng một phần', WRONG: 'Sai', BLANK: 'Chưa trả lời',
@@ -90,6 +96,7 @@ export function PracticePage() {
   const navigate = useNavigate()
   const [active, setActive] = useState(0)
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({})
+  const [flagDrafts, setFlagDrafts] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)
@@ -109,16 +116,22 @@ export function PracticePage() {
     if (session.data?.status === 'IN_PROGRESS' && remaining === 0) navigate(`/practice/${sessionId}/result`, { replace: true })
   }, [remaining, session.data?.status, sessionId, navigate, tick])
 
-  async function save(nextValue = value, target = question) {
+  async function save(nextValue = value, target = question, flagOverride?: boolean) {
     if (!target || !session.data) return false
     setBusy(true); setError('')
     try {
       await api(`/practice/sessions/${sessionId}/answers/${target.id}/`, {
-        method: 'PUT', body: JSON.stringify({ value: nextValue }),
+        method: 'PUT', body: JSON.stringify({
+          value: nextValue, flagged: flagOverride ?? flagDrafts[target.id] ?? saved?.flagged ?? false,
+        }),
       })
       await session.refetch()
       setDrafts((current) => {
         if (JSON.stringify(current[target.id]) !== JSON.stringify(nextValue)) return current
+        const next = { ...current }; delete next[target.id]; return next
+      })
+      setFlagDrafts((current) => {
+        if (current[target.id] !== (flagOverride ?? current[target.id])) return current
         const next = { ...current }; delete next[target.id]; return next
       })
       return true
@@ -186,6 +199,14 @@ export function PracticePage() {
       <p className="question-text">{question.text}</p>
       <QuestionInput question={question} value={value} disabled={closed || !!question.feedback || busy}
         onChange={changeAnswer} />
+      {session.data.mode === 'TIMED' && !closed && <label className="flag-control">
+        <input type="checkbox" checked={flagDrafts[question.id] ?? saved?.flagged ?? false} disabled={busy}
+          onChange={(event) => {
+            const flagged = event.target.checked
+            setFlagDrafts((current) => ({ ...current, [question.id]: flagged }))
+            void save(value, question, flagged)
+          }} /> Đánh dấu để xem lại
+      </label>}
       {question.feedback && <div className="feedback" role="status"><strong>{statusName[question.feedback.status] || question.feedback.status}</strong>
         <p>Đáp án: {answerText(question.feedback.correct_answer)}</p>
         {question.feedback.explanation && <p>{question.feedback.explanation}</p>}</div>}
@@ -222,5 +243,36 @@ export function ResultPage() {
       {item.explanation && <p>Giải thích: {item.explanation}</p>}
     </article>)}
     <Link className="button secondary" to={`/exams/${result.data.exam_id}`}>Về đề thi</Link>
+  </section>
+}
+
+export function HistoryPage() {
+  const { api } = useAuth()
+  const [page, setPage] = useState(1)
+  const history = useQuery({ queryKey: ['practice-history', page], queryFn: () => api<HistoryPageData>(`/practice/sessions/history/?page=${page}`) })
+  const stats = useQuery({ queryKey: ['practice-stats'], queryFn: () => api<PersonalStats>('/practice/stats/') })
+  return <section className="paper practice-panel">
+    <p className="eyebrow">TIẾN ĐỘ CÁ NHÂN</p><h1>Lịch sử làm bài</h1>
+    {stats.isPending && <p role="status">Đang tải thống kê…</p>}
+    {stats.isError && <p role="alert">{stats.error.message}</p>}
+    {stats.data && <dl className="history-stats">
+      <div><dt>Lượt làm</dt><dd>{stats.data.total_sessions}</dd></div>
+      <div><dt>Đã hoàn thành</dt><dd>{stats.data.completed_sessions}</dd></div>
+      <div><dt>Thi có giờ</dt><dd>{stats.data.timed_sessions}</dd></div>
+      <div><dt>Ôn tập</dt><dd>{stats.data.practice_sessions}</dd></div>
+    </dl>}
+    {history.isPending && <p role="status">Đang tải lịch sử…</p>}
+    {history.isError && <p role="alert">{history.error.message} <button onClick={() => history.refetch()}>Thử lại</button></p>}
+    {history.data?.count === 0 && <p>Bạn chưa có bài làm. <Link to="/library">Chọn một đề trong thư viện</Link>.</p>}
+    {history.data?.results.map((item) => <article className="history-item" key={item.id}>
+      <div><h2>{item.exam_title}</h2><p>{new Date(item.started_at).toLocaleString('vi-VN')} · {item.mode === 'TIMED' ? 'Thi có giờ' : 'Ôn tập'} · {item.status === 'IN_PROGRESS' ? 'Đang làm' : 'Đã nộp'}</p></div>
+      <div><strong>{item.total_score === null ? '—' : `${item.total_score} / ${item.max_score}`}</strong>
+        <Link to={item.status === 'IN_PROGRESS' ? `/practice/${item.id}` : `/practice/${item.id}/result`}>{item.status === 'IN_PROGRESS' ? 'Tiếp tục' : 'Xem kết quả'}</Link></div>
+    </article>)}
+    {history.data && <nav className="pagination" aria-label="Phân trang lịch sử">
+      <button disabled={!history.data.previous} onClick={() => setPage(page - 1)}>Trang trước</button>
+      <span>Trang {page}</span>
+      <button disabled={!history.data.next} onClick={() => setPage(page + 1)}>Trang sau</button>
+    </nav>}
   </section>
 }

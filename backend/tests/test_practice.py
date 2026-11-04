@@ -1,15 +1,18 @@
 """S1 session integration and answer confidentiality against PostgreSQL."""
 
 from datetime import timedelta
+from io import StringIO
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.core.management import call_command
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.models import Subject
+from apps.catalog.management.commands.seed_thpt_demo import TITLE
+from apps.catalog.models import Exam, Subject
 from apps.catalog.services import create_exam
 from apps.practice.models import Answer, Session, SessionStatus, WrongQuestion
 from apps.practice.schemas import SessionConfig
@@ -154,3 +157,86 @@ def test_question_shuffle_is_reproducible():
     )
     only = SessionConfig(seed=42, only_wrong_bank=True)
     assert build_question_set(questions, only, {"q2"})[0] == {"s1": ["q2"]}
+
+
+@pytest.mark.django_db
+def test_personal_history_stats_and_wrong_summary_are_scoped(exam_users):
+    exam, question_id, owner, other = exam_users
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    created = client.post(
+        reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "PRACTICE"}, format="json"
+    )
+    client.put(
+        reverse(
+            "practice-answer", kwargs={"session_id": created.data["id"], "question_id": question_id}
+        ),
+        {"value": {"choice": "A"}},
+        format="json",
+    )
+    client.post(reverse("practice-submit", kwargs={"session_id": created.data["id"]}))
+    summary_url = reverse("practice-exam-summary", kwargs={"exam_id": exam.id})
+    assert client.get(summary_url).data == {"wrong_question_count": 1, "session_count": 1}
+    history = client.get(reverse("practice-history"))
+    assert history.data["count"] == 1
+    assert history.data["results"][0]["exam_title"] == exam.title
+    assert client.get(reverse("practice-stats")).data == {
+        "total_sessions": 1,
+        "completed_sessions": 1,
+        "timed_sessions": 0,
+        "practice_sessions": 1,
+    }
+
+    client.force_authenticate(user=other)
+    assert client.get(summary_url).status_code == 404
+    assert client.get(reverse("practice-history")).data["count"] == 0
+    assert client.get(reverse("practice-stats")).data["total_sessions"] == 0
+    client.force_authenticate(user=None)
+    assert client.get(reverse("practice-history")).status_code == 401
+    assert client.get(summary_url).status_code == 401
+
+
+@pytest.mark.django_db
+def test_synthetic_three_section_thpt_seed_and_complete_session(exam_users):
+    _, _, owner, _ = exam_users
+    output = StringIO()
+    call_command("seed_thpt_demo", owner=owner.username, stdout=output)
+    first_id = output.getvalue().strip()
+    output = StringIO()
+    call_command("seed_thpt_demo", owner=owner.username, stdout=output)
+    assert output.getvalue().strip() == first_id
+    exam = Exam.objects.get(pk=first_id)
+    assert exam.title == TITLE
+    assert exam.sections.count() == 3
+    assert exam.question_count == 3
+    assert exam.has_answer_key
+
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    created = client.post(
+        reverse("practice-sessions"), {"exam_id": first_id, "mode": "TIMED"}, format="json"
+    )
+    assert created.status_code == 201
+    assert len(created.data["sections"]) == 3
+    answers = [
+        {"choice": "B"},
+        {"a": True, "b": False, "c": True, "d": False},
+        {"text": "5"},
+    ]
+    for section, value in zip(created.data["sections"], answers, strict=True):
+        question_id = section["questions"][0]["id"]
+        response = client.put(
+            reverse(
+                "practice-answer",
+                kwargs={"session_id": created.data["id"], "question_id": question_id},
+            ),
+            {"value": value},
+            format="json",
+        )
+        assert response.status_code == 200
+        assert "feedback" not in response.data
+    result = client.post(reverse("practice-submit", kwargs={"session_id": created.data["id"]}))
+    assert result.status_code == 200
+    assert result.data["total_score"] == "10.00"
+    assert result.data["max_score"] == "10.00"
+    assert [item["status"] for item in result.data["questions"]] == ["CORRECT"] * 3

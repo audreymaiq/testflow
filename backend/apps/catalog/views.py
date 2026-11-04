@@ -4,11 +4,13 @@ from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from .models import Subject
-from .selectors import list_exams, visible_exams
+from apps.common.errors import DomainPermissionDenied
+
+from .models import PublishRequest, Subject, Visibility
+from .selectors import list_exams, publication_queue, visible_exams
 from .serializers import (
     ExamDetailSerializer,
     ExamFilterSerializer,
@@ -16,9 +18,23 @@ from .serializers import (
     FacetsResponseSerializer,
     ManualCreateSerializer,
     PreviewResponseSerializer,
+    PublicationDecisionSerializer,
+    PublicationDetailSerializer,
+    PublicationFilterSerializer,
+    PublicationRequestSerializer,
     SubjectSerializer,
+    VisibilityChangeSerializer,
+    VisibilityResponseSerializer,
 )
-from .services import create_exam
+from .services import (
+    create_exam,
+    decide_publication,
+    hide_exam,
+    is_reviewer,
+    make_private,
+    request_publication,
+    soft_delete_exam,
+)
 
 
 class ExamListView(GenericAPIView):
@@ -46,7 +62,7 @@ class ManualExamView(GenericAPIView):
 
 
 class ExamDetailView(GenericAPIView):
-    permission_classes = (AllowAny,)
+    permission_classes = (IsAuthenticatedOrReadOnly,)
     serializer_class = ExamDetailSerializer
 
     @extend_schema(operation_id="exams_retrieve")
@@ -58,6 +74,10 @@ class ExamDetailView(GenericAPIView):
             pk=exam_id,
         )
         return Response(self.get_serializer(exam).data)
+
+    def delete(self, request, exam_id):
+        soft_delete_exam(exam_id, owner=request.user)
+        return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ExamPreviewView(GenericAPIView):
@@ -123,3 +143,78 @@ class SubjectListView(GenericAPIView):
     def get(self, request):
         subjects = Subject.objects.filter(is_active=True).order_by("name")
         return Response(self.get_serializer(subjects, many=True).data)
+
+
+class VisibilityView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = VisibilityChangeSerializer
+
+    @extend_schema(responses={200: VisibilityResponseSerializer})
+    def post(self, request, exam_id):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        if serializer.validated_data["visibility"] == Visibility.PRIVATE:
+            exam = make_private(exam_id, owner=request.user)
+            return Response({"visibility": exam.visibility, "request_id": None})
+        publication = request_publication(exam_id, owner=request.user)
+        return Response({"visibility": Visibility.PRIVATE, "request_id": publication.pk})
+
+
+class PublicationQueueView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PublicationRequestSerializer
+
+    @extend_schema(operation_id="publish_requests_list", parameters=[PublicationFilterSerializer])
+    def get(self, request):
+        if not is_reviewer(request.user):
+            raise DomainPermissionDenied("REVIEWER_REQUIRED", "Cần quyền duyệt đề.")
+        filters = PublicationFilterSerializer(data=request.query_params.dict())
+        filters.is_valid(raise_exception=True)
+        page = self.paginate_queryset(publication_queue(filters.validated_data["status"]))
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+
+class PublicationDetailView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PublicationDetailSerializer
+
+    @extend_schema(operation_id="publish_requests_retrieve")
+    def get(self, request, request_id):
+        if not is_reviewer(request.user):
+            raise DomainPermissionDenied("REVIEWER_REQUIRED", "Cần quyền duyệt đề.")
+        publication = get_object_or_404(
+            PublishRequest.objects.select_related("exam", "requested_by").filter(
+                exam__deleted_at__isnull=True,
+                exam__visibility=Visibility.PRIVATE,
+                status="PENDING",
+            ),
+            pk=request_id,
+        )
+        return Response(self.get_serializer(publication).data)
+
+
+class PublicationDecisionView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = PublicationDecisionSerializer
+
+    @extend_schema(responses={200: PublicationRequestSerializer})
+    def post(self, request, request_id, decision):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        publication = decide_publication(
+            request_id,
+            reviewer=request.user,
+            approve=decision == "approve",
+            reason=serializer.validated_data.get("reason", ""),
+        )
+        return Response(PublicationRequestSerializer(publication).data)
+
+
+class AdminHideView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = VisibilityChangeSerializer
+
+    @extend_schema(request=None, responses={200: ExamDetailSerializer})
+    def post(self, request, exam_id):
+        exam = hide_exam(exam_id, admin=request.user)
+        return Response(ExamDetailSerializer(exam).data)

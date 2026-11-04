@@ -4,7 +4,9 @@ import { useAuth } from './auth'
 import { Modal, Toast } from './shared'
 import { ThemeControls } from './theme'
 import { ExamDetailPage, LibraryPage, ManualExamPage } from './catalog'
-import { PracticePage, ResultPage } from './practice'
+import { HistoryPage, PracticePage, ResultPage } from './practice'
+import { PublicationDetailPage, PublicationQueuePage } from './publication'
+import { ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
 
 function Shell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
@@ -29,7 +31,10 @@ function Shell({ children }: { children: ReactNode }) {
       <nav aria-label="Điều hướng chính">
         <Link to="/library">Thư viện</Link>
         {user ? <>
+          <Link to="/imports/new">Nhập TXT</Link>
           <Link to="/account">Tài khoản</Link>
+          <Link to="/history">Lịch sử</Link>
+          {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <Link to="/publish-requests">Duyệt đề</Link>}
           <button type="button" className="text-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
         </> : <>
           <Link to="/login">Đăng nhập</Link>
@@ -150,9 +155,15 @@ export default function App() {
     <Route path="/account" element={<Protected><Account /></Protected>} />
     <Route path="/library" element={<LibraryPage />} />
     <Route path="/exams/new" element={<Protected><ManualExamPage /></Protected>} />
+    <Route path="/imports" element={<Protected><ImportsPage /></Protected>} />
+    <Route path="/imports/new" element={<Protected><TxtImportPage /></Protected>} />
+    <Route path="/imports/:jobId" element={<Protected><ImportReviewPage /></Protected>} />
     <Route path="/exams/:id" element={<ExamDetailPage />} />
     <Route path="/practice/:sessionId" element={<Protected><PracticePage /></Protected>} />
     <Route path="/practice/:sessionId/result" element={<Protected><ResultPage /></Protected>} />
+    <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
+    <Route path="/publish-requests" element={<Protected><PublicationQueuePage /></Protected>} />
+    <Route path="/publish-requests/:requestId" element={<Protected><PublicationDetailPage /></Protected>} />
     <Route path="*" element={<section className="paper not-found"><h1>Không tìm thấy trang</h1><Link to="/">Về trang chủ</Link></section>} />
   </Routes></Shell>
 }

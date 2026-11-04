@@ -4,7 +4,7 @@ from django.db.models import Q
 
 from apps.common.text import search_fold
 
-from .models import Exam, Visibility
+from .models import Exam, PublishRequest, Visibility
 
 
 def visible_exams(user):
@@ -41,3 +41,13 @@ def list_exams(user, filters):
     if ordering not in {"-created_at", "-attempt_count", "year"}:
         ordering = "-created_at"
     return queryset.order_by(ordering, "id").distinct()
+
+
+def publication_queue(status):
+    return (
+        PublishRequest.objects.filter(
+            status=status, exam__deleted_at__isnull=True, exam__visibility=Visibility.PRIVATE
+        )
+        .select_related("exam", "requested_by")
+        .order_by("created_at", "id")
+    )

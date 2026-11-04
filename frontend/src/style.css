@@ -111,13 +111,39 @@ h1 { font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1.15; font-weight: 600; l
 .text-answer textarea { min-height: 140px; }
 .feedback { margin-top: 1rem; padding: 1rem; background: var(--surface-alt); border-left: 4px solid var(--accent); }
 .feedback p { margin-bottom: 0; }
+.flag-control { display: flex; align-items: center; gap: .4rem; margin-top: 1rem; }
+.flag-control input { width: 18px; height: 18px; accent-color: var(--accent); }
 .submit-button { color: var(--accent); background: var(--surface); margin-top: 1rem; }
 .result-score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 1rem; padding: 1.5rem; background: var(--surface-alt); }
 .result-score strong { font: 600 2rem 'IBM Plex Mono', monospace; }
 .result-question { border-top: 1px solid var(--border); padding: 1rem 0; }
+.pagination { display: flex; align-items: center; justify-content: flex-end; gap: .7rem; padding-top: 1.2rem; }
+.pagination button { border: 1px solid var(--border); background: var(--surface); color: var(--accent); border-radius: 5px; min-height: 40px; padding: .4rem .65rem; }
+.pagination button:disabled { color: var(--muted); }
+.practice-config { display: grid; gap: .7rem; border: 1px solid var(--border); border-radius: 5px; padding: 1rem; margin: 1.5rem 0; }
+.practice-config > div { display: grid; gap: .5rem; }
+.practice-config label { display: block; }
+.practice-config input { accent-color: var(--accent); }
+.owner-actions { display: flex; flex-wrap: wrap; align-items: center; gap: .7rem; border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1.5rem; }
+.owner-actions h2 { flex-basis: 100%; margin: .5rem 0; }
+.owner-actions p { flex-basis: 100%; margin: 0; }
+.review-decision { margin-top: 2rem; border-top: 1px solid var(--border); padding-top: 1rem; }
+.review-decision label { display: grid; gap: .4rem; font-weight: 600; }
+.review-decision textarea { min-height: 100px; width: 100%; border: 1px solid var(--border); border-radius: 5px; padding: .7rem; color: var(--text); background: var(--surface-alt); }
+.history-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; padding: 1rem 0; }
+.history-stats div { border: 1px solid var(--border); padding: 1rem; }
+.history-stats dt { font-size: .8rem; color: var(--muted); }
+.history-stats dd { margin: .5rem 0 0; font: 1.5rem 'IBM Plex Mono', monospace; }
+.history-item { display: flex; justify-content: space-between; align-items: center; gap: 1rem; border-top: 1px solid var(--border); padding: 1rem 0; }
+.history-item h2 { font-size: 1.15rem; margin: 0; }
+.history-item p { color: var(--muted); margin-bottom: 0; }
+.history-item > div:last-child { display: grid; gap: .4rem; text-align: right; white-space: nowrap; }
+@media (max-width: 650px) { .history-stats { grid-template-columns: repeat(2, 1fr); } .history-item { align-items: start; } .library-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 900px) { .library-layout { grid-template-columns: 1fr; } .library-filters { grid-template-columns: repeat(3, minmax(0, 1fr)); } .library-filters .eyebrow { grid-column: 1 / -1; } }
 @media (max-width: 720px) { .exam-row { grid-template-columns: minmax(0, 1fr) 70px; } .exam-row span:nth-child(2), .exam-row span:nth-child(4) { display: none; } .exam-facts { grid-template-columns: repeat(2, 1fr); } }
 @media (max-width: 520px) { .library-filters, .form-grid { grid-template-columns: 1fr; } .library-results { padding: 1rem; } }
 @media (max-width: 850px) { .topbar { flex-wrap: wrap; gap: .75rem; } .theme-controls { width: 100%; } }
 @media (max-width: 480px) { .topbar nav { gap: .65rem; } .topbar nav a, .text-button { font-size: .78rem; } .theme-controls label { flex: 1; } .theme-controls select { max-width: 100%; } main { margin: 1.5rem auto; } }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; animation-duration: .01ms !important; transition-duration: .01ms !important; } }
+.draft-editor { width: 100%; min-height: 28rem; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+.urgent-review { display: block; width: 100%; padding: 1rem; margin: 1rem 0; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-alt); color: var(--text); text-align: left; font: inherit; cursor: pointer; }

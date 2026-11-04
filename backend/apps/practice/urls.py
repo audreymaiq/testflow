@@ -2,15 +2,25 @@ from django.urls import path
 
 from .views import (
     AnswerView,
+    ExamPracticeSummaryView,
+    HistoryView,
     ResultView,
     SessionDetailView,
     SessionListCreateView,
     SkipView,
+    StatsView,
     SubmitView,
 )
 
 urlpatterns = [
     path("sessions/", SessionListCreateView.as_view(), name="practice-sessions"),
+    path("sessions/history/", HistoryView.as_view(), name="practice-history"),
+    path("stats/", StatsView.as_view(), name="practice-stats"),
+    path(
+        "exams/<uuid:exam_id>/summary/",
+        ExamPracticeSummaryView.as_view(),
+        name="practice-exam-summary",
+    ),
     path("sessions/<uuid:session_id>/", SessionDetailView.as_view(), name="practice-session"),
     path(
         "sessions/<uuid:session_id>/answers/<uuid:question_id>/",

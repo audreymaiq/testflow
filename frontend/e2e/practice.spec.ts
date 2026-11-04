@@ -1,4 +1,9 @@
 import { expect, test } from '@playwright/test'
+import { execFileSync } from 'node:child_process'
+import { fileURLToPath } from 'node:url'
+
+const root = fileURLToPath(new URL('../..', import.meta.url))
+const python = process.platform === 'win32' ? 'backend\\.venv\\Scripts\\python.exe' : 'backend/.venv/bin/python'
 
 test('manual exam to timed result uses real API and database', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
@@ -20,6 +25,7 @@ test('manual exam to timed result uses real API and database', async ({ page }) 
   await page.getByLabel('Đáp án đúng').selectOption('B')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
   await expect(page.getByRole('heading', { name: `Bài làm ${suffix}` })).toBeVisible()
+  const examUrl = page.url()
 
   await page.getByRole('button', { name: 'Làm bài có giờ' }).click()
   await expect(page.getByRole('heading', { name: 'Bài làm của bạn' })).toBeVisible()
@@ -27,10 +33,11 @@ test('manual exam to timed result uses real API and database', async ({ page }) 
   await expect(page.getByText('Đáp án: B')).toHaveCount(0)
   const sessionUrl = page.url()
   await page.getByRole('radio', { name: 'B Bốn' }).check()
-  await page.getByRole('button', { name: 'Lưu câu trả lời' }).click()
   await expect(page.getByRole('button', { name: '1' })).toHaveClass(/answered/)
+  await page.getByLabel('Đánh dấu để xem lại').check()
   await page.reload()
   await expect(page.getByRole('radio', { name: 'B Bốn' })).toBeChecked()
+  await expect(page.getByLabel('Đánh dấu để xem lại')).toBeChecked()
   await expect(page.getByText('Đáp án: B')).toHaveCount(0)
 
   page.once('dialog', (dialog) => dialog.accept())
@@ -40,4 +47,49 @@ test('manual exam to timed result uses real API and database', async ({ page }) 
   await expect(page.getByText('Đáp án: B')).toBeVisible()
   await page.goto(sessionUrl)
   await expect(page.getByRole('link', { name: 'Xem kết quả' })).toBeVisible()
+
+  await page.goto(examUrl)
+  await page.getByRole('button', { name: 'Luyện tập' }).click()
+  await expect(page.getByRole('heading', { name: 'Bài làm của bạn' })).toBeVisible()
+  await page.getByRole('radio', { name: 'A Ba' }).check()
+  await expect(page.getByText('Đáp án: B')).toBeVisible()
+  await expect(page.getByText('Sai', { exact: true })).toBeVisible()
+  await expect(page.getByRole('radio', { name: 'B Bốn' })).toBeDisabled()
+  await page.getByRole('link', { name: 'Lịch sử' }).click()
+  await expect(page.getByRole('heading', { name: 'Lịch sử làm bài' })).toBeVisible()
+  await expect(page.getByText(`Bài làm ${suffix}`).first()).toBeVisible()
+  await expect(page.getByText('2', { exact: true }).first()).toBeVisible()
+})
+
+test('synthetic three-section THPT exam completes through the browser', async ({ page }) => {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const owner = `thpt${suffix}`
+  await page.goto('/register')
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(owner)
+  await page.getByLabel('Email').fill(`${owner}@example.test`)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible()
+  execFileSync(python, ['backend/manage.py', 'seed_thpt_demo', '--owner', owner], { cwd: root })
+
+  await page.goto('/library')
+  await page.getByRole('link', { name: /TestFlow: đề mẫu Toán THPT ba phần/ }).click()
+  await expect(page.getByText('Phần I: Trắc nghiệm: 1 câu')).toBeVisible()
+  await expect(page.getByText('Phần II: Đúng sai: 1 câu')).toBeVisible()
+  await expect(page.getByText('Phần III: Trả lời ngắn: 1 câu')).toBeVisible()
+  await page.getByRole('button', { name: 'Làm bài có giờ' }).click()
+  await page.getByRole('radio', { name: 'B 4' }).check()
+  await page.getByRole('button', { name: 'Câu tiếp' }).click()
+  const rows = page.locator('.statement-row')
+  await rows.nth(0).getByRole('radio', { name: 'Đúng' }).check()
+  await rows.nth(1).getByRole('radio', { name: 'Sai' }).check()
+  await rows.nth(2).getByRole('radio', { name: 'Đúng' }).check()
+  await rows.nth(3).getByRole('radio', { name: 'Sai' }).check()
+  await page.getByRole('button', { name: 'Câu tiếp' }).click()
+  await page.getByLabel('Câu trả lời').fill('5')
+  page.once('dialog', (dialog) => dialog.accept())
+  await page.getByRole('button', { name: 'Nộp bài' }).click()
+  await expect(page.getByRole('heading', { name: 'Kết quả bài làm' })).toBeVisible()
+  await expect(page.getByText('10.00 / 10.00')).toBeVisible()
+  await expect(page.getByText('3 đúng · 0 đúng một phần · 0 sai · 0 chưa trả lời')).toBeVisible()
 })

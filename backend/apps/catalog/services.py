@@ -4,9 +4,10 @@ from decimal import Decimal
 
 from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db import transaction
+from django.utils import timezone
 from testflow_contracts.exam import ExamDraft
 
-from apps.common.errors import ValidationFailed
+from apps.common.errors import Conflict, DomainPermissionDenied, NotFound, ValidationFailed
 from apps.common.text import normalize_text, search_fold
 
 from .models import (
@@ -15,6 +16,8 @@ from .models import (
     Exam,
     Major,
     Passage,
+    PublishRequest,
+    PublishRequestStatus,
     Question,
     School,
     Section,
@@ -200,6 +203,124 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         )
     )
     exam.save(update_fields=("search_text", "updated_at"))
+    return exam
+
+
+def is_reviewer(user) -> bool:
+    return bool(
+        user
+        and user.is_authenticated
+        and (
+            user.is_superuser
+            or user.groups.filter(name="Reviewer").exists()
+            or (user.is_staff and user.groups.filter(name="Admin").exists())
+        )
+    )
+
+
+def is_admin(user) -> bool:
+    return bool(
+        user
+        and user.is_authenticated
+        and user.is_staff
+        and (user.is_superuser or user.groups.filter(name="Admin").exists())
+    )
+
+
+def _owned_exam(exam_id, owner):
+    exam = (
+        Exam.objects.select_for_update()
+        .filter(pk=exam_id, owner_id=owner.pk, deleted_at__isnull=True)
+        .first()
+    )
+    if exam is None:
+        raise NotFound("EXAM_NOT_FOUND", "Không tìm thấy đề của bạn.")
+    return exam
+
+
+def _close_pending(exam, *, reason: str):
+    exam.publish_requests.filter(status=PublishRequestStatus.PENDING).update(
+        status=PublishRequestStatus.REJECTED, reason=reason, decided_at=timezone.now()
+    )
+
+
+@transaction.atomic
+def request_publication(exam_id, *, owner) -> PublishRequest:
+    exam = _owned_exam(exam_id, owner)
+    if exam.visibility != Visibility.PRIVATE:
+        raise Conflict("EXAM_NOT_PRIVATE", "Chỉ đề riêng tư mới có thể gửi duyệt.")
+    if not exam.source.strip():
+        raise ValidationFailed("SOURCE_REQUIRED", "Cần ghi rõ nguồn trước khi gửi duyệt công khai.")
+    if not exam.sections.exists() or not exam.question_count:
+        raise ValidationFailed("EXAM_EMPTY", "Đề cần có câu hỏi trước khi công khai.")
+    request = exam.publish_requests.filter(status=PublishRequestStatus.PENDING).first()
+    if request is not None:
+        return request
+    return PublishRequest.objects.create(
+        exam=exam, requested_by=owner, status=PublishRequestStatus.PENDING
+    )
+
+
+@transaction.atomic
+def make_private(exam_id, *, owner) -> Exam:
+    exam = _owned_exam(exam_id, owner)
+    if exam.visibility == Visibility.HIDDEN:
+        raise Conflict("EXAM_HIDDEN", "Đề đang bị quản trị viên ẩn.")
+    exam.visibility = Visibility.PRIVATE
+    exam.save(update_fields=("visibility", "updated_at"))
+    _close_pending(exam, reason="Người sở hữu đã rút yêu cầu công khai.")
+    return exam
+
+
+@transaction.atomic
+def soft_delete_exam(exam_id, *, owner) -> None:
+    exam = _owned_exam(exam_id, owner)
+    exam.deleted_at = timezone.now()
+    exam.visibility = Visibility.PRIVATE
+    exam.save(update_fields=("deleted_at", "visibility", "updated_at"))
+    _close_pending(exam, reason="Người sở hữu đã xóa đề.")
+
+
+@transaction.atomic
+def decide_publication(request_id, *, reviewer, approve: bool, reason: str = "") -> PublishRequest:
+    if not is_reviewer(reviewer):
+        raise DomainPermissionDenied("REVIEWER_REQUIRED", "Cần quyền duyệt đề.")
+    target = PublishRequest.objects.filter(pk=request_id).values("exam_id").first()
+    if target is None:
+        raise NotFound("REQUEST_NOT_FOUND", "Không tìm thấy yêu cầu công khai.")
+    exam = Exam.objects.select_for_update().get(pk=target["exam_id"])
+    request = PublishRequest.objects.select_for_update().get(pk=request_id)
+    if (
+        request.status != PublishRequestStatus.PENDING
+        or exam.visibility != Visibility.PRIVATE
+        or exam.deleted_at
+    ):
+        raise Conflict("REQUEST_STALE", "Yêu cầu này không còn hiệu lực.")
+    if exam.owner_id == reviewer.pk:
+        raise DomainPermissionDenied("SELF_REVIEW_FORBIDDEN", "Không thể tự duyệt đề của mình.")
+    if not approve and not reason.strip():
+        raise ValidationFailed("REASON_REQUIRED", "Cần ghi lý do từ chối.")
+    request.status = PublishRequestStatus.APPROVED if approve else PublishRequestStatus.REJECTED
+    request.reason = reason.strip()
+    request.reviewed_by = reviewer
+    request.decided_at = timezone.now()
+    request.save(update_fields=("status", "reason", "reviewed_by", "decided_at", "updated_at"))
+    if approve:
+        exam.visibility = Visibility.PUBLIC
+        exam.save(update_fields=("visibility", "updated_at"))
+    return request
+
+
+@transaction.atomic
+def hide_exam(exam_id, *, admin) -> Exam:
+    if not is_admin(admin):
+        raise DomainPermissionDenied("ADMIN_REQUIRED", "Cần quyền quản trị.")
+    exam = Exam.objects.select_for_update().filter(pk=exam_id, deleted_at__isnull=True).first()
+    if exam is None:
+        raise NotFound("EXAM_NOT_FOUND", "Không tìm thấy đề.")
+    exam.visibility = Visibility.HIDDEN
+    exam.save(update_fields=("visibility", "updated_at"))
+    _close_pending(exam, reason="Quản trị viên đã ẩn đề.")
     return exam
 
 

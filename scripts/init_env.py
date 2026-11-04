@@ -1,7 +1,7 @@
 """Create local development environment without overwriting an existing secret."""
 
-from pathlib import Path
 import secrets
+from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 target = ROOT / ".env"

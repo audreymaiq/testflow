@@ -41,7 +41,7 @@ export async function request<T>(path: string, options: RequestInit = {}, access
       ...options,
       credentials: 'include',
       headers: {
-        'Content-Type': 'application/json',
+        ...(options.body instanceof FormData ? {} : { 'Content-Type': 'application/json' }),
         ...(access ? { Authorization: `Bearer ${access}` } : {}),
         ...options.headers,
       },

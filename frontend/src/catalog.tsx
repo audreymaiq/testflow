@@ -6,15 +6,19 @@ import { useAuth } from './auth'
 type ExamSummary = {
   id: string; title: string; subtitle: string; level: string; grade: number | null
   subject: string; exam_type: string; visibility: string; question_count: number
-  duration_minutes: number | null; has_answer_key: boolean
+  duration_minutes: number | null; has_answer_key: boolean; year: number | null
 }
 type ExamDetail = ExamSummary & {
+  is_owner: boolean
   chapters: { id: number; name: string; code: string }[]
   sections: { id: number; title: string; kind: string }[]
+  section_stats: { id: number; title: string; count: number }[]
+  chapter_stats: { id: number; name: string; count: number }[]
   source: string
 }
 type Subject = { code: string; name: string; levels: string[]; has_formula: boolean }
-type Page<T> = { count: number; results: T[] }
+type Page<T> = { count: number; next: string | null; previous: string | null; results: T[] }
+type Facets = { subjects: [string, string][]; schools: string[]; majors: string[]; levels: string[] }
 
 const levelNames: Record<string, string> = {
   TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
@@ -25,24 +29,60 @@ export function LibraryPage() {
   const [query, setQuery] = useState('')
   const [mine, setMine] = useState(false)
   const [level, setLevel] = useState('')
+  const [grade, setGrade] = useState('')
+  const [subject, setSubject] = useState('')
+  const [school, setSchool] = useState('')
+  const [major, setMajor] = useState('')
+  const [year, setYear] = useState('')
+  const [examType, setExamType] = useState('')
+  const [hasKey, setHasKey] = useState(false)
+  const [page, setPage] = useState(1)
+  const facets = useQuery({ queryKey: ['facets', user?.id], queryFn: () => api<Facets>('/facets/') })
   const params = new URLSearchParams()
   if (query.trim()) params.set('q', query.trim())
   if (mine) params.set('mine', 'true')
   if (level) params.set('level', level)
+  if (grade) params.set('grade', grade)
+  if (subject) params.set('subject', subject)
+  if (school) params.set('school', school)
+  if (major) params.set('major', major)
+  if (year) params.set('year', year)
+  if (examType) params.set('exam_type', examType)
+  if (hasKey) params.set('has_answer_key', 'true')
+  params.set('page', String(page))
+  const search = params.toString()
   const exams = useQuery({
-    queryKey: ['exams', user?.id, query, mine, level],
-    queryFn: () => api<Page<ExamSummary>>(`/exams/?${params.toString()}`),
+    queryKey: ['exams', user?.id, search],
+    queryFn: () => api<Page<ExamSummary>>(`/exams/?${search}`),
   })
 
   return <section className="library-layout">
     <aside className="library-filters paper">
       <p className="eyebrow">LỌC ĐỀ</p>
-      <label>Tìm kiếm<input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
-      <label>Cấp học<select value={level} onChange={(event) => setLevel(event.target.value)}>
+      <label>Tìm kiếm<input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1) }} placeholder="Tên đề hoặc môn…" /></label>
+      <label>Cấp học<select value={level} onChange={(event) => { setLevel(event.target.value); setGrade(''); setPage(1) }}>
         <option value="">Tất cả</option>
         {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select></label>
-      {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => setMine(event.target.checked)} /> Chỉ đề của tôi</label>}
+      <label>Lớp<select value={grade} onChange={(event) => { setGrade(event.target.value); setPage(1) }}>
+        <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}</option>)}
+      </select></label>
+      <label>Môn học<select value={subject} onChange={(event) => { setSubject(event.target.value); setPage(1) }}>
+        <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+      </select></label>
+      <label>Trường<select value={school} onChange={(event) => { setSchool(event.target.value); setPage(1) }}>
+        <option value="">Tất cả</option>{facets.data?.schools.map((item) => <option key={item}>{item}</option>)}
+      </select></label>
+      <label>Ngành<select value={major} onChange={(event) => { setMajor(event.target.value); setPage(1) }}>
+        <option value="">Tất cả</option>{facets.data?.majors.map((item) => <option key={item}>{item}</option>)}
+      </select></label>
+      <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => { setYear(event.target.value); setPage(1) }} /></label>
+      <label>Loại đề<select value={examType} onChange={(event) => { setExamType(event.target.value); setPage(1) }}>
+        <option value="">Tất cả</option>
+        {Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+      </select></label>
+      <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => { setHasKey(event.target.checked); setPage(1) }} /> Có đáp án</label>
+      {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => { setMine(event.target.checked); setPage(1) }} /> Chỉ đề của tôi</label>}
     </aside>
     <div className="library-results paper">
       <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
@@ -52,14 +92,19 @@ export function LibraryPage() {
       {exams.isError && <p role="alert">{exams.error.message} <button onClick={() => exams.refetch()}>Thử lại</button></p>}
       {exams.data && <>
         <p className="result-count">{exams.data.count} đề</p>
-        {exams.data.count === 0 ? <p>Chưa có đề phù hợp với bộ lọc.</p> : <div className="exam-table" role="table" aria-label="Danh sách đề">
-          <div className="exam-row table-head" role="row"><span>TÊN ĐỀ</span><span>MÔN</span><span>SỐ CÂU</span><span>HIỂN THỊ</span></div>
-          {exams.data.results.map((exam) => <Link className="exam-row" role="row" key={exam.id} to={`/exams/${exam.id}`}>
+        {exams.data.count === 0 ? <p>Chưa có đề phù hợp với bộ lọc.</p> : <section className="exam-table" aria-label="Danh sách đề">
+          <div className="exam-row table-head" aria-hidden="true"><span>TÊN ĐỀ</span><span>MÔN</span><span>SỐ CÂU</span><span>HIỂN THỊ</span></div>
+          {exams.data.results.map((exam) => <Link className="exam-row" key={exam.id} to={`/exams/${exam.id}`}>
             <span className="exam-name"><strong>{exam.title}</strong><small>{exam.subtitle || levelNames[exam.level]}</small></span>
             <span>{exam.subject}</span><span className="mono">{exam.question_count}</span>
             <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
           </Link>)}
-        </div>}
+        </section>}
+        <nav className="pagination" aria-label="Phân trang đề thi">
+          <button type="button" disabled={!exams.data.previous} onClick={() => setPage(page - 1)}>Trang trước</button>
+          <span>Trang {page}</span>
+          <button type="button" disabled={!exams.data.next} onClick={() => setPage(page + 1)}>Trang sau</button>
+        </nav>
       </>}
     </div>
   </section>
@@ -67,28 +112,84 @@ export function LibraryPage() {
 
 export function ExamDetailPage() {
   const { id } = useParams()
-  const { user, api } = useAuth()
+  const { user, loading, api } = useAuth()
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState('')
+  const [ownerBusy, setOwnerBusy] = useState(false)
+  const [ownerMessage, setOwnerMessage] = useState('')
+  const [chapterIds, setChapterIds] = useState<string[]>([])
+  const [includeWrong, setIncludeWrong] = useState(false)
+  const [onlyWrong, setOnlyWrong] = useState(false)
+  const [shuffleQuestions, setShuffleQuestions] = useState(false)
+  const [shuffleOptions, setShuffleOptions] = useState(false)
   const exam = useQuery({
     queryKey: ['exam', id, user?.id],
     queryFn: () => api<ExamDetail>(`/exams/${id}/`),
+    enabled: !loading,
   })
   const preview = useQuery({
     queryKey: ['exam-preview', id, user?.id],
     queryFn: () => api<{ questions: { id: string; text: string; choices: { label: string; text: string }[] }[] }>(`/exams/${id}/preview/`),
-    enabled: !!exam.data,
+    enabled: !loading && !!exam.data,
+  })
+  const practiceSummary = useQuery({
+    queryKey: ['practice-exam-summary', id, user?.id],
+    queryFn: () => api<{ wrong_question_count: number; session_count: number }>(`/practice/exams/${id}/summary/`),
+    enabled: !loading && !!user && !!exam.data,
   })
   async function start(mode: 'TIMED' | 'PRACTICE') {
     setStarting(true); setStartError('')
     try {
       const session = await api<{ id: string }>('/practice/sessions/', {
-        method: 'POST', body: JSON.stringify({ exam_id: id, mode }),
+        method: 'POST', body: JSON.stringify({
+          exam_id: id, mode,
+          ...(mode === 'PRACTICE' ? {
+            chapter_ids: onlyWrong ? [] : chapterIds,
+            include_wrong_bank: includeWrong,
+            only_wrong_bank: onlyWrong,
+            shuffle_questions: shuffleQuestions,
+            shuffle_options: shuffleOptions,
+          } : {}),
+        }),
       })
       navigate(`/practice/${session.id}`)
     } catch (cause) { setStartError(cause instanceof Error ? cause.message : 'Không bắt đầu được bài làm.') }
     finally { setStarting(false) }
+  }
+  async function changeVisibility(visibility: 'PRIVATE' | 'PUBLIC') {
+    setOwnerBusy(true); setOwnerMessage('')
+    try {
+      const result = await api<{ request_id: number | null }>(`/exams/${id}/visibility/`, {
+        method: 'POST', body: JSON.stringify({ visibility }),
+      })
+      await queryClient.invalidateQueries({ queryKey: ['exam', id] })
+      await queryClient.invalidateQueries({ queryKey: ['exams'] })
+      setOwnerMessage(visibility === 'PUBLIC' ? `Đã gửi yêu cầu công khai #${result.request_id}.` : 'Đề đã chuyển về riêng tư.')
+    } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không đổi được trạng thái đề.') }
+    finally { setOwnerBusy(false) }
+  }
+  async function removeExam() {
+    if (!window.confirm('Xóa đề này khỏi thư viện?')) return
+    setOwnerBusy(true); setOwnerMessage('')
+    try {
+      await api<void>(`/exams/${id}/`, { method: 'DELETE' })
+      await queryClient.invalidateQueries({ queryKey: ['exams'] })
+      navigate('/library')
+    } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không xóa được đề.') }
+    finally { setOwnerBusy(false) }
+  }
+  async function hide() {
+    if (!window.confirm('Ẩn đề này khỏi mọi người dùng?')) return
+    setOwnerBusy(true); setOwnerMessage('')
+    try {
+      await api(`/exams/${id}/hide/`, { method: 'POST' })
+      await queryClient.invalidateQueries({ queryKey: ['exam', id] })
+      await queryClient.invalidateQueries({ queryKey: ['exams'] })
+      setOwnerMessage('Đề đã được ẩn.')
+    } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không ẩn được đề.') }
+    finally { setOwnerBusy(false) }
   }
   if (exam.isPending) return <p role="status">Đang tải đề…</p>
   if (exam.isError) return <section className="paper detail-panel"><h1>Không thể mở đề</h1><p role="alert">{exam.error.message}</p><Link to="/library">Về thư viện</Link></section>
@@ -103,6 +204,24 @@ export function ExamDetailPage() {
       <div><dt>Hiển thị</dt><dd>{exam.data.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</dd></div>
       <div><dt>Đáp án</dt><dd>{exam.data.has_answer_key ? 'Có' : 'Chưa đủ'}</dd></div>
     </dl>
+    <h2>Cấu trúc đề</h2>
+    <ul>{exam.data.section_stats.map((item) => <li key={item.id}>{item.title}: {item.count} câu</li>)}</ul>
+    {exam.data.chapter_stats.length > 0 && <ul>{exam.data.chapter_stats.map((item) => <li key={item.id}>{item.name}: {item.count} câu</li>)}</ul>}
+    {user && <p>{practiceSummary.isPending ? 'Đang tải tiến độ…' : `${practiceSummary.data?.session_count || 0} lượt làm · ${practiceSummary.data?.wrong_question_count || 0} câu trong ngân hàng câu sai`}</p>}
+    {user && (practiceSummary.data?.wrong_question_count || 0) > 0 && <button
+      type="button" className="urgent-review" onClick={() => setOnlyWrong(true)}>
+      🔥 Cần ôn tập gấp · {practiceSummary.data?.wrong_question_count} câu
+    </button>}
+    {user && <fieldset className="practice-config"><legend>Cấu hình ôn tập</legend>
+      {exam.data.chapters.length > 0 && <div><strong>Chương</strong>{exam.data.chapters.map((chapter) => <label key={chapter.id}>
+        <input type="checkbox" checked={chapterIds.includes(String(chapter.id))} disabled={onlyWrong}
+          onChange={(event) => setChapterIds((current) => event.target.checked ? [...current, String(chapter.id)] : current.filter((item) => item !== String(chapter.id)))} /> {chapter.name}
+      </label>)}</div>}
+      <label><input type="checkbox" checked={includeWrong} disabled={onlyWrong} onChange={(event) => setIncludeWrong(event.target.checked)} /> Bao gồm câu sai của tôi</label>
+      <label><input type="checkbox" checked={onlyWrong} onChange={(event) => setOnlyWrong(event.target.checked)} /> Chỉ luyện câu sai</label>
+      <label><input type="checkbox" checked={shuffleQuestions} onChange={(event) => setShuffleQuestions(event.target.checked)} /> Xáo thứ tự câu</label>
+      <label><input type="checkbox" checked={shuffleOptions} onChange={(event) => setShuffleOptions(event.target.checked)} /> Xáo thứ tự đáp án</label>
+    </fieldset>}
     <div className="start-actions">
       {user ? <>
         <button className="button primary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('TIMED')}>Làm bài có giờ</button>
@@ -110,6 +229,15 @@ export function ExamDetailPage() {
       </> : <Link className="button primary" to="/login" state={{ from: `/exams/${id}` }}>Đăng nhập để làm bài</Link>}
       {startError && <p role="alert" className="form-error">{startError}</p>}
     </div>
+    {exam.data.is_owner && <div className="owner-actions">
+      <h2>Quản lý đề của tôi</h2>
+      {exam.data.visibility === 'PRIVATE'
+        ? <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PUBLIC')}>Gửi duyệt công khai</button>
+        : <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PRIVATE')}>Chuyển về riêng tư</button>}
+      <button type="button" className="button secondary" disabled={ownerBusy} onClick={removeExam}>Xóa đề</button>
+      {ownerMessage && <p role="status">{ownerMessage}</p>}
+    </div>}
+    {user?.roles.includes('Admin') && <div className="owner-actions"><button type="button" className="button secondary" disabled={ownerBusy} onClick={hide}>Ẩn đề với mọi người</button>{ownerMessage && !exam.data.is_owner && <p role="status">{ownerMessage}</p>}</div>}
     <h2>Nội dung đề</h2>
     <ul>{exam.data.sections.map((section) => <li key={section.id}>{section.title} · {section.kind}</li>)}</ul>
     <h2>Xem trước</h2>

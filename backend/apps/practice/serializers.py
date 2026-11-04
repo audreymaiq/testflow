@@ -56,3 +56,27 @@ class ResultResponseSerializer(serializers.Serializer):
     correct_percent = serializers.CharField()
     total_score = serializers.CharField(allow_null=True)
     max_score = serializers.CharField(allow_null=True)
+
+
+class HistorySerializer(serializers.Serializer):
+    id = serializers.UUIDField()
+    exam_id = serializers.UUIDField()
+    exam_title = serializers.CharField(source="exam.title")
+    mode = serializers.CharField()
+    status = serializers.CharField()
+    started_at = serializers.DateTimeField()
+    submitted_at = serializers.DateTimeField(allow_null=True)
+    total_score = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+    max_score = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+
+
+class StatsSerializer(serializers.Serializer):
+    total_sessions = serializers.IntegerField()
+    completed_sessions = serializers.IntegerField()
+    timed_sessions = serializers.IntegerField()
+    practice_sessions = serializers.IntegerField()
+
+
+class ExamPracticeSummarySerializer(serializers.Serializer):
+    wrong_question_count = serializers.IntegerField()
+    session_count = serializers.IntegerField()
