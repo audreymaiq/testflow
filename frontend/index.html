@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>TestFlow</title>
+    <script>
+      (() => {
+        const root = document.documentElement;
+        const theme = localStorage.getItem('tf_theme') || 'ocean';
+        const preference = localStorage.getItem('tf_mode') || 'system';
+        root.dataset.theme = ['ocean', 'amber', 'sakura', 'holo'].includes(theme) ? theme : 'ocean';
+        root.dataset.mode = preference === 'system'
+          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
+          : preference;
+      })();
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
