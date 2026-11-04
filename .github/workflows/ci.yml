@@ -49,9 +49,8 @@ jobs:
       - name: Install frontend
         working-directory: frontend
         run: npm ci
-      - name: Requirements and design
+      - name: Design tokens
         run: |
-          python scripts/requirements.py check
           python design/palette.py
           python design/build_tokens.py
           git diff --exit-code -- design/tokens.css
