@@ -1,18 +1,24 @@
 """TXT upload, draft review, and atomic confirmation."""
 
 import hashlib
+import logging
 from pathlib import PurePath
+from time import monotonic
 
+from django.conf import settings
 from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
+from django.utils import timezone
 from pydantic import ValidationError as ContractValidationError
 from testflow_contracts.exam import ExamDraft
 
 from apps.catalog.services import create_exam
-from apps.common.errors import Conflict, NotFound, ValidationFailed
+from apps.common.errors import Conflict, NotFound, QuotaExceeded, ValidationFailed
 
 from .models import Draft, ImportJob, ReviewEdit
 from .txt_parser import MAX_BYTES, parse_txt
+
+logger = logging.getLogger("testflow.imports")
 
 
 class FileTooLarge(ValidationFailed):
@@ -69,6 +75,7 @@ def job_payload(job, *, include_draft=False):
 
 
 def create_txt_job(upload, *, uploader):
+    started = monotonic()
     if not upload.name.lower().endswith(".txt"):
         raise InvalidFileType("INVALID_FILE_TYPE", "Chỉ chấp nhận tệp .txt.")
     if upload.size > MAX_BYTES:
@@ -83,17 +90,8 @@ def create_txt_job(upload, *, uploader):
     except UnicodeDecodeError as exc:
         raise InvalidFileType("INVALID_FILE_TYPE", "Tệp TXT cần mã hóa UTF-8.") from exc
     digest = hashlib.sha256(raw).hexdigest()
-    existing = (
-        ImportJob.objects.filter(sha256=digest)
-        .exclude(status__in=[ImportJob.Status.REJECTED, ImportJob.Status.FAILED])
-        .first()
-    )
-    if existing:
-        details = (
-            {"existing_job_id": str(existing.id)} if existing.uploader_id == uploader.id else {}
-        )
-        raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.", details)
     outcome = parse_txt(content)
+    parse_ms = round((monotonic() - started) * 1000, 2)
     filename = PurePath(upload.name.replace("\\", "/")).name[:255]
     job = ImportJob(
         uploader=uploader,
@@ -102,10 +100,36 @@ def create_txt_job(upload, *, uploader):
         mime_type="text/plain; charset=utf-8",
         file_size=len(raw),
         source_kind="TXT",
+        timings={"assemble_ms": parse_ms},
     )
-    job.original_file.save("original.txt", ContentFile(raw), save=False)
     try:
         with transaction.atomic():
+            type(uploader).objects.select_for_update().get(pk=uploader.pk)
+            existing = (
+                ImportJob.objects.filter(sha256=digest)
+                .exclude(status__in=[ImportJob.Status.REJECTED, ImportJob.Status.FAILED])
+                .first()
+            )
+            if existing:
+                details = (
+                    {"existing_job_id": str(existing.id)}
+                    if existing.uploader_id == uploader.id
+                    else {}
+                )
+                raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.", details)
+            local_midnight = timezone.localtime(timezone.now()).replace(
+                hour=0, minute=0, second=0, microsecond=0
+            )
+            used = ImportJob.objects.filter(
+                uploader=uploader, created_at__gte=local_midnight
+            ).count()
+            if used >= settings.IMPORT_DAILY_JOB_LIMIT:
+                raise QuotaExceeded(
+                    "UPLOAD_QUOTA_EXCEEDED",
+                    "Bạn đã dùng hết số lượt nhập đề hôm nay.",
+                    {"daily_limit": settings.IMPORT_DAILY_JOB_LIMIT},
+                )
+            job.original_file.save("original.txt", ContentFile(raw), save=False)
             job.save()
             job.transition(ImportJob.Status.ASSEMBLING)
             data = outcome.draft.model_dump(mode="json")
@@ -118,9 +142,16 @@ def create_txt_job(upload, *, uploader):
                 skipped_count=outcome.skipped,
             )
             job.transition(ImportJob.Status.NEEDS_REVIEW)
-    except IntegrityError as exc:
-        job.original_file.delete(save=False)
-        raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.") from exc
+    except Exception as exc:
+        if job.original_file.name:
+            job.original_file.delete(save=False)
+        if isinstance(exc, IntegrityError):
+            raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.") from exc
+        raise
+    logger.info(
+        "TXT import assembled",
+        extra={"import_job_id": str(job.id), "stage": "assemble", "latency_ms": parse_ms},
+    )
     return job
 
 
@@ -156,6 +187,7 @@ def replace_draft(job_id, *, user, data):
 
 @transaction.atomic
 def confirm(job_id, *, user):
+    started = monotonic()
     job = _owned_job(job_id, user, lock=True)
     if job.status != ImportJob.Status.NEEDS_REVIEW:
         raise Conflict("IMPORT_STATE_CONFLICT", "Lần nhập đề đã được xử lý.")
@@ -166,6 +198,14 @@ def confirm(job_id, *, user):
     job.exam_id = exam.id
     job.save(update_fields=["exam_id", "updated_at"])
     job.transition(ImportJob.Status.APPROVED)
+    logger.info(
+        "TXT import confirmed",
+        extra={
+            "import_job_id": str(job.id),
+            "stage": "confirm",
+            "latency_ms": round((monotonic() - started) * 1000, 2),
+        },
+    )
     return exam
 
 
