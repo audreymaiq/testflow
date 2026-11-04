@@ -1,0 +1,38 @@
+[importlinter]
+root_package = apps
+
+[importlinter:contract:layers]
+name = Accounts depends only on common
+type = layers
+layers =
+    apps.accounts
+    apps.common
+
+[importlinter:contract:catalog]
+name = Catalog depends only on common
+type = layers
+layers =
+    apps.catalog
+    apps.common
+
+[importlinter:contract:identity_catalog]
+name = Identity and catalog remain independent
+type = independence
+modules =
+    apps.accounts
+    apps.catalog
+
+[importlinter:contract:practice]
+name = Practice depends on catalog and common
+type = layers
+layers =
+    apps.practice
+    apps.catalog
+    apps.common
+
+[importlinter:contract:identity_practice]
+name = Identity and practice remain independent
+type = independence
+modules =
+    apps.accounts
+    apps.practice
