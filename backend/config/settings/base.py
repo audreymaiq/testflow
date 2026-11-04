@@ -45,6 +45,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "apps.common.request_logging.RequestLoggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -116,7 +117,20 @@ STATIC_URL = "static/"
 STATIC_ROOT = ROOT_DIR / "staticfiles"
 MEDIA_ROOT = ROOT_DIR / "media" / "private"
 MEDIA_URL = None
+IMPORT_DAILY_JOB_LIMIT = env.int("IMPORT_DAILY_JOB_LIMIT", default=20)
+BUILD_SHA = env("BUILD_SHA", default="local")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {"json": {"()": "apps.common.request_logging.JsonFormatter"}},
+    "handlers": {"stdout": {"class": "logging.StreamHandler", "formatter": "json"}},
+    "loggers": {
+        "testflow.request": {"handlers": ["stdout"], "level": "INFO", "propagate": False},
+        "testflow.imports": {"handlers": ["stdout"], "level": "INFO", "propagate": False},
+        "django.request": {"handlers": ["stdout"], "level": "WARNING", "propagate": False},
+    },
+}
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
     {"NAME": "django.contrib.auth.password_validation.MinimumLengthValidator"},
