@@ -18,11 +18,15 @@ from django.contrib import admin
 from django.urls import include, path
 from drf_spectacular.views import SpectacularAPIView
 
+from apps.common.health import healthz
+
 urlpatterns = [
+    path("healthz", healthz, name="healthz"),
     path("admin/", admin.site.urls),
     path("api/v1/auth/", include("apps.accounts.urls")),
     path("api/v1/", include("apps.catalog.urls")),
     path("api/v1/practice/", include("apps.practice.urls")),
     path("api/v1/imports/", include("apps.imports.urls")),
+    path("api/v1/ops/", include("apps.ops.urls")),
     path("api/v1/schema/", SpectacularAPIView.as_view(), name="schema"),
 ]
