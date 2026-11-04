@@ -7,6 +7,7 @@ import { ExamDetailPage, LibraryPage, ManualExamPage } from './catalog'
 import { HistoryPage, PracticePage, ResultPage } from './practice'
 import { PublicationDetailPage, PublicationQueuePage } from './publication'
 import { ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
+import { OperationsPage } from './ops'
 
 function Shell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
@@ -35,6 +36,7 @@ function Shell({ children }: { children: ReactNode }) {
           <Link to="/account">Tài khoản</Link>
           <Link to="/history">Lịch sử</Link>
           {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <Link to="/publish-requests">Duyệt đề</Link>}
+          {user.roles.includes('Admin') && <Link to="/ops">Vận hành</Link>}
           <button type="button" className="text-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
         </> : <>
           <Link to="/login">Đăng nhập</Link>
@@ -164,6 +166,7 @@ export default function App() {
     <Route path="/history" element={<Protected><HistoryPage /></Protected>} />
     <Route path="/publish-requests" element={<Protected><PublicationQueuePage /></Protected>} />
     <Route path="/publish-requests/:requestId" element={<Protected><PublicationDetailPage /></Protected>} />
+    <Route path="/ops" element={<Protected><OperationsPage /></Protected>} />
     <Route path="*" element={<section className="paper not-found"><h1>Không tìm thấy trang</h1><Link to="/">Về trang chủ</Link></section>} />
   </Routes></Shell>
 }
