@@ -1,0 +1,32 @@
+services:
+  db:
+    image: postgres:17.6-alpine
+    environment:
+      POSTGRES_DB: testflow
+      POSTGRES_USER: testflow
+      POSTGRES_PASSWORD: testflow_dev_password
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - testflow_pg_dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U testflow -d testflow"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+  redis:
+    image: redis:7.4.6-alpine
+    command: ["redis-server", "--appendonly", "yes"]
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - testflow_redis_dev:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+volumes:
+  testflow_pg_dev:
+  testflow_redis_dev:
