@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="vi" data-theme="ocean" data-mode="light">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>TestFlow theme preview</title>
+  <link rel="stylesheet" href="tokens.css" />
+  <style>
+    body { font: 16px sans-serif; background: var(--bg); color: var(--text); padding: 2rem; }
+    main { max-width: 700px; margin: auto; }
+    .paper { background: var(--surface); border: 1px solid var(--border); border-radius: 8px; padding: 2rem; margin-top: 2rem; }
+    label { display: inline-grid; gap: .4rem; margin-right: 1rem; }
+    select, button { padding: .6rem; font: inherit; }
+    button { background: var(--accent); color: var(--on-accent); border: 0; border-radius: 6px; }
+    .muted { color: var(--muted); }
+    .line { border-top: 1px solid var(--border); padding-top: 1rem; }
+  </style>
+  <script>
+    const preference = localStorage.getItem('tf_mode') || 'system';
+    const theme = localStorage.getItem('tf_theme') || 'ocean';
+    document.documentElement.dataset.theme = theme;
+    document.documentElement.dataset.mode = preference === 'system'
+      ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : preference;
+  </script>
+</head>
+<body>
+  <main>
+    <h1>TestFlow / bảng màu</h1>
+    <label>Giao diện <select id="theme">
+      <option value="ocean">Cobalt</option><option value="amber">Bronze</option>
+      <option value="sakura">Rose</option><option value="holo">Violet</option>
+    </select></label>
+    <label>Chế độ <select id="mode">
+      <option value="light">Sáng</option><option value="dark">Tối</option>
+      <option value="system">Tự động</option>
+    </select></label>
+    <div class="paper"><p class="muted">ĐỀ LUYỆN TẬP / 40 CÂU</p>
+      <h2>Đọc rõ trên mọi bảng màu</h2>
+      <p class="line">Đây là bản xem trước của tờ đề, viền và chữ phụ.</p>
+      <button>Tiếp tục</button>
+    </div>
+  </main>
+  <script>
+    const themeSelect = document.getElementById('theme');
+    const modeSelect = document.getElementById('mode');
+    themeSelect.value = theme; modeSelect.value = preference;
+    const apply = () => {
+      const selected = modeSelect.value;
+      document.documentElement.dataset.theme = themeSelect.value;
+      document.documentElement.dataset.mode = selected === 'system'
+        ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : selected;
+      localStorage.setItem('tf_theme', themeSelect.value);
+      localStorage.setItem('tf_mode', selected);
+    };
+    themeSelect.addEventListener('change', apply);
+    modeSelect.addEventListener('change', apply);
+    matchMedia('(prefers-color-scheme: dark)').addEventListener('change', apply);
+  </script>
+</body>
+</html>
