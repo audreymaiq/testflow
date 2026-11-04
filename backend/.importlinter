@@ -51,3 +51,19 @@ type = independence
 modules =
     apps.accounts
     apps.imports
+
+[importlinter:contract:operations]
+name = Operations reads imports catalog and common
+type = layers
+layers =
+    apps.ops
+    apps.imports
+    apps.catalog
+    apps.common
+
+[importlinter:contract:identity_operations]
+name = Identity and operations remain independent
+type = independence
+modules =
+    apps.accounts
+    apps.ops
