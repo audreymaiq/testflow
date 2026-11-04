@@ -1,0 +1,74 @@
+name: TestFlow CI
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  s0:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17.6-alpine
+        env:
+          POSTGRES_DB: testflow
+          POSTGRES_USER: testflow
+          POSTGRES_PASSWORD: testflow_dev_password
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U testflow -d testflow"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+      redis:
+        image: redis:7.4.6-alpine
+        ports: ["6379:6379"]
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 3s --health-timeout 3s --health-retries 20
+    env:
+      DJANGO_SECRET_KEY: test-only-nonproduction-secret-change-before-release
+      DJANGO_ALLOWED_HOSTS: localhost,127.0.0.1
+      DATABASE_URL: postgres://testflow:testflow_dev_password@127.0.0.1:5432/testflow
+      REDIS_URL: redis://127.0.0.1:6379/0
+      CORS_ALLOWED_ORIGINS: http://localhost:5173
+      CI: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+      - name: Install backend
+        run: |
+          python -m venv backend/.venv
+          backend/.venv/bin/pip install -r backend/requirements-dev.txt
+          backend/.venv/bin/pip install -e contracts
+      - name: Install frontend
+        working-directory: frontend
+        run: npm ci
+      - name: Requirements and design
+        run: |
+          python scripts/requirements.py check
+          python design/palette.py
+          python design/build_tokens.py
+          git diff --exit-code -- design/tokens.css
+      - name: Backend gates
+        run: |
+          backend/.venv/bin/ruff check backend contracts
+          backend/.venv/bin/mypy --config-file backend/pyproject.toml backend/apps backend/config contracts/testflow_contracts
+          (cd backend && .venv/bin/lint-imports --config .importlinter)
+          backend/.venv/bin/python backend/manage.py check
+          backend/.venv/bin/python backend/manage.py makemigrations --check --dry-run
+          backend/.venv/bin/python backend/manage.py migrate --noinput
+          backend/.venv/bin/python backend/manage.py spectacular --validate --fail-on-warn --file /tmp/testflow-schema.yaml
+          backend/.venv/bin/pytest -c backend/pytest.ini backend/tests -q
+      - name: Frontend gates
+        working-directory: frontend
+        run: |
+          npm run check
+          npm run build
+          npx playwright install --with-deps chromium
+          npm run e2e
