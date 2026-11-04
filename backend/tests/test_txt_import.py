@@ -49,6 +49,7 @@ def test_txt_import_review_confirm_and_private_exam(clients):
     job = ImportJob.objects.get(pk=job_id)
     assert job.original_file.name.startswith(f"imports/{job_id}/")
     assert job.uploader == owner
+    assert job.timings["assemble_ms"] >= 0
     assert Exam.objects.count() == 0
     assert other_client.get(f"/api/v1/imports/{job_id}/").status_code == 404
     assert other_client.post(f"/api/v1/imports/{job_id}/confirm/").status_code == 404
@@ -116,3 +117,20 @@ def test_import_transition_graph(clients):
             else:
                 with pytest.raises(Conflict):
                     job.transition(destination)
+
+
+@pytest.mark.django_db
+def test_daily_quota_and_duplicate_precedence(clients, settings, tmp_path):
+    client, _, _ = clients
+    settings.IMPORT_DAILY_JOB_LIMIT = 1
+    first = upload(client)
+    assert first.status_code == 201
+    duplicate = upload(client)
+    assert duplicate.status_code == 409
+    assert duplicate.data["error"]["code"] == "DUPLICATE_FILE"
+    other = upload(client, GOOD.replace("2 + 2", "3 + 3"))
+    assert other.status_code == 429
+    assert other.data["error"]["code"] == "UPLOAD_QUOTA_EXCEEDED"
+    assert other.data["error"]["details"]["daily_limit"] == 1
+    assert ImportJob.objects.count() == 1
+    assert len(list(tmp_path.rglob("original.txt"))) == 1
