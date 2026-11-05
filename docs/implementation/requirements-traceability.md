@@ -60,11 +60,11 @@ Updated: 2026-11-05 09:15 ICT. Planned paths and tests must be replaced with rea
 | FR-P8 | PRD §5.4 / R1 | backend/apps/practice/selectors.py; frontend/src/practice.tsx | backend/tests/test_practice.py; frontend/e2e/practice.spec.ts | scoped paginated history and personal count stats pass | VERIFIED LOCAL |
 | FR-P9 | PRD §5.4 / R1-S | backend/apps/practice/services.py; frontend/src/practice.tsx | frontend/e2e/practice.spec.ts | timed question flag persists across reload | VERIFIED LOCAL |
 | FR-R1 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
-| FR-R2 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
-| FR-R3 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
-| FR-R4 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
-| FR-R5 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
-| FR-R6 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
+| FR-R2 | PRD §5.3 / R1 | frontend/src/imports.tsx | frontend/e2e/imports.spec.ts | TXT per-question form edit/save/practice passes; page images and warning-to-question links open | PARTIAL LOCAL |
+| FR-R3 | PRD §5.3 / R1 | backend/apps/imports/services.py | backend/tests/test_txt_import.py; frontend/e2e/imports.spec.ts | TXT confirm creates PRIVATE exam atomically and once | PARTIAL LOCAL |
+| FR-R4 | PRD §5.3 / R1 | backend/apps/imports/services.py; frontend/src/imports.tsx | backend/tests/test_txt_import.py | TXT discard state works; optional reason absent | PARTIAL LOCAL |
+| FR-R5 | PRD §5.3 / R1 | backend/apps/imports/models.py; services.py | backend/tests/test_txt_import.py | ReviewEdit stores before/after on TXT draft save | PARTIAL LOCAL |
+| FR-R6 | PRD §5.3 / R1 | backend/apps/catalog/services.py; frontend/src/publication.tsx | backend/tests/test_publication.py; frontend/e2e/publication.spec.ts | Reviewer approval/rejection and owner status/reason locally verified | VERIFIED LOCAL |
 | FR-T1 | PRD §5.6 / R1 | design/palette.py; design/tokens.css; frontend/src/theme.tsx | design/palette.py | 288 contrast pairs passed; four themes and three mode choices built | VERIFIED LOCAL |
 | FR-T2 | PRD §5.6 / R1 | frontend/index.html | frontend/e2e/auth.spec.ts | prepaint script and reload persistence verified; visual flash measurement pending | IN PROGRESS |
 | FR-T3 | PRD §5.6 / R1 | frontend/src/shared.tsx; frontend/src/App.tsx | frontend/e2e/auth.spec.ts | modal Escape/cancel/confirm and axe audit passed | VERIFIED LOCAL |
@@ -96,7 +96,7 @@ Updated: 2026-11-05 09:15 ICT. Planned paths and tests must be replaced with rea
 | S1 | PRD §18 / exit gate | backend/apps/catalog; backend/apps/practice; contracts; frontend/src/{catalog,practice}.tsx | backend/tests/{test_catalog,test_grading,test_practice}.py; frontend/e2e/{catalog,practice}.spec.ts | local backend/browser gates pass; hosted CI and clean Linux bootstrap open | VERIFIED LOCAL |
 | S2 | PRD §§13,18 / exit gate | eval/run.py; eval/README.md; docs/experiments/README.md | backend/tests/test_eval.py | offline runner and synthetic smoke pass; real gold/extractor outputs absent | BLOCKED EXTERNAL |
 | S3 | PRD §18 / exit gate | backend/apps/imports/{models,services}.py | backend/tests/test_txt_import.py | state matrix, TXT quota and dedup pass; document processing absent | PARTIAL FOUNDATION |
-| S4 | PRD §18 / exit gate | docs/implementation/status.md; slice files | slice tests and evidence | execution-plan.md exit gate | NOT STARTED |
+| S4 | PRD §18 / exit gate | frontend/src/{imports,publication}.tsx; backend/apps/imports/services.py | frontend/e2e/{imports,publication}.spec.ts | TXT structured review and publication moderation pass; document image review open | PARTIAL LOCAL |
 | S5 | PRD §18 / exit gate | backend/apps/common/{health,request_logging}.py; backend/apps/ops; frontend/src/ops.tsx | backend/tests/{test_health,test_ops}.py; frontend/e2e/ops.spec.ts | local health/JSON correlation/Admin summary and 9 browser E2E pass; full R1/security/load gates open | PARTIAL LOCAL |
 | S6 | Execution contract §§8–10 / exit gate | docs/runbooks/local-operations.md; backend/apps/ops | local health/Admin tests | local operations runbook; no host, backups, TLS, release or deployed smoke | BLOCKED EXTERNAL |
 

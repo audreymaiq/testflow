@@ -3,6 +3,9 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
 
 type Issue = { line: number; code: string; message: string; severity: 'ERROR' | 'WARNING' }
+type DraftChoice = { label: string; text: string; is_correct: boolean }
+type DraftQuestion = { tmp_id: string; order: number; kind: string; text: string; explanation: string; choices: DraftChoice[] }
+type ImportDraft = { metadata: Record<string, unknown>; sections: { title: string; questions: DraftQuestion[] }[] }
 type Job = {
   id: string
   status: string
@@ -10,7 +13,7 @@ type Job = {
   exam_id: string | null
   report: { valid: number; skipped: number; issues: Issue[] }
   draft_summary: { title: string | null; questions: number; chapters: number }
-  draft?: Record<string, unknown>
+  draft?: ImportDraft
 }
 
 function ErrorText({ message }: { message: string }) {
@@ -75,6 +78,8 @@ export function ImportReviewPage() {
   const [editor, setEditor] = useState('')
   const [metadata, setMetadata] = useState<Record<string, unknown>>({})
   const [metadataDirty, setMetadataDirty] = useState(false)
+  const [questionsDirty, setQuestionsDirty] = useState(false)
+  const [selectedQuestion, setSelectedQuestion] = useState('')
   const [subjects, setSubjects] = useState<{ code: string; name: string }[]>([])
   const [editing, setEditing] = useState(false)
   const [pending, setPending] = useState(false)
@@ -88,6 +93,8 @@ export function ImportReviewPage() {
       setEditor(JSON.stringify(value.draft, null, 2))
       setMetadata((value.draft?.metadata || {}) as Record<string, unknown>)
       setMetadataDirty(false)
+      setQuestionsDirty(false)
+      setSelectedQuestion(value.draft?.sections.flatMap((section) => section.questions)[0]?.tmp_id || '')
     }).catch((cause) => setError(cause instanceof Error ? cause.message : 'Không tải được bản nháp.'))
   }, [jobId])
 
@@ -103,6 +110,7 @@ export function ImportReviewPage() {
       setJob(value); setEditor(JSON.stringify(value.draft, null, 2))
       setMetadata((value.draft?.metadata || {}) as Record<string, unknown>)
       setMetadataDirty(false)
+      setQuestionsDirty(false)
       setEditing(false); setMessage('Đã lưu bản nháp.')
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không lưu được bản nháp.') }
     finally { setPending(false) }
@@ -125,6 +133,19 @@ export function ImportReviewPage() {
     try { draft = JSON.parse(editor) } catch { setError('JSON không hợp lệ.'); return }
     await replace(draft)
   }
+
+  function changeQuestion(update: (question: DraftQuestion) => void) {
+    if (!job?.draft) return
+    const draft = structuredClone(job.draft)
+    const question = draft.sections.flatMap((section) => section.questions).find((item) => item.tmp_id === selectedQuestion)
+    if (!question) return
+    update(question)
+    setJob({ ...job, draft })
+    setQuestionsDirty(true)
+  }
+
+  const allQuestions = job?.draft?.sections.flatMap((section) => section.questions) || []
+  const currentQuestion = allQuestions.find((question) => question.tmp_id === selectedQuestion)
 
   async function confirm() {
     if (!jobId) return
@@ -168,9 +189,23 @@ export function ImportReviewPage() {
           <label>Nguồn đề<input maxLength={300} value={String(metadata.source || '')} onChange={(event) => field('source', event.target.value)} /></label>
           <button type="submit" className="button secondary" disabled={pending}>Lưu thông tin đề</button>
         </form>
-        <button type="button" className="button secondary" onClick={() => setEditing(!editing)}>{editing ? 'Đóng trình sửa' : 'Sửa bản nháp JSON'}</button>
+        {allQuestions.length > 0 && <div className="manual-form" role="region" aria-label="Kiểm tra câu hỏi">
+          <h2>Kiểm tra câu hỏi</h2>
+          <label>Chọn câu hỏi<select value={selectedQuestion} onChange={(event) => setSelectedQuestion(event.target.value)}>{job.draft?.sections.flatMap((section, sectionIndex) => section.questions.map((question) => <option key={question.tmp_id} value={question.tmp_id}>{section.title || `Phần ${sectionIndex + 1}`} · Câu {question.order}</option>))}</select></label>
+          {currentQuestion && <>
+            <p>Loại: {currentQuestion.kind}</p>
+            <label>Nội dung câu hỏi<textarea value={currentQuestion.text} onChange={(event) => changeQuestion((question) => { question.text = event.target.value })} /></label>
+            {['MCQ', 'MCQ_MULTI'].includes(currentQuestion.kind) && <fieldset><legend>Đáp án</legend>{currentQuestion.choices.map((choice, index) => <div className="form-grid" key={choice.label}>
+              <label>{choice.label}<input value={choice.text} onChange={(event) => changeQuestion((question) => { question.choices[index].text = event.target.value })} /></label>
+              <label><input type={currentQuestion.kind === 'MCQ' ? 'radio' : 'checkbox'} name={`answer-${currentQuestion.tmp_id}`} checked={choice.is_correct} onChange={() => changeQuestion((question) => { question.choices.forEach((item, answerIndex) => { item.is_correct = currentQuestion.kind === 'MCQ' ? answerIndex === index : answerIndex === index ? !item.is_correct : item.is_correct }) })} /> Đúng</label>
+            </div>)}</fieldset>}
+            <label>Giải thích<textarea value={currentQuestion.explanation || ''} onChange={(event) => changeQuestion((question) => { question.explanation = event.target.value })} /></label>
+            <button type="button" className="button secondary" disabled={pending || !questionsDirty || metadataDirty} onClick={() => replace(job.draft)}>Lưu câu hỏi</button>
+          </>}
+        </div>}
+        <button type="button" className="button secondary" onClick={() => { setEditor(JSON.stringify(job.draft, null, 2)); setEditing(!editing) }}>{editing ? 'Đóng trình sửa' : 'Sửa bản nháp JSON'}</button>
         {editing && <div><label>Bản nháp JSON<textarea className="draft-editor" value={editor} onChange={(event) => setEditor(event.target.value)} /></label><button type="button" className="button secondary" disabled={pending} onClick={save}>Lưu bản nháp</button></div>}
-        <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !metadata.title || !metadata.subject || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
+        <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !metadata.title || !metadata.subject || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
       </>}
       {job.exam_id && <Link to={`/exams/${job.exam_id}`}>Xem đề đã lưu</Link>}
     </>}
