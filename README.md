@@ -91,9 +91,12 @@ Settings are read from `.env` in the project root. See [.env.example](.env.examp
 | `REDIS_URL` | Redis connection URL |
 | `CORS_ALLOWED_ORIGINS` | Origins allowed to call the API |
 | `IMPORT_DAILY_JOB_LIMIT` | Maximum number of imports per user per day (default: 20) |
+| `BUILD_SHA` | Revision shown in the admin operations summary (default: `local`) |
 | `VITE_API_BASE_URL` | API address used by the web app |
 
 The database password in `.env.example` is for local development only. PostgreSQL and Redis listen on `127.0.0.1` only.
+
+Local health, logs, quota, and admin operations checks are described in [the operations runbook](docs/runbooks/local-operations.md).
 
 ## Importing exams from text
 

@@ -56,8 +56,8 @@ jobs:
           git diff --exit-code -- design/tokens.css
       - name: Backend gates
         run: |
-          backend/.venv/bin/ruff check backend contracts
-          backend/.venv/bin/mypy --config-file backend/pyproject.toml backend/apps backend/config contracts/testflow_contracts
+          backend/.venv/bin/ruff check backend contracts scripts eval
+          backend/.venv/bin/mypy --config-file backend/pyproject.toml backend/apps backend/config contracts/testflow_contracts eval
           (cd backend && .venv/bin/lint-imports --config .importlinter)
           backend/.venv/bin/python backend/manage.py check
           backend/.venv/bin/python backend/manage.py makemigrations --check --dry-run

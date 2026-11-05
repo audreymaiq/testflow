@@ -9,7 +9,7 @@ from apps.imports.models import ImportJob
 
 
 def summary():
-    counts = {status: 0 for status in ImportJob.Status}
+    counts = {status: 0 for status, _label in ImportJob.Status.choices}
     counts.update(
         {
             row["status"]: row["count"]
