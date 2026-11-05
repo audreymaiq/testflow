@@ -23,3 +23,5 @@ With the development stack running, open `http://127.0.0.1:8000/healthz`. Check 
 ## Current release gaps
 
 Production host, domain, TLS termination, backup destination and restore exercise, alerting, on-call ownership, deployment credentials, and authorized real data are not configured or verified. Do not treat the local probe or Admin dashboard as proof of production readiness.
+
+Production Django settings require HTTPS through a trusted private reverse proxy and redirect HTTP to HTTPS. HSTS stays disabled by default (`DJANGO_HSTS_SECONDS=0`) until the actual domain and TLS path are verified. `manage.py check --deploy --settings=config.settings.prod` currently reports that single deliberate HSTS warning. The application server must not be directly exposed where clients can forge `X-Forwarded-Proto`.

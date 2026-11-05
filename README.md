@@ -87,6 +87,7 @@ Settings are read from `.env` in the project root. See [.env.example](.env.examp
 | `DJANGO_SECRET_KEY` | Django secret key |
 | `DJANGO_DEBUG` | Debug mode (`1` or `0`) |
 | `DJANGO_ALLOWED_HOSTS` | Comma-separated list of allowed hostnames |
+| `DJANGO_HSTS_SECONDS` | Production HSTS duration; set only after HTTPS and domain verification (default: 0) |
 | `DATABASE_URL` | PostgreSQL connection URL |
 | `REDIS_URL` | Redis connection URL |
 | `CORS_ALLOWED_ORIGINS` | Origins allowed to call the API |
