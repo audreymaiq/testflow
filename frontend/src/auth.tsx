@@ -1,4 +1,5 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
+import { useQueryClient } from '@tanstack/react-query'
 import { ApiError, request, type Session, type User } from './api'
 
 let bootstrapPromise: Promise<Session> | null = null
@@ -35,6 +36,7 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 export function AuthProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient()
   const [user, setUser] = useState<User | null>(null)
   const [access, setAccess] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -44,18 +46,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     let active = true
     bootstrapSession()
       .then(({ access: token, user: profile }) => {
-        if (active && sessionVersion.current === 0) { setAccess(token); setUser(profile) }
+        if (active && sessionVersion.current === 0) { queryClient.clear(); setAccess(token); setUser(profile) }
       })
-      .catch(() => { if (active && sessionVersion.current === 0) { setAccess(null); setUser(null) } })
+      .catch(() => { if (active && sessionVersion.current === 0) { queryClient.clear(); setAccess(null); setUser(null) } })
       .finally(() => { if (active) setLoading(false) })
     return () => { active = false }
-  }, [])
+  }, [queryClient])
 
   async function register(username: string, email: string, password: string) {
     const session = await request<Session>('/auth/register/', {
       method: 'POST', body: JSON.stringify({ username, email, password }),
     })
     sessionVersion.current += 1
+    queryClient.clear()
     setAccess(session.access); setUser(session.user)
   }
 
@@ -64,12 +67,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       method: 'POST', body: JSON.stringify({ identifier, password }),
     })
     sessionVersion.current += 1
+    queryClient.clear()
     setAccess(session.access); setUser(session.user)
   }
 
   async function logout() {
     await request<void>('/auth/logout/', { method: 'POST' })
     sessionVersion.current += 1
+    queryClient.clear()
     setAccess(null); setUser(null)
   }
 
@@ -93,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setAccess(refreshed.access)
         return await request<T>(path, options, refreshed.access)
       } catch (refreshError) {
+        queryClient.clear()
         setAccess(null); setUser(null)
         throw refreshError
       }

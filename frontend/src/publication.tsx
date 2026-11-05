@@ -19,9 +19,9 @@ type RequestDetail = RequestSummary & {
 type Page<T> = { count: number; next: string | null; previous: string | null; results: T[] }
 
 export function PublicationQueuePage() {
-  const { api } = useAuth()
+  const { api, user } = useAuth()
   const [page, setPage] = useState(1)
-  const queue = useQuery({ queryKey: ['publish-requests', page], queryFn: () => api<Page<RequestSummary>>(`/publish-requests/?page=${page}`) })
+  const queue = useQuery({ queryKey: ['publish-requests', user?.id, page], queryFn: () => api<Page<RequestSummary>>(`/publish-requests/?page=${page}`) })
   return <section className="paper practice-panel">
     <p className="eyebrow">KIỂM DUYỆT</p><h1>Yêu cầu công khai</h1>
     {queue.isPending && <p role="status">Đang tải hàng đợi…</p>}
@@ -41,13 +41,13 @@ export function PublicationQueuePage() {
 
 export function PublicationDetailPage() {
   const { requestId } = useParams()
-  const { api } = useAuth()
+  const { api, user } = useAuth()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
   const [reason, setReason] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
-  const review = useQuery({ queryKey: ['publish-request', requestId], queryFn: () => api<RequestDetail>(`/publish-requests/${requestId}/`) })
+  const review = useQuery({ queryKey: ['publish-request', requestId, user?.id], queryFn: () => api<RequestDetail>(`/publish-requests/${requestId}/`) })
 
   async function decide(decision: 'approve' | 'reject') {
     setPending(true); setError('')

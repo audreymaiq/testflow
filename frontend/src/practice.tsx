@@ -93,7 +93,7 @@ function QuestionInput({ question, value, onChange, disabled }: {
 
 export function PracticePage() {
   const { sessionId } = useParams()
-  const { api } = useAuth()
+  const { api, user } = useAuth()
   const navigate = useNavigate()
   const [active, setActive] = useState(0)
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({})
@@ -103,7 +103,7 @@ export function PracticePage() {
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)
   const [serverOffset, setServerOffset] = useState(0)
-  const session = useQuery({ queryKey: ['session', sessionId], queryFn: () => api<Session>(`/practice/sessions/${sessionId}/`) })
+  const session = useQuery({ queryKey: ['session', sessionId, user?.id], queryFn: () => api<Session>(`/practice/sessions/${sessionId}/`) })
   useEffect(() => { const id = window.setInterval(() => setTick(Date.now()), 1000); return () => window.clearInterval(id) }, [])
   useEffect(() => {
     if (session.data?.server_time) setServerOffset(new Date(session.data.server_time).getTime() - Date.now())
@@ -232,8 +232,8 @@ export function PracticePage() {
 
 export function ResultPage() {
   const { sessionId } = useParams()
-  const { api } = useAuth()
-  const result = useQuery({ queryKey: ['result', sessionId], queryFn: () => api<Result>(`/practice/sessions/${sessionId}/result/`) })
+  const { api, user } = useAuth()
+  const result = useQuery({ queryKey: ['result', sessionId, user?.id], queryFn: () => api<Result>(`/practice/sessions/${sessionId}/result/`) })
   if (result.isPending) return <p role="status">Đang tải kết quả…</p>
   if (result.isError) return <section className="paper practice-panel"><h1>Chưa có kết quả</h1><p role="alert">{result.error.message}</p><Link to={`/practice/${sessionId}`}>Trở lại bài làm</Link></section>
   return <section className="paper practice-panel">
@@ -255,10 +255,10 @@ export function ResultPage() {
 }
 
 export function HistoryPage() {
-  const { api } = useAuth()
+  const { api, user } = useAuth()
   const [page, setPage] = useState(1)
-  const history = useQuery({ queryKey: ['practice-history', page], queryFn: () => api<HistoryPageData>(`/practice/sessions/history/?page=${page}`) })
-  const stats = useQuery({ queryKey: ['practice-stats'], queryFn: () => api<PersonalStats>('/practice/stats/') })
+  const history = useQuery({ queryKey: ['practice-history', user?.id, page], queryFn: () => api<HistoryPageData>(`/practice/sessions/history/?page=${page}`) })
+  const stats = useQuery({ queryKey: ['practice-stats', user?.id], queryFn: () => api<PersonalStats>('/practice/stats/') })
   return <section className="paper practice-panel">
     <p className="eyebrow">TIẾN ĐỘ CÁ NHÂN</p><h1>Lịch sử làm bài</h1>
     {stats.isPending && <p role="status">Đang tải thống kê…</p>}

@@ -16,7 +16,7 @@ Updated: 2026-11-06. Planned paths and tests must be replaced with real evidence
 | ADR-010 | PRD §20 / R1 | backend/apps/practice/grading.py | backend/tests/test_grading.py | 18 pure Decimal grading cases pass for six kinds | VERIFIED LOCAL |
 | ADR-011 | PRD §20 / R1 | frontend/src; frontend/package-lock.json | frontend/src/App.test.tsx; frontend/e2e/auth.spec.ts | TypeScript, 2 unit tests, 1 browser E2E passed | VERIFIED LOCAL |
 | ADR-012 | PRD §20 / R1 | backend/config; compose.dev.yml | backend/tests/test_accounts.py | PostgreSQL migrations and 4 API tests passed | VERIFIED LOCAL |
-| ADR-013 | PRD §20 / R1 | backend/apps/accounts; frontend/src/auth.tsx | backend/tests/test_accounts.py; frontend/e2e/auth.spec.ts | 15m access, 7d rotating refresh, blacklist and HttpOnly cookie verified | VERIFIED LOCAL |
+| ADR-013 | PRD §20 / R1 | backend/apps/accounts; frontend/src/auth.tsx | backend/tests/test_accounts.py; frontend/src/App.test.tsx; frontend/e2e/auth.spec.ts | 15m access, 7d rotating refresh, blacklist and HttpOnly cookie; private query cache cleared on identity change | VERIFIED LOCAL |
 | ADR-014 | PRD §20 / R1 | backend/config/media.py | backend/config/media.py | design review + CI gate | NOT STARTED |
 | ADR-015 | PRD §20 / R1 | backend/apps/practice | backend/tests/test_practice.py | session API and browser lifecycle pass; full production load pending | IN PROGRESS |
 | ADR-016 | PRD §20 / R1 | backend/apps/imports/ingest | backend/apps/imports/ingest | design review + CI gate | NOT STARTED |

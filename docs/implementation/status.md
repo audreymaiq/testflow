@@ -82,7 +82,7 @@ Requirements: FR-I1/I2/I9, NFR-5, PRD §9.2 and §18; execution contract §9. Th
 
 `GET /healthz` probes PostgreSQL and Redis. Request middleware gives each response a validated or generated `X-Request-ID`; JSON stdout request/import logs include correlation and timing without request bodies. An Admin-only operations summary and browser page show import state counts, oldest review age, pending publication count, and build SHA. [Local operations runbook](../runbooks/local-operations.md) records checks and limits. Tests cover probe failure, request ID sanitization, Admin authorization/counts, and a real Chrome Admin journey. No production log sink, measured alert baseline, backup monitor or deployment is present.
 
-Latest broad local gates: `pytest -c backend/pytest.ini backend/tests -q` 59 passed on PostgreSQL; `npm run e2e` 11 passed on Chrome; Ruff passed on backend/contracts/eval; mypy passed 68 source files; import-linter kept 9/9 contracts; `manage.py check`, `makemigrations --check --dry-run`, `spectacular --validate --fail-on-warn`, `npm run check` (2 Vitest tests), and `npm run build` passed. Docker Compose PostgreSQL and Redis were healthy. CI workflow has these expanded static gates but has not run on a remote host.
+Latest broad local gates: `pytest -c backend/pytest.ini backend/tests -q` 59 passed on PostgreSQL; `npm run e2e` 11 passed on Chrome; Ruff passed on backend/contracts/eval; mypy passed 68 source files; import-linter kept 9/9 contracts; `manage.py check`, `makemigrations --check --dry-run`, `spectacular --validate --fail-on-warn`, `npm run check` (3 Vitest tests), and `npm run build` passed. Docker Compose PostgreSQL and Redis were healthy. CI workflow has these expanded static gates but has not run on a remote host.
 
 ## S1b package 3: self-service canonical taxonomy names
 
@@ -107,6 +107,12 @@ Evidence: the shared modal now presents the v1 example, v2 answer variants and l
 Requirements: PRD §23.1 items 8 and 25, FR-T3. Owner delete, Admin hide and practice submit use the shared text-only modal instead of browser-native `confirm`. Escape or Close cancels without a server mutation. Confirm invokes the existing permission-checked service once; pending state blocks duplicate actions, and failure remains visible. Browser tests cover cancel and confirm for submit plus owner deletion/visibility behavior. Full Chrome, frontend and backend gates must remain green before marking this local package verified.
 
 Evidence: all three native confirmation calls were replaced. Chrome tests cancel and then confirm practice submit and owner deletion; existing owner visibility flow still passes. Focused Chrome E2E 6/6, full Chrome E2E 11/11, backend 59/59, Ruff, mypy (68 files), import-linter 9/9, TypeScript/Vitest 2 and Vite build passed. Withdrawal from PUBLIC to PRIVATE still lacks a confirmation step, so Quiz Rush parity item 8 remains partial. Admin hide has permission-checked backend evidence but its new modal is not yet covered by a browser test. Hosted CI is unverified.
+
+## S1b package 7: browser cache identity isolation (local implementation verified)
+
+Requirements: PRD §§6, 8.3–8.5 and 11.2 (private read isolation). Auth login, registration, logout and failed refresh clear user-scoped React Query cache before changing identity. Practice session/result/history/statistics and publication queue/detail query keys include user ID so one account cannot display another account's cached payload during a same-tab switch. Existing server ownership checks remain authoritative. A unit test seeds private cache, signs out through the UI and proves it is gone; browser tests check the existing logout/private access journeys. Full static, backend and Chrome gates must pass before local verification.
+
+Evidence: `AuthProvider` clears React Query cache when bootstrap establishes a session or guest state, on successful registration/login/logout, and after failed refresh. Private practice and publication query keys include the account ID. A new unit test seeds a private session cache entry, signs out through the UI and verifies removal. Frontend TypeScript/Vitest 3, build, full Chrome E2E 11/11, backend 59/59, Ruff, mypy (68 files), and import-linter 9/9 passed locally. This reduces same-tab stale-data exposure; hosted CI and production security review remain open.
 
 ## Open decisions
 
