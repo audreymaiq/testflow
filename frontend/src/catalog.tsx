@@ -1,6 +1,6 @@
-import { useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
@@ -117,8 +117,10 @@ export function LibraryPage() {
 export function ExamDetailPage() {
   const { id } = useParams()
   const { user, loading, api } = useAuth()
+  const location = useLocation()
   const navigate = useNavigate()
   const queryClient = useQueryClient()
+  const resumedExamId = useRef<string | null>(null)
   const [starting, setStarting] = useState(false)
   const [startError, setStartError] = useState('')
   const [ownerBusy, setOwnerBusy] = useState(false)
@@ -143,7 +145,7 @@ export function ExamDetailPage() {
     queryFn: () => api<{ wrong_question_count: number; session_count: number }>(`/practice/exams/${id}/summary/`),
     enabled: !loading && !!user && !!exam.data,
   })
-  async function start(mode: 'TIMED' | 'PRACTICE') {
+  const start = useCallback(async (mode: 'TIMED' | 'PRACTICE') => {
     setStarting(true); setStartError('')
     try {
       const session = await api<{ id: string }>('/practice/sessions/', {
@@ -161,7 +163,15 @@ export function ExamDetailPage() {
       navigate(`/practice/${session.id}`)
     } catch (cause) { setStartError(cause instanceof Error ? cause.message : 'Không bắt đầu được bài làm.') }
     finally { setStarting(false) }
-  }
+  }, [api, id, onlyWrong, chapterIds, includeWrong, shuffleQuestions, shuffleOptions, navigate])
+  const resumePractice = (location.state as { resumePractice?: unknown } | null)?.resumePractice
+  useEffect(() => {
+    if (!user || !id || !exam.data || resumedExamId.current === id) return
+    if (resumePractice !== 'TIMED' && resumePractice !== 'PRACTICE') return
+    resumedExamId.current = id
+    navigate(location.pathname, { replace: true, state: null })
+    void start(resumePractice)
+  }, [user, id, exam.data, resumePractice, navigate, location.pathname, start])
   async function changeVisibility(visibility: 'PRIVATE' | 'PUBLIC') {
     setOwnerBusy(true); setOwnerMessage('')
     try {
@@ -232,7 +242,10 @@ export function ExamDetailPage() {
       {user ? <>
         <button className="button primary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('TIMED')}>Làm bài có giờ</button>
         <button className="button secondary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('PRACTICE')}>Luyện tập</button>
-      </> : <Link className="button primary" to="/login" state={{ from: `/exams/${id}` }}>Đăng nhập để làm bài</Link>}
+      </> : exam.data.has_answer_key ? <>
+        <Link className="button primary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'TIMED' }}>Đăng nhập để làm bài có giờ</Link>
+        <Link className="button secondary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'PRACTICE' }}>Đăng nhập để luyện tập</Link>
+      </> : <p>Đề chưa đủ đáp án để bắt đầu làm bài.</p>}
       {startError && <p role="alert" className="form-error">{startError}</p>}
     </div>
     {exam.data.is_owner && <div className="owner-actions">

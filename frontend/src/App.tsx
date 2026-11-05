@@ -13,18 +13,21 @@ import { OperationsPage } from './ops'
 function Shell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
   const [confirmLogout, setConfirmLogout] = useState(false)
+  const [leaving, setLeaving] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
-  const closeLogout = useCallback(() => setConfirmLogout(false), [])
+  const closeLogout = useCallback(() => { if (!leaving) setConfirmLogout(false) }, [leaving])
 
   async function leave() {
+    if (leaving) return
+    setLeaving(true)
+    navigate('/', { replace: true })
     try {
       await logout()
       setConfirmLogout(false)
-      navigate('/')
     } catch {
       setMessage('Không thể đăng xuất. Vui lòng thử lại.')
-    }
+    } finally { setLeaving(false) }
   }
 
   return <>
@@ -32,8 +35,8 @@ function Shell({ children }: { children: ReactNode }) {
       <Link to="/" className="brand" aria-label="TestFlow, trang chủ"><span className="brand-mark" />TestFlow</Link>
       <nav aria-label="Điều hướng chính">
         <Link to="/library">Thư viện</Link>
+        <Link to="/imports/new">Nhập TXT</Link>
         {user ? <>
-          <Link to="/imports/new">Nhập TXT</Link>
           <Link to="/account">Tài khoản</Link>
           <Link to="/history">Lịch sử</Link>
           {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <Link to="/publish-requests">Duyệt đề</Link>}
@@ -50,7 +53,7 @@ function Shell({ children }: { children: ReactNode }) {
     {message && <Toast message={message} />}
     {confirmLogout && <Modal title="Đăng xuất?" onClose={closeLogout}>
       <p>Phiên đăng nhập trên thiết bị này sẽ kết thúc.</p>
-      <button type="button" className="button primary" onClick={leave}>Đăng xuất</button>
+      <button type="button" className="button primary" disabled={leaving} onClick={leave}>{leaving ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
     </Modal>}
   </>
 }
@@ -68,14 +71,23 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
   const { user, login, register } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const from = (location.state as { from?: string } | null)?.from || '/account'
+  const intent = location.state as { from?: unknown; practiceMode?: unknown } | null
+  const requestedFrom = intent?.from
+  const from = typeof requestedFrom === 'string' && requestedFrom.startsWith('/')
+    && !requestedFrom.startsWith('//') && !requestedFrom.includes('\\')
+    && !['/login', '/register'].includes(requestedFrom)
+    ? requestedFrom : '/account'
+  const practiceMode = /^\/exams\/[0-9a-f-]{36}$/i.test(from)
+    && (intent?.practiceMode === 'TIMED' || intent?.practiceMode === 'PRACTICE')
+    ? intent.practiceMode : null
+  const destinationState = practiceMode ? { resumePractice: practiceMode } : null
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [identifier, setIdentifier] = useState('')
   const [password, setPassword] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
-  if (user) return <Navigate to={from} replace />
+  if (user) return <Navigate to={from} state={destinationState} replace />
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -83,7 +95,7 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
     try {
       if (kind === 'register') await register(username, email, password)
       else await login(identifier, password)
-      navigate(from, { replace: true })
+      navigate(from, { replace: true, state: destinationState })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Có lỗi xảy ra. Vui lòng thử lại.')
     } finally { setPending(false) }
@@ -103,7 +115,7 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
       <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang xử lý…' : kind === 'register' ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
     </form>
     <p className="switch">{kind === 'register' ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}{' '}
-      <Link to={kind === 'register' ? '/login' : '/register'} state={{ from }}>
+      <Link to={kind === 'register' ? '/login' : '/register'} state={{ from, practiceMode }}>
         {kind === 'register' ? 'Đăng nhập' : 'Tạo tài khoản'}
       </Link>
     </p>
@@ -114,7 +126,7 @@ function Protected({ children }: { children: ReactNode }) {
   const { user, loading } = useAuth()
   const location = useLocation()
   if (loading) return <p className="loading" role="status">Đang khôi phục phiên đăng nhập…</p>
-  if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />
+  if (!user) return <Navigate to="/login" state={{ from: location.pathname + location.search + location.hash }} replace />
   return children
 }
 

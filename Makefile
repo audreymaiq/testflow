@@ -10,7 +10,7 @@ setup:
 	$(PIP) install -e contracts
 	cd frontend && npm ci
 	$(PYTHON) design/build_tokens.py
-	$(PYTHON) scripts/init_env.py
+	$(PYTHON) -c 'import pathlib, secrets; target = pathlib.Path(".env"); target.exists() or target.write_text(pathlib.Path(".env.example").read_text(encoding="utf-8").replace("replace-with-a-long-random-dev-secret", secrets.token_urlsafe(48)), encoding="utf-8")'
 
 services:
 	docker compose -f compose.dev.yml up -d --wait

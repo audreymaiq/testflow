@@ -158,6 +158,11 @@ def create_session(*, user, exam_id, mode: str, config: SessionConfig) -> Sessio
         if existing.deadline_at and existing.deadline_at <= timezone.now():
             submit_session(existing.id, user=user)
         else:
+            if existing.mode != mode:
+                raise Conflict(
+                    "SESSION_MODE_CONFLICT",
+                    "Bạn đang làm đề này ở chế độ khác. Hãy tiếp tục hoặc nộp bài hiện tại.",
+                )
             return existing
     questions = list(
         Question.objects.filter(section__exam=exam)

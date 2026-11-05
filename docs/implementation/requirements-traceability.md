@@ -1,6 +1,6 @@
 # TestFlow requirements traceability
 
-Updated: 2026-11-05. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 53 backend tests, 10 Chrome E2E, Ruff, mypy 67 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
+Updated: 2026-11-06. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 59 backend tests, 11 Chrome E2E, Ruff, mypy 68 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
 
 | ID | Source/scope | Implementation target | Test target | Verification method | State |
 | --- | --- | --- | --- | --- | --- |
@@ -23,7 +23,7 @@ Updated: 2026-11-05. Planned paths and tests must be replaced with real evidence
 | ADR-017 | PRD §20 / R1 | backend/apps/catalog/models.py; migrations/0003_seed_subjects.py | backend/tests/test_catalog.py | DB Subject catalog and seeded subject endpoint work locally | VERIFIED LOCAL |
 | ADR-018 | PRD §20 / R1 | backend/apps/catalog/services.py; frontend/src/publication.tsx | backend/tests/test_publication.py; frontend/e2e/publication.spec.ts | private-first, reviewer approval, withdrawal, hide, and source requirement pass locally | VERIFIED LOCAL |
 | ADR-019 | PRD §20 / R1 | backend/apps/catalog/models.py | backend/apps/catalog/models.py | design review + CI gate | NOT STARTED |
-| ADR-020 | PRD §20 / R1 | backend/apps/imports/txt_parser.py; scripts/check_quiz_rush_parser.py | backend/tests/test_txt_parser.py | 300/300 read-only source comparison; 9 focused parser/import tests pass | VERIFIED LOCAL |
+| ADR-020 | PRD §20 / R1 | backend/apps/imports/txt_parser.py; data/seed/quiz-rush-cv.txt | backend/tests/test_txt_parser.py; backend/tests/test_quiz_rush_seed.py | Historical 300/300 source comparison; committed fixture and parser covered locally | VERIFIED LOCAL |
 | ADR-021 | PRD §20 / R1 | backend/apps/practice/models.py | backend/tests/test_practice.py | PostgreSQL session/answer/wrong-bank migrations and scoped API tests pass | VERIFIED LOCAL |
 | ADR-022 | PRD §20 / R1 | design; frontend/src/shared | design; frontend/src/shared | design review + CI gate | NOT STARTED |
 | FR-A1 | PRD §5.1 / R1 | backend/apps/accounts; frontend/src/App.tsx | backend/tests/test_accounts.py; frontend/e2e/auth.spec.ts | DB/API and browser register/login/logout passed | VERIFIED LOCAL |
@@ -32,8 +32,8 @@ Updated: 2026-11-05. Planned paths and tests must be replaced with real evidence
 | FR-A4 | PRD §5.1 / R1 | backend/apps/accounts/permissions.py; backend/apps/accounts/migrations/0002_roles.py | backend/tests/test_accounts.py | Student denied Reviewer/Admin permissions; roles seeded | VERIFIED LOCAL |
 | FR-I1 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/imports.tsx | backend/tests/test_txt_import.py; frontend/e2e/imports.spec.ts | TXT upload, size/type check and 20/day quota pass; document formats remain open | PARTIAL LOCAL |
 | FR-I10 | PRD §5.2 / R2 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | DEFERRED |
-| FR-I11 | PRD §5.2 / R1 | backend/apps/imports/txt_parser.py | backend/tests/test_txt_parser.py; scripts/check_quiz_rush_parser.py | TXT v1/v2 parsed; 300/300 legacy questions exact in read-only check | VERIFIED LOCAL |
-| FR-I12 | PRD §5.2 / R1 | scripts/check_quiz_rush_parser.py; data/seed/quiz-rush-cv.txt; backend/apps/imports/management/commands/seed_quiz_rush.py | backend/tests/test_quiz_rush_seed.py | owner-authorized fixture matches 300/300, four chapters; private seed, distinct Reviewer publication, public visitor and idempotency pass | VERIFIED LOCAL |
+| FR-I11 | PRD §5.2 / R1 | backend/apps/imports/txt_parser.py; data/seed/quiz-rush-cv.txt | backend/tests/test_txt_parser.py; backend/tests/test_quiz_rush_seed.py | TXT v1/v2 parsed; historical 300/300 legacy comparison; committed fixture covered locally | VERIFIED LOCAL |
+| FR-I12 | PRD §5.2 / R1 | data/seed/quiz-rush-cv.txt; backend/apps/imports/management/commands/seed_quiz_rush.py | backend/tests/test_quiz_rush_seed.py | owner-authorized 300-question, four-chapter fixture; private seed, distinct Reviewer publication, public visitor and idempotency pass | VERIFIED LOCAL |
 | FR-I2 | PRD §5.2 / R1 | backend/apps/imports/services.py; backend/apps/imports/models.py | backend/tests/test_txt_import.py | TXT SHA-256 duplicate/rejected precedence tested; document formats open | PARTIAL LOCAL |
 | FR-I3 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | NOT STARTED |
 | FR-I4 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | NOT STARTED |
@@ -45,7 +45,7 @@ Updated: 2026-11-05. Planned paths and tests must be replaced with real evidence
 | FR-L1 | PRD §5.5 / R1 | backend/apps/catalog/models.py; backend/apps/catalog/selectors.py | backend/tests/test_catalog.py; frontend/e2e/catalog.spec.ts | owner and visibility model; PRIVATE browser journey passed | IN PROGRESS |
 | FR-L2 | PRD §5.5 / R1 | backend/apps/catalog/services.py; frontend/src/{catalog,publication}.tsx | backend/tests/test_publication.py; frontend/e2e/publication.spec.ts | owner soft-delete/withdrawal and reviewer approval pass; full serial E2E pending | IN PROGRESS |
 | FR-L3 | PRD §5.5 / R1 | backend/apps/catalog/selectors.py; frontend/src/catalog.tsx | backend/tests/test_catalog.py; frontend/e2e/catalog.spec.ts | list/detail/preview/facets private isolation passed; future endpoints pending | IN PROGRESS |
-| FR-L4 | PRD §5.5 / R1 | backend/apps/catalog/views.py; frontend/src/catalog.tsx | frontend/e2e/catalog.spec.ts | visitor browse and owner private visibility pass; practice redirect pending | IN PROGRESS |
+| FR-L4 | PRD §5.5 / R1 | backend/apps/catalog/views.py; frontend/src/{App,catalog}.tsx; backend/apps/practice/services.py | frontend/e2e/publication.spec.ts; backend/tests/test_practice.py | PUBLIC visitor selects timed/practice, registers/logs in and starts once; import intent reaches TXT form; wrong active mode returns 409; 11 browser tests pass | VERIFIED LOCAL |
 | FR-L5 | PRD §5.5 / R1-S | backend/apps/catalog; frontend/src/features/library | backend/apps/catalog; frontend/src/features/library | privacy DB/API + E2E | NOT STARTED |
 | FR-L6 | PRD §5.5 / R2 | backend/apps/catalog; frontend/src/features/library | backend/apps/catalog; frontend/src/features/library | privacy DB/API + E2E | DEFERRED |
 | FR-P1 | PRD §5.4 / R1 | backend/apps/catalog/selectors.py; frontend/src/catalog.tsx | backend/tests/test_catalog.py; frontend/e2e/catalog.spec.ts | AND filters, accent-folded search, facets, pagination; list query count bounded locally | VERIFIED LOCAL |

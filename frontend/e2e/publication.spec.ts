@@ -18,10 +18,11 @@ async function logout(page: import('@playwright/test').Page) {
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
 }
 
 test('owner publication request is approved by reviewer and private withdrawal is immediate', async ({ page }) => {
-  test.setTimeout(60000)
+  test.setTimeout(90000)
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const owner = `publisher${suffix}`
   const reviewer = `reviewer${suffix}`
@@ -56,11 +57,34 @@ test('owner publication request is approved by reviewer and private withdrawal i
 
   await page.goto(examUrl)
   await expect(page.getByRole('heading', { name: `Đề duyệt ${suffix}` })).toBeVisible()
-  await page.goto('/login')
+  await page.getByRole('link', { name: 'Đăng nhập để luyện tập' }).click()
+  await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
+  await page.getByRole('link', { name: 'Tạo tài khoản' }).last().click()
+  const learner = `learner${suffix}`
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(learner)
+  await page.getByLabel('Email').fill(`${learner}@example.test`)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: 'Bài làm của bạn' })).toBeVisible()
+  await expect(page.getByText('LUYỆN TẬP', { exact: true })).toBeVisible()
+  await page.goto(examUrl)
+  await expect(page.getByText(/1 lượt làm · 0 câu trong ngân hàng câu sai/)).toBeVisible()
+  await logout(page)
+  await page.getByRole('link', { name: 'Nhập TXT' }).click()
+  await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
+  await page.getByLabel('Tên đăng nhập hoặc email').fill(learner)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
+  await expect(page.getByRole('heading', { name: 'Nhập bộ câu hỏi TXT' })).toBeVisible()
+  await logout(page)
+
+  await page.goto(examUrl)
+  await page.getByRole('link', { name: 'Đăng nhập để làm bài có giờ' }).click()
   await page.getByLabel('Tên đăng nhập hoặc email').fill(owner)
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Đăng nhập' }).click()
-  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Bài làm của bạn' })).toBeVisible()
+  await expect(page.getByText('LÀM BÀI CÓ GIỜ', { exact: true })).toBeVisible()
   await page.goto(examUrl)
   await page.getByRole('button', { name: 'Chuyển về riêng tư' }).click()
   await expect(page.getByText('Đề đã chuyển về riêng tư.')).toBeVisible()

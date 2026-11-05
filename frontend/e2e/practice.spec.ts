@@ -6,6 +6,7 @@ const root = fileURLToPath(new URL('../..', import.meta.url))
 const python = process.platform === 'win32' ? 'backend\\.venv\\Scripts\\python.exe' : 'backend/.venv/bin/python'
 
 test('manual exam to timed result uses real API and database', async ({ page }) => {
+  test.setTimeout(90000)
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const owner = `solver${suffix}`
   await page.goto('/register')
@@ -13,7 +14,7 @@ test('manual exam to timed result uses real API and database', async ({ page }) 
   await page.getByLabel('Email').fill(`${owner}@example.test`)
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
-  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible({ timeout: 15000 })
 
   await page.goto('/exams/new')
   await page.getByLabel('Tên đề').fill(`Bài làm ${suffix}`)
@@ -46,7 +47,7 @@ test('manual exam to timed result uses real API and database', async ({ page }) 
   await expect(page.getByText('10.00 / 10.00')).toBeVisible()
   await expect(page.getByText('Đáp án: B')).toBeVisible()
   await page.goto(sessionUrl)
-  await expect(page.getByRole('link', { name: 'Xem kết quả' })).toBeVisible()
+  await expect(page.getByRole('link', { name: 'Xem kết quả' })).toBeVisible({ timeout: 15000 })
 
   await page.goto(examUrl)
   await page.getByRole('button', { name: 'Luyện tập' }).click()

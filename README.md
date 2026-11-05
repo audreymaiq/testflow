@@ -51,12 +51,12 @@ Open <http://localhost:5173>.
 Set up the project:
 
 ```powershell
-python scripts\init_env.py
 python -m venv backend\.venv
 backend\.venv\Scripts\pip.exe install -r backend\requirements-dev.txt
 backend\.venv\Scripts\pip.exe install -e contracts
 npm --prefix frontend ci
 python design\build_tokens.py
+if (!(Test-Path .env)) { (Get-Content .env.example -Raw -Encoding utf8).Replace('replace-with-a-long-random-dev-secret', (& backend\.venv\Scripts\python.exe -c 'import secrets; print(secrets.token_urlsafe(48))')) | Set-Content .env -Encoding utf8 }
 docker compose -f compose.dev.yml up -d --wait
 backend\.venv\Scripts\python.exe backend\manage.py migrate
 ```
@@ -88,7 +88,7 @@ Create two distinct Admin/Reviewer accounts first. Then run:
 backend\.venv\Scripts\python.exe backend\manage.py seed_quiz_rush --owner ADMIN_USERNAME --reviewer REVIEWER_USERNAME
 ```
 
-The command creates the deck privately through the normal exam service, then requests and approves publication through the existing moderation services. It is idempotent. Omitting `--reviewer` leaves the deck private. The fixture can be reproduced from the authorized legacy source with `backend\.venv\Scripts\python.exe scripts\check_quiz_rush_parser.py T:\coding\quiz-rush\js\data.js --output data\seed\quiz-rush-cv.txt`; the converter checks all 300 questions and answers before writing.
+The command creates the deck privately through the normal exam service, then requests and approves publication through the existing moderation services. It is idempotent. Omitting `--reviewer` leaves the deck private. The committed fixture contains the 300 authorized questions in four chapters; `backend/tests/test_quiz_rush_seed.py` verifies its structure and private-first publication flow.
 
 ## Configuration
 

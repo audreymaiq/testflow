@@ -117,6 +117,23 @@ def test_deadline_is_server_owned_and_expiry_is_lazy(exam_users):
 
 
 @pytest.mark.django_db
+def test_active_session_reuse_does_not_silently_switch_modes(exam_users):
+    exam, _, owner, _ = exam_users
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    url = reverse("practice-sessions")
+    first = client.post(url, {"exam_id": str(exam.id), "mode": "TIMED"}, format="json")
+    assert first.status_code == 201
+    same_mode = client.post(url, {"exam_id": str(exam.id), "mode": "TIMED"}, format="json")
+    assert same_mode.status_code == 201
+    assert same_mode.data["id"] == first.data["id"]
+    other_mode = client.post(url, {"exam_id": str(exam.id), "mode": "PRACTICE"}, format="json")
+    assert other_mode.status_code == 409
+    assert other_mode.data["error"]["code"] == "SESSION_MODE_CONFLICT"
+    assert Session.objects.filter(user=owner, exam=exam).count() == 1
+
+
+@pytest.mark.django_db
 def test_practice_feedback_locks_answer_and_updates_wrong_bank(exam_users):
     exam, question_id, owner, _ = exam_users
     client = APIClient()

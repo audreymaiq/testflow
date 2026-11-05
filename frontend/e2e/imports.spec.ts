@@ -43,6 +43,8 @@ test('TXT import is reviewed, confirmed once, and private to the owner', async (
   await expect(page.getByText(/0 câu trong ngân hàng câu sai/)).toBeVisible()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
+  await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
+  await expect(page).toHaveURL(/\/$/)
   await page.goto(examUrl)
   await expect(page.getByRole('heading', { name: 'Không thể mở đề' })).toBeVisible()
 })
