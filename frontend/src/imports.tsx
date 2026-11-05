@@ -90,14 +90,19 @@ export function ImportReviewPage() {
 
   useEffect(() => {
     if (!jobId) return
+    let active = true
     api<Job>(`/imports/${jobId}/`).then((value) => {
+      if (!active) return
       setJob(value)
       setEditor(JSON.stringify(value.draft, null, 2))
       setMetadata((value.draft?.metadata || {}) as Record<string, unknown>)
       setMetadataDirty(false)
       setQuestionsDirty(false)
       setSelectedQuestion(value.draft?.sections.flatMap((section) => section.questions)[0]?.tmp_id || '')
-    }).catch((cause) => setError(cause instanceof Error ? cause.message : 'Không tải được bản nháp.'))
+    }).catch((cause) => {
+      if (active) setError(cause instanceof Error ? cause.message : 'Không tải được bản nháp.')
+    })
+    return () => { active = false }
   }, [jobId])
 
   useEffect(() => {

@@ -1,6 +1,6 @@
 # TestFlow requirements traceability
 
-Updated: 2026-11-05 09:31 ICT. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 51 backend tests, 10 Chrome E2E, Ruff, mypy 64 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
+Updated: 2026-11-05. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 53 backend tests, 10 Chrome E2E, Ruff, mypy 67 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
 
 | ID | Source/scope | Implementation target | Test target | Verification method | State |
 | --- | --- | --- | --- | --- | --- |
@@ -33,7 +33,7 @@ Updated: 2026-11-05 09:31 ICT. Planned paths and tests must be replaced with rea
 | FR-I1 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/imports.tsx | backend/tests/test_txt_import.py; frontend/e2e/imports.spec.ts | TXT upload, size/type check and 20/day quota pass; document formats remain open | PARTIAL LOCAL |
 | FR-I10 | PRD §5.2 / R2 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | DEFERRED |
 | FR-I11 | PRD §5.2 / R1 | backend/apps/imports/txt_parser.py | backend/tests/test_txt_parser.py; scripts/check_quiz_rush_parser.py | TXT v1/v2 parsed; 300/300 legacy questions exact in read-only check | VERIFIED LOCAL |
-| FR-I12 | PRD §5.2 / R1 | scripts/check_quiz_rush_parser.py | read-only 300-question comparison | exact in-memory translation and comparison pass; source rights before seed/distribution unresolved | PARTIAL LOCAL |
+| FR-I12 | PRD §5.2 / R1 | scripts/check_quiz_rush_parser.py; data/seed/quiz-rush-cv.txt; backend/apps/imports/management/commands/seed_quiz_rush.py | backend/tests/test_quiz_rush_seed.py | owner-authorized fixture matches 300/300, four chapters; private seed, distinct Reviewer publication, public visitor and idempotency pass | VERIFIED LOCAL |
 | FR-I2 | PRD §5.2 / R1 | backend/apps/imports/services.py; backend/apps/imports/models.py | backend/tests/test_txt_import.py | TXT SHA-256 duplicate/rejected precedence tested; document formats open | PARTIAL LOCAL |
 | FR-I3 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | NOT STARTED |
 | FR-I4 | PRD §5.2 / R1 | backend/apps/imports; frontend/src/features/imports | backend/apps/imports; frontend/src/features/imports | parser + DB/API + import E2E | NOT STARTED |
@@ -92,6 +92,7 @@ Updated: 2026-11-05 09:31 ICT. Planned paths and tests must be replaced with rea
 | US-12 | PRD §2.2 / R1 | backend/apps/practice; frontend/src/features/practice | backend/apps/practice; frontend/src/features/practice | grading + DB/API + E2E | NOT STARTED |
 | US-13 | PRD §2.2 / R1 | backend/apps/practice; frontend/src/features/practice | backend/apps/practice; frontend/src/features/practice | grading + DB/API + E2E | NOT STARTED |
 | ADR-023 | Execution contract §8 / S6 | docs/adr/023-production-operations.md | document review | accepted decision | DOCUMENTED |
+| ADR-024 | Owner rights decision / S1b | docs/adr/024-quiz-rush-seed.md | backend/tests/test_quiz_rush_seed.py | owner authorized Quiz Rush deck distribution; fixture and moderated seed tested | DOCUMENTED |
 | S0 | PRD §18 / exit gate | docs/implementation/status.md; slice files | slice tests and evidence | execution-plan.md exit gate | IN PROGRESS |
 | S1 | PRD §18 / exit gate | backend/apps/catalog; backend/apps/practice; contracts; frontend/src/{catalog,practice}.tsx | backend/tests/{test_catalog,test_grading,test_practice}.py; frontend/e2e/{catalog,practice}.spec.ts | local backend/browser gates pass; hosted CI and clean Linux bootstrap open | VERIFIED LOCAL |
 | S2 | PRD §§13,18 / exit gate | eval/run.py; eval/README.md; docs/experiments/README.md | backend/tests/test_eval.py | offline runner and synthetic smoke pass; real gold/extractor outputs absent | BLOCKED EXTERNAL |

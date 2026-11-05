@@ -48,7 +48,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   await page.getByRole('link', { name: 'Duyệt đề' }).click()
   await expect(page.getByText(`Đề duyệt ${suffix}`)).toBeVisible()
   await page.getByRole('article').filter({ hasText: `Đề duyệt ${suffix}` }).getByRole('link', { name: 'Xem và duyệt' }).click()
-  await expect(page.getByText('Nguồn: Tự biên soạn')).toBeVisible()
+  await expect(page.getByText('Nguồn: Tự biên soạn', { exact: true })).toBeVisible()
   await expect(page.getByText('Một cộng một bằng mấy?')).toBeVisible()
   await page.getByRole('button', { name: 'Duyệt công khai' }).click()
   await expect(page.getByText(`Đề duyệt ${suffix}`)).toHaveCount(0)

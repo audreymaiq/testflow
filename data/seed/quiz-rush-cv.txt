@@ -1,0 +1,1805 @@
+#TITLE: Thị Giác Máy Tính
+[C12] Chương 1 - 2 (80 câu)
+Quá trình chuyển đổi một hình ảnh liên tục thành dạng số rời rạc được gọi là gì?
+A. Lượng tử hóa (Quantization)
+B. Số hóa ảnh (Image Digitization)
+C. Nén ảnh (Image Compression)
+D. Tăng cường ảnh (Image Enhancement)
+=>B
+Bước 'Lấy mẫu' (Sampling) trong quá trình số hóa ảnh liên quan đến việc rời rạc hóa yếu tố nào?
+A. Giá trị cường độ sáng
+B. Không gian (vị trí điểm ảnh)
+C. Bảng màu (Color Palette)
+D. Thời gian phơi sáng
+=>B
+Một ảnh xám 8-bit có thể biểu diễn tối đa bao nhiêu mức xám khác nhau?
+A. 128
+B. 256
+C. 512
+D. 1024
+=>B
+Công thức Out(x,y) = In(x,y) + 50 thực hiện thao tác xử lý ảnh nào?
+A. Tăng độ tương phản
+B. Tăng độ sáng
+C. Biến đổi âm bản
+D. Phân ngưỡng
+=>B
+Để tạo ảnh âm bản (Negative) từ ảnh xám 8-bit, công thức nào sau đây là đúng?
+A. Out = 255 - In
+B. Out = 255 + In
+C. Out = In / 255
+D. Out = 128 - In
+=>A
+Phép biến đổi Gamma với giá trị γ < 1 (trên ảnh đã chuẩn hóa về [0,1]) có tác dụng gì?
+A. Làm tối toàn bộ ảnh
+B. Làm sáng các vùng tối, tăng chi tiết trong bóng đổ
+C. Tăng độ tương phản ở vùng sáng
+D. Chuyển ảnh sang dạng nhị phân
+=>B
+Phân ngưỡng (Thresholding) là kỹ thuật dùng để:
+A. Loại bỏ nhiễu muối tiêu
+B. Chuyển ảnh xám thành ảnh nhị phân (đen trắng)
+C. Tăng độ sắc nét của cạnh
+D. Phân tích phổ tần số của ảnh
+=>B
+Toán tử điểm ảnh (Point Processing) có đặc điểm gì?
+A. Giá trị pixel mới phụ thuộc vào các pixel lân cận
+B. Sử dụng phép tích chập (convolution) với kernel
+C. Giá trị pixel mới chỉ phụ thuộc vào giá trị của chính pixel đó
+D. Luôn yêu cầu chuyển ảnh sang miền tần số
+=>C
+Lọc không gian (Spatial Filtering) hoạt động dựa trên phép toán nào?
+A. Biến đổi Fourier nhanh (FFT)
+B. Tích chập (Convolution) giữa ảnh và Kernel
+C. Cân bằng Histogram
+D. Phép trừ ảnh
+=>B
+Kernel nào sau đây được sử dụng cho bộ lọc trung bình (Mean Filter) 3×3?
+A. [[-1,-1,-1],[-1,8,-1],[-1,-1,-1]]
+B. [[1/16,2/16,1/16],[2/16,4/16,2/16],[1/16,2/16,1/16]]
+C. [[1/9,1/9,1/9],[1/9,1/9,1/9],[1/9,1/9,1/9]]
+D. [[0,-1,0],[-1,5,-1],[0,-1,0]]
+=>C
+Để loại bỏ hiệu quả nhiễu muối tiêu (Salt-and-Pepper Noise), bộ lọc nào sau đây là tối ưu nhất?
+A. Lọc trung bình (Mean Filter)
+B. Lọc Gaussian
+C. Lọc trung vị (Median Filter)
+D. Lọc Laplacian
+=>C
+Bộ lọc Gaussian có đặc điểm gì khác biệt so với bộ lọc trung bình?
+A. Kernel có các trọng số bằng nhau
+B. Kernel có trọng số giảm dần theo khoảng cách đến tâm, giúp bảo toàn cạnh tốt hơn
+C. Là bộ lọc phi tuyến tính
+D. Chỉ dùng để phát hiện cạnh
+=>B
+Bộ lọc Laplacian trong xử lý ảnh thường dùng để làm gì?
+A. Làm mịn da trong ảnh chân dung
+B. Giảm nhiễu màu
+C. Phát hiện cạnh (Edge Detection) dựa trên đạo hàm bậc hai
+D. Tăng độ sáng tổng thể
+=>C
+Láng giềng 4-kết nối (4-connectivity) của một pixel (x,y) KHÔNG bao gồm pixel nào sau đây?
+A. (x-1, y)
+B. (x, y-1)
+C. (x-1, y-1)
+D. (x+1, y)
+=>C
+Bộ lọc Bilateral Filter (Lọc song phương) khác bộ lọc Gaussian ở điểm nào?
+A. Chỉ làm mờ vùng tần số thấp
+B. Kết hợp cả thông tin về khoảng cách không gian và sự khác biệt cường độ để bảo toàn cạnh
+C. Làm tăng độ sáng của ảnh
+D. Là bộ lọc tuyến tính đơn giản
+=>B
+Làm thế nào để tăng cường độ sắc nét (Sharpening) cho ảnh bằng lọc không gian?
+A. Cộng ảnh gốc với kết quả lọc trung bình
+B. Trừ ảnh gốc cho kết quả lọc Laplacian
+C. Cộng ảnh gốc với kết quả lọc Laplacian
+D. Áp dụng lọc Gaussian với σ lớn
+=>C
+Khi áp dụng lọc tuyến tính lên biên của ảnh, vấn đề 'biên' (Border Issue) thường được xử lý bằng cách nào trong OpenCV?
+A. Bỏ qua các pixel biên (ảnh đầu ra nhỏ hơn)
+B. Đệm thêm pixel (Padding) bằng cách sao chép, phản chiếu hoặc thêm hằng số
+C. Chỉ áp dụng lọc cho các pixel nằm hoàn toàn trong kernel
+D. Tự động thu nhỏ kích thước kernel
+=>B
+Bộ lọc nào là phi tuyến tính (non-linear)?
+A. Lọc trung bình
+B. Lọc Gaussian
+C. Lọc trung vị (Median)
+D. Lọc Laplacian
+=>C
+Trong lọc không gian, nếu kernel có tổng các hệ số lớn hơn 1, điều gì có thể xảy ra với ảnh đầu ra?
+A. Ảnh sẽ tối đi
+B. Ảnh sẽ sáng lên (có thể bão hòa - clipping)
+C. Ảnh sẽ bị làm mờ
+D. Ảnh sẽ bị âm bản
+=>B
+Histogram của một ảnh xám đen, thiếu sáng (underexposed) thường có đặc điểm gì?
+A. Các cột tập trung lệch hẳn về bên phải (gần 255)
+B. Các cột tập trung lệch hẳn về bên trái (gần 0)
+C. Các cột phân bố trải đều từ trái sang phải
+D. Các cột tập trung co cụm ở giữa
+=>B
+Mục đích chính của Cân bằng Histogram (Histogram Equalization) là gì?
+A. Giảm nhiễu trong ảnh
+B. Tăng cường độ tương phản tổng thể của ảnh một cách tự động
+C. Phát hiện các góc nghiêng của vật thể
+D. Chuyển đổi không gian màu từ RGB sang HSV
+=>B
+Trong công thức cân bằng Histogram, thành phần Pr(rj) biểu diễn điều gì?
+A. Giá trị tích lũy của mức xám
+B. Xác suất xuất hiện của mức xám thứ rj
+C. Số mức xám tối đa của ảnh
+D. Độ sáng trung bình của ảnh
+=>B
+Nhược điểm tiềm ẩn của phương pháp cân bằng Histogram toàn cục (Global Histogram Equalization) là gì?
+A. Làm chậm quá trình hiển thị ảnh
+B. Có thể khuếch đại nhiễu nền ở những vùng ảnh đồng nhất
+C. Không thể áp dụng cho ảnh màu
+D. Làm mất hoàn toàn các chi tiết cạnh
+=>B
+Một ảnh có độ tương phản thấp (low-contrast) sẽ có Histogram như thế nào?
+A. Trải dài từ 0 đến 255
+B. Có hai đỉnh rõ rệt ở hai đầu mút
+C. Các cột co cụm trong một khoảng hẹp
+D. Phân bố ngẫu nhiên không theo quy luật
+=>C
+Hàm nào trong OpenCV được dùng để thực hiện cân bằng Histogram cho ảnh xám?
+A. cv2.calcHist()
+B. cv2.equalizeHist()
+C. cv2.normalize()
+D. cv2.threshold()
+=>B
+Biểu đồ Histogram không thể cung cấp thông tin nào sau đây về bức ảnh?
+A. Độ tương phản tổng thể
+B. Vị trí không gian của các đối tượng sáng/tối
+C. Xu hướng thiên sáng hay thiên tối
+D. Dải động (dynamic range) của ảnh
+=>B
+Trong xử lý ảnh, Gradient của ảnh được sử dụng chủ yếu để làm gì?
+A. Đo cường độ sáng trung bình
+B. Phát hiện sự thay đổi cường độ sáng, xác định biên (cạnh)
+C. Giảm dung lượng lưu trữ ảnh
+D. Cân bằng màu sắc giữa các kênh
+=>B
+Toán tử Sobel trong xử lý ảnh tính toán điều gì?
+A. Đạo hàm bậc hai của ảnh
+B. Trung bình trượt của ảnh
+C. Xấp xỉ đạo hàm bậc nhất (Gradient) theo hướng ngang và dọc
+D. Biến đổi Fourier rời rạc
+=>C
+Thuật toán Canny bao gồm 5 bước cơ bản. Bước nào có tác dụng làm mảnh các cạnh, chỉ giữ lại pixel có cường độ gradient lớn nhất cục bộ?
+A. Lọc nhiễu Gaussian
+B. Tính toán Gradient
+C. Non-Maximum Suppression (Nén không cực đại)
+D. Ngưỡng kép (Double Threshold)
+=>C
+Bước đầu tiên bắt buộc phải thực hiện trong thuật toán Canny Edge Detector là gì?
+A. Phân ngưỡng ảnh
+B. Chuyển ảnh sang ảnh xám
+C. Làm mịn ảnh bằng bộ lọc Gaussian để giảm nhiễu
+D. Tính toán đạo hàm bậc hai
+=>C
+Trong thuật toán Canny, nếu một pixel có cường độ gradient nằm giữa threshold_low và threshold_high (ngưỡng thấp và cao), số phận của nó được quyết định như thế nào?
+A. Luôn được coi là cạnh
+B. Luôn bị loại bỏ
+C. Được giữ lại chỉ khi nó được kết nối với một pixel được coi là cạnh mạnh
+D. Được làm mờ đi để tạo hiệu ứng chuyển tiếp
+=>C
+Đâu là ưu điểm nổi bật của thuật toán Canny so với các toán tử Sobel hay Prewitt thông thường?
+A. Tốc độ tính toán nhanh hơn rất nhiều
+B. Cho ra các cạnh mảnh, chính xác và ít bị đứt gãy nhờ cơ chế ngưỡng kép và theo dõi độ trễ
+C. Có thể hoạt động trực tiếp trên ảnh màu RGB mà không cần chuyển xám
+D. Không yêu cầu cài đặt bất kỳ tham số nào từ người dùng
+=>B
+Đạo hàm bậc nhất (Sobel, Prewitt) có xu hướng phát hiện cạnh như thế nào so với đạo hàm bậc hai (Laplacian)?
+A. Phát hiện cạnh dày hơn (cần bước làm mảnh tiếp theo)
+B. Phát hiện cạnh mảnh hơn
+C. Nhạy cảm với nhiễu hơn Laplacian
+D. Không thể xác định hướng của cạnh
+=>A
+Trong OpenCV, để sử dụng bộ phát hiện cạnh Canny, ta gọi hàm nào?
+A. cv2.Sobel()
+B. cv2.Laplacian()
+C. cv2.Canny()
+D. cv2.cornerHarris()
+=>C
+Tham số apertureSize (kích thước kernel Sobel) trong hàm cv2.Canny() mặc định thường là bao nhiêu?
+A. 1
+B. 3
+C. 5
+D. 7
+=>B
+Biến đổi Fourier trong xử lý ảnh dùng để chuyển tín hiệu ảnh từ miền không gian sang miền nào?
+A. Miền thời gian
+B. Miền tần số
+C. Miền cường độ
+D. Miền màu sắc
+=>B
+Trong miền tần số của ảnh, các cạnh sắc nét và nhiễu thường tương ứng với thành phần tần số nào?
+A. Tần số thấp (Low Frequency)
+B. Tần số trung bình (Medium Frequency)
+C. Tần số cao (High Frequency)
+D. Tần số một chiều (DC Component)
+=>C
+Phép lọc thông thấp (Low-pass Filter) trên miền tần số có tác dụng gì đối với ảnh gốc?
+A. Làm sắc nét ảnh
+B. Làm mờ ảnh và giảm nhiễu
+C. Phát hiện đường biên
+D. Phân đoạn đối tượng
+=>B
+Thuật toán FFT (Fast Fourier Transform) được sử dụng để làm gì?
+A. Thay thế hoàn toàn cho biến đổi Fourier rời rạc (DFT) với kết quả chính xác hơn
+B. Tính toán biến đổi Fourier rời rạc (DFT) một cách nhanh chóng và hiệu quả hơn
+C. Chuyển đổi ảnh màu sang ảnh xám
+D. Nén ảnh không mất dữ liệu
+=>B
+Sự khác biệt cốt lõi giữa Biến đổi Wavelet và Biến đổi Fourier là gì?
+A. Fourier chỉ làm việc với tín hiệu số, Wavelet làm việc với tín hiệu tương tự
+B. Wavelet cung cấp thông tin về cả thời gian/vị trí và tần số, trong khi Fourier chỉ cung cấp thông tin tần số
+C. Fourier có độ phức tạp tính toán thấp hơn Wavelet trong mọi trường hợp
+D. Wavelet chỉ áp dụng cho ảnh đen trắng
+=>B
+Trong phân tích ảnh bằng 2D-DWT, ảnh được phân tách thành bốn băng tần con. Băng tần nào chứa thông tin xấp xỉ (thông tin toàn cục, tần số thấp)?
+A. LH (Horizontal)
+B. HL (Vertical)
+C. HH (Diagonal)
+D. LL (Low-Low)
+=>D
+Wavelet loại nào là đơn giản nhất và có dạng hình chữ nhật?
+A. Daubechies Wavelet
+B. Mexican Hat Wavelet
+C. Haar Wavelet
+D. Morlet Wavelet
+=>C
+Phép biến đổi hình học nào làm thay đổi vị trí của đối tượng nhưng giữ nguyên hình dạng và kích thước?
+A. Phép quay (Rotation)
+B. Phép tỉ lệ (Scaling)
+C. Phép tịnh tiến (Translation)
+D. Phép chiếu phối cảnh (Perspective)
+=>C
+Khi phóng to ảnh bằng phép biến đổi hình học, để tránh hiện tượng 'răng cưa' (aliasing), ta nên sử dụng phương pháp nội suy nào để có chất lượng ảnh mịn nhất?
+A. Nearest Neighbor
+B. Bicubic Interpolation
+C. Bilinear Interpolation
+D. Không nội suy, giữ nguyên pixel gốc
+=>B
+Xử lý hình thái học (Morphological Operations) thường được áp dụng chủ yếu trên loại ảnh nào?
+A. Ảnh màu RGB
+B. Ảnh đa phổ
+C. Ảnh nhị phân (Binary Image)
+D. Ảnh HDR
+=>C
+Phép toán Erosion (Xói mòn) áp dụng cho ảnh nhị phân có tác dụng gì lên vùng đối tượng trắng (Foreground)?
+A. Làm thu nhỏ và có thể xóa bỏ các đối tượng/chi tiết nhỏ
+B. Làm phình to và kết nối các vùng gần nhau
+C. Làm mịn đường viền bên trong của đối tượng
+D. Lấp đầy các lỗ hổng nhỏ trong đối tượng
+=>A
+Phép toán Closing (Đóng) được định nghĩa là sự kết hợp của các phép toán cơ bản nào theo thứ tự?
+A. Erosion rồi Dilation
+B. Dilation rồi Erosion
+C. Opening rồi Erosion
+D. Erosion rồi Opening
+=>B
+Để lấp đầy các lỗ hổng nhỏ màu đen bên trong một vật thể trắng trong ảnh nhị phân, ta nên sử dụng phép toán hình thái nào?
+A. Erosion
+B. Opening
+C. Closing
+D. Top-hat
+=>C
+'Phần tử cấu trúc' (Structuring Element) trong xử lý hình thái học có vai trò gì?
+A. Xác định mức ngưỡng nhị phân hóa ảnh
+B. Xác định kích thước kernel cho phép lọc Gaussian
+C. Xác định hình dạng và kích thước của vùng lân cận ảnh hưởng đến phép biến đổi
+D. Xác định số mức xám của ảnh đầu ra
+=>C
+Phép trừ nền video (Background Subtraction) sử dụng thuật toán MOG2 hoạt động dựa trên nguyên tắc nào?
+A. So sánh từng frame với một ảnh nền tĩnh cố định ban đầu
+B. Tính toán trung bình trượt của tất cả các pixel theo thời gian
+C. Mô hình hóa nền bằng hỗn hợp Gaussian (Gaussian Mixture Model) và cập nhật liên tục
+D. Áp dụng phép trừ ảnh trực tiếp giữa frame hiện tại và frame trước đó
+=>C
+Giả sử ảnh xám 8 bit có giá trị pixel là 100. Sau khi áp dụng phép biến đổi âm bản, giá trị mới là bao nhiêu?
+A. 100
+B. 155
+C. 255
+D. 0
+=>B
+Công thức biến đổi Gamma s=c·r^γ (với r∈[0,1]). Nếu γ=0.5, điều gì xảy ra với ảnh?
+A. Ảnh tối đi ở vùng sáng, sáng lên ở vùng tối.
+B. Ảnh sáng lên ở vùng sáng, tối đi ở vùng tối.
+C. Ảnh không thay đổi.
+D. Ảnh trở thành âm bản.
+=>A
+Trong cân bằng histogram toàn cục, hàm biến đổi T(r) được xây dựng dựa trên:
+A. Hàm mật độ xác suất (PDF) của mức xám.
+B. Hàm phân phối tích lũy (CDF) của mức xám.
+C. Giá trị trung bình của histogram.
+D. Độ lệch chuẩn của histogram.
+=>B
+Điều gì xảy ra nếu ta áp dụng cân bằng histogram hai lần liên tiếp trên cùng một ảnh?
+A. Ảnh tiếp tục được tăng cường độ tương phản.
+B. Ảnh gần như không thay đổi (vì histogram đã gần phân bố đều).
+C. Ảnh trở về trạng thái ban đầu.
+D. Ảnh bị nhiễu hạt nặng.
+=>B
+Phép biến đổi logarit s=c·log(1+r) thường dùng để:
+A. Nén dải động của ảnh có độ tương phản cao (ví dụ ảnh phổ Fourier).
+B. Tăng độ sáng cho ảnh tối.
+C. Phát hiện cạnh.
+D. Chuyển ảnh màu sang xám.
+=>A
+Trong ảnh màu RGB, nếu ta áp dụng cùng một hàm biến đổi điểm ảnh lên cả ba kênh R, G, B một cách độc lập, điều gì có thể xảy ra?
+A. Màu sắc của ảnh có thể bị thay đổi (méo màu).
+B. Ảnh trở thành ảnh xám.
+C. Độ sáng không thay đổi.
+D. Không có hiệu ứng gì.
+=>A
+Để tăng độ tương phản mà không làm thay đổi tông màu tổng thể (hue), ta nên thực hiện trong không gian màu nào?
+A. RGB
+B. CMY
+C. HSV hoặc Lab (chỉ điều chỉnh kênh V hoặc L)
+D. YCbCr với thay đổi cả ba kênh.
+=>C
+Phân ngưỡng Otsu tìm ngưỡng T sao cho:
+A. Tổng phương sai trong lớp (within-class variance) là nhỏ nhất.
+B. Phương sai giữa các lớp (between-class variance) là lớn nhất.
+C. Số pixel foreground bằng số pixel background.
+D. Giá trị trung bình của foreground bằng trung bình background.
+=>B
+Adaptive thresholding phù hợp với ảnh có đặc điểm gì?
+A. Độ sáng đồng đều.
+B. Chiếu sáng không đồng đều (ví dụ có bóng đổ, gradient ánh sáng).
+C. Chỉ có hai màu đen trắng thuần túy.
+D. Nhiễu muối tiêu.
+=>B
+Toán tử điểm ảnh KHÔNG thể thực hiện được hiệu ứng nào sau đây?
+A. Tăng độ sáng.
+B. Làm mờ ảnh.
+C. Biến đổi âm bản.
+D. Cắt ngưỡng.
+=>B
+Biểu đồ histogram của ảnh có độ tương phản cao có đặc điểm:
+A. Tập trung hẹp ở giữa.
+B. Trải rộng từ 0 đến 255, không có khoảng trống lớn.
+C. Có hai đỉnh rõ rệt ở hai đầu.
+D. Dạng hình chuông (Gaussian).
+=>B
+Khi một ảnh có histogram bị co cụm ở vùng tối (gần 0), để 'kéo giãn' histogram ra toàn dải, ta dùng phép toán nào?
+A. Cân bằng histogram.
+B. Lọc trung vị.
+C. Biến đổi Gamma với γ > 1.
+D. Lọc thông cao.
+=>A
+Kernel lọc trung bình 3×3 có tổng các hệ số là 1. Điều này đảm bảo điều gì?
+A. Ảnh không bị thay đổi độ sáng tổng thể (bảo toàn năng lượng).
+B. Lọc sẽ làm sắc nét ảnh.
+C. Lọc chỉ có tác dụng với ảnh xám.
+D. Không cần chuẩn hóa kernel.
+=>A
+Bộ lọc Gaussian với σ lớn hơn sẽ cho hiệu ứng:
+A. Mờ ít hơn (giữ nhiều chi tiết).
+B. Mờ nhiều hơn (mất chi tiết nhỏ).
+C. Phát hiện cạnh sắc nét hơn.
+D. Không ảnh hưởng đến độ mờ.
+=>B
+Để làm sắc nét ảnh bằng kỹ thuật unsharp masking, ta thực hiện:
+A. Cộng ảnh gốc với ảnh đã lọc thông cao.
+B. Trừ ảnh gốc cho ảnh đã lọc thông thấp, sau đó cộng kết quả với ảnh gốc.
+C. Nhân ảnh gốc với kernel Laplacian.
+D. Áp dụng lọc trung vị rồi trừ cho ảnh gốc.
+=>B
+Kernel Sobel theo hướng X là [[-1,0,1],[-2,0,2],[-1,0,1]]. Kernel theo hướng Y được tạo bằng cách nào?
+A. Xoay kernel X đi 90 độ.
+B. Chuyển vị kernel X.
+C. Đảo dấu kernel X.
+D. Lấy đối xứng qua đường chéo chính.
+=>B
+Độ lớn gradient tại một pixel tính từ đạo hàm theo x (Gx) và y (Gy) thường được xấp xỉ bằng:
+A. |Gx| + |Gy|
+B. √(Gx² + Gy²)
+C. max(|Gx|, |Gy|)
+D. Cả A, B, C đều có thể dùng (B chính xác nhất, A và C nhanh hơn).
+=>D
+Trong thuật toán Canny, bước Non-Maximum Suppression được thực hiện dựa trên:
+A. Độ lớn gradient và hướng gradient.
+B. Chỉ độ lớn gradient.
+C. Giá trị cường độ sáng.
+D. Ngưỡng kép.
+=>A
+Nếu ta đặt ngưỡng thấp và ngưỡng cao trong Canny quá gần nhau, kết quả sẽ:
+A. Có nhiều cạnh giả (nhiễu).
+B. Có ít cạnh, dễ đứt đoạn.
+C. Cạnh dày hơn.
+D. Không ảnh hưởng.
+=>B
+Bộ lọc Sobel nhạy cảm với nhiễu hơn bộ lọc Canny vì:
+A. Sobel không có bước làm mịn Gaussian.
+B. Sobel dùng kernel nhỏ hơn.
+C. Sobel là đạo hàm bậc hai.
+D. Sobel không có ngưỡng.
+=>A
+Bộ lọc Prewitt khác Sobel ở điểm:
+A. Trọng số tâm trong Prewitt là 1, Sobel là 2.
+B. Prewitt dùng kernel 2×2.
+C. Prewitt không phát hiện được cạnh dọc.
+D. Prewitt nhanh hơn Sobel.
+=>A
+Đạo hàm bậc hai (Laplacian) có nhược điểm gì khi phát hiện cạnh?
+A. Không xác định được hướng của cạnh.
+B. Rất nhạy với nhiễu (tạo ra cạnh đôi).
+C. Chỉ phát hiện cạnh ngang.
+D. Cả A và B đều đúng.
+=>D
+Lọc Bilateral (song phương) bảo toàn cạnh vì nó xét thêm:
+A. Sự khác biệt về cường độ pixel (range kernel).
+B. Khoảng cách không gian (spatial kernel).
+C. Cả hai yếu tố trên.
+D. Chỉ dựa vào cường độ.
+=>C
+Trong phép trừ nền (background subtraction), mô hình nền được cập nhật liên tục để:
+A. Thích ứng với thay đổi ánh sáng và môi trường.
+B. Giảm dung lượng bộ nhớ.
+C. Tăng tốc độ xử lý.
+D. Loại bỏ bóng đổ.
+=>A
+Thuật toán ViBe trong trừ nền dựa trên:
+A. Mô hình hỗn hợp Gaussian (MOG).
+B. Tập hợp các mẫu màu cho mỗi pixel và so sánh ngẫu nhiên.
+C. Mạng nơ-ron tích chập.
+D. Optical flow.
+=>B
+Phép toán Opening (Mở) ảnh nhị phân có tác dụng:
+A. Xóa các đối tượng nhỏ và làm mịn đường viền ngoài.
+B. Lấp đầy lỗ hổng bên trong đối tượng.
+C. Phóng to đối tượng.
+D. Tìm biên đối tượng.
+=>A
+Để tách hai vật thể trắng dính nhau trong ảnh nhị phân, ta nên dùng phép toán nào?
+A. Dilation.
+B. Erosion.
+C. Closing.
+D. Opening.
+=>B
+Biến đổi Fourier của một ảnh có đặc điểm gì?
+A. Phổ biên độ đối xứng qua tâm (với ảnh thực).
+B. Phổ pha không chứa thông tin quan trọng.
+C. Tần số thấp nằm ở góc của ảnh phổ.
+D. Không thể biến đổi ngược.
+=>A
+Trong miền tần số, để làm mờ ảnh, ta nhân phổ với bộ lọc:
+A. Thông thấp (low-pass).
+B. Thông cao (high-pass).
+C. Band-pass.
+D. Notch filter.
+=>A
+Biến đổi Wavelet rời rạc 2D (2D-DWT) phân tách ảnh thành bốn băng con. Băng con HH chứa thông vị trí gì?
+A. Xấp xỉ (tần số thấp).
+B. Chi tiết ngang.
+C. Chi tiết dọc.
+D. Chi tiết chéo (đường chéo).
+=>D
+[C3] Chương 3 (90 câu)
+Trong thị giác máy tính, 'đặc trưng' (feature) của ảnh được định nghĩa là gì?
+A. Toàn bộ ma trận điểm ảnh của ảnh gốc.
+B. Một phần thông tin có liên quan để giải quyết công việc tính toán trong ứng dụng cụ thể.
+C. Giá trị trung bình cường độ sáng của toàn ảnh.
+D. Kích thước và định dạng file ảnh.
+=>B
+Ba thành phần chính trong một hệ thống phát hiện và đối sánh đặc trưng là gì?
+A. Tiền xử lý - Hậu xử lý - Hiển thị.
+B. Lọc nhiễu - Phân đoạn - Nhận dạng.
+C. Phát hiện - Mô tả - Đối sánh.
+D. Lấy mẫu - Lượng tử hóa - Mã hóa.
+=>C
+Loại đặc trưng nào thường được mô tả bằng sự xuất hiện của các mảng pixel xung quanh vị trí điểm?
+A. Đặc trưng toàn cục.
+B. Đặc trưng đường biên.
+C. Đặc trưng điểm chính (keypoint features / corners).
+D. Đặc trưng màu sắc.
+=>C
+Đối sánh ảnh (Image Matching) là quá trình:
+A. Chuyển đổi ảnh màu thành ảnh xám.
+B. Tăng cường độ phân giải của ảnh.
+C. So sánh hai hoặc nhiều ảnh để tìm ra các vùng tương đồng.
+D. Nén ảnh để giảm dung lượng lưu trữ.
+=>C
+Trong quy trình đối sánh dựa trên đặc trưng cục bộ, bước 'Ước lượng biến đổi' sử dụng:
+A. Các cặp điểm tương ứng để ước lượng phép biến đổi hình học (tịnh tiến, xoay, tỉ lệ).
+B. Histogram màu để cân bằng sáng.
+C. Mạng nơ-ron tích chập để phân loại.
+D. Phép biến đổi Fourier để lọc tần số.
+=>A
+Đâu KHÔNG phải là ứng dụng điển hình của phát hiện đặc trưng và đối sánh ảnh?
+A. Nhận dạng vật thể.
+B. Ghép ảnh toàn cảnh (panorama stitching).
+C. Tăng dung lượng file ảnh.
+D. Lập bản đồ 3D từ ảnh 2D.
+=>C
+Yếu tố nào sau đây ảnh hưởng lớn đến độ chính xác của quá trình đối sánh ảnh?
+A. Chất lượng hình ảnh (độ phân giải, nhiễu).
+B. Thuật toán đối sánh và tham số của nó.
+C. Phương pháp loại bỏ điểm ngoại lai (outliers).
+D. Tất cả các yếu tố trên.
+=>D
+Phương pháp đối sánh dựa trên đặc trưng cục bộ phù hợp nhất khi nào?
+A. Khi có sẵn mô hình toán học chi tiết của đối tượng.
+B. Khi bài toán tổng quát, không yêu cầu kiến thức trước về đối tượng.
+C. Khi cần nhận dạng chính xác tuyệt đối khuôn mặt.
+D. Khi dữ liệu ảnh rất nhỏ và đồng nhất.
+=>B
+Đối sánh dựa trên mô hình (model-based matching) thường yêu cầu:
+A. Không cần dữ liệu huấn luyện nào.
+B. Một lượng lớn dữ liệu huấn luyện để xây dựng mô hình.
+C. Chỉ làm việc với ảnh nhị phân.
+D. Tốc độ tính toán nhanh hơn mọi phương pháp khác.
+=>B
+Mục tiêu của việc sử dụng RANSAC trong đối sánh ảnh là gì?
+A. Tăng số lượng điểm đặc trưng.
+B. Tăng tốc độ tính toán.
+C. Loại bỏ các điểm ngoại lai (outliers) và ước lượng mô hình biến đổi chính xác.
+D. Chuyển đổi ảnh sang không gian màu HSV.
+=>C
+SIFT là viết tắt của cụm từ nào?
+A. Simple Invariant Fourier Transform.
+B. Scale-Invariant Feature Transform.
+C. Spatial Image Filtering Technique.
+D. Symmetric Integral Feature Tracker.
+=>B
+SIFT được thiết kế để giải quyết vấn đề gì một cách đặc biệt xuất sắc?
+A. Tăng độ sáng cho ảnh thiếu sáng.
+B. Bất biến với sự thay đổi tỷ lệ (scale) và xoay (rotation).
+C. Nén ảnh với tỷ lệ cao.
+D. Phân đoạn ảnh y tế.
+=>B
+Trong SIFT, không gian tỷ lệ (scale-space) được xây dựng bằng cách nào?
+A. Dùng nhiều ảnh có độ phân giải khác nhau.
+B. Làm mờ ảnh gốc với bộ lọc Gaussian có độ lệch chuẩn σ tăng dần.
+C. Xoay ảnh theo nhiều góc.
+D. Thay đổi độ tương phản của ảnh.
+=>B
+Để phát hiện điểm cực trị (keypoint candidates), SIFT sử dụng hàm nào?
+A. Laplacian of Gaussian (LoG).
+B. Difference of Gaussians (DoG) - xấp xỉ của LoG.
+C. Hessian matrix.
+D. FAST corner detector.
+=>B
+Trong bước phát hiện điểm cực trị của SIFT, một pixel được coi là cực trị nếu nó lớn hơn (hoặc nhỏ hơn) bao nhiêu điểm lân cận trong không gian tỷ lệ?
+A. 4 điểm (trên, dưới, trái, phải).
+B. 8 điểm lân cận cùng tỷ lệ.
+C. 26 điểm (8 cùng tỷ lệ + 9 tỷ lệ trên + 9 tỷ lệ dưới).
+D. 16 điểm trong cửa sổ 4x4.
+=>C
+Để gán hướng cho keypoint, SIFT dựa vào thông vị trí nào trong vùng lân cận?
+A. Giá trị cường độ sáng trung bình.
+B. Histogram của hướng gradient.
+C. Vị trí tương đối so với tâm ảnh.
+D. Phổ tần số Fourier.
+=>B
+Bộ mô tả SIFT tiêu chuẩn có bao nhiêu chiều?
+A. 64.
+B. 128.
+C. 256.
+D. 512.
+=>B
+Vector mô tả SIFT 128 chiều được hình thành như thế nào?
+A. Lấy giá trị pixel của vùng 16x16 rồi trải phẳng.
+B. Chia vùng 16x16 thành 16 ô 4x4, mỗi ô tính histogram gradient 8 hướng.
+C. Dùng mạng CNN để trích xuất đặc trưng.
+D. Tính giá trị trung bình của 128 điểm ảnh lân cận.
+=>B
+Để bất biến với sự thay đổi độ sáng tuyến tính, vector mô tả SIFT được:
+A. Nhân với hệ số gamma.
+B. Chuẩn hóa về độ dài đơn vị và ngưỡng giá trị lớn.
+C. Cộng thêm một hằng số.
+D. Chuyển sang thang logarit.
+=>B
+Ưu điểm lớn nhất của SIFT là gì?
+A. Tốc độ tính toán cực nhanh.
+B. Độ chính xác và tính bất biến cao trước các biến đổi hình học và ánh sáng.
+C. Không yêu cầu bất kỳ tham số đầu vào nào.
+D. Mô tả đặc trưng chỉ dài 32 bit.
+=>B
+Nhược điểm chính của SIFT là gì?
+A. Chỉ hoạt động trên ảnh xám.
+B. Tính toán tốn kém về mặt thời gian (chậm).
+C. Không phát hiện được góc.
+D. Không có sẵn trong OpenCV.
+=>B
+Trong SIFT, các điểm nằm trên cạnh (edge points) thường bị loại bỏ vì lý do gì?
+A. Chúng có độ tương phản quá cao.
+B. Chúng không ổn định vì vị trí dọc theo cạnh có thể bị trôi.
+C. Chúng không có hướng gradient.
+D. SIFT không thể tính toán DoG trên cạnh.
+=>B
+Bước 'Loại bỏ các điểm kém ổn định' trong SIFT dựa trên tiêu chí nào?
+A. Ngưỡng về độ tương phản và tỉ lệ độ cong chính (loại bỏ điểm trên cạnh).
+B. Khoảng cách đến tâm ảnh.
+C. Số lượng điểm lân cận.
+D. Giá trị cường độ sáng tuyệt đối.
+=>A
+SIFT thuộc loại đặc trưng gì?
+A. Đặc trưng toàn cục (global).
+B. Đặc trưng cục bộ (local).
+C. Đặc trưng dựa trên học sâu.
+D. Đặc trưng màu sắc.
+=>B
+Trong OpenCV, để tạo đối tượng phát hiện SIFT, ta dùng lệnh nào?
+A. cv2.SIFT()
+B. cv2.xfeatures2d.SIFT_create()
+C. cv2.ORB_create()
+D. cv2.FastFeatureDetector_create()
+=>B
+SURF là viết tắt của cụm từ nào?
+A. Simple Unified Robust Features.
+B. Speeded Up Robust Features.
+C. Symmetric Unsupervised Recognition Framework.
+D. Scaled Uniform Rotation Filter.
+=>B
+Mục tiêu thiết kế chính của SURF so với SIFT là gì?
+A. Tăng độ chính xác lên gấp đôi.
+B. Tăng tốc độ tính toán trong khi vẫn giữ độ chính xác cao.
+C. Giảm số chiều của vector mô tả xuống còn 32.
+D. Chỉ hoạt động trên ảnh màu.
+=>B
+SURF sử dụng công cụ toán học nào để tăng tốc độ tính toán bộ lọc?
+A. Biến đổi Fourier nhanh (FFT).
+B. Ảnh tích phân (Integral Image).
+C. Phân rã trị riêng (Eigen decomposition).
+D. Thuật toán sắp xếp nhanh QuickSort.
+=>B
+Để phát hiện điểm đặc trưng, SURF dựa trên:
+A. Hiệu của Gaussian (DoG).
+B. Định thức của ma trận Hessian xấp xỉ bằng bộ lọc Box.
+C. Thuật toán FAST.
+D. Biến đổi Hough.
+=>B
+Bộ mô tả đặc trưng của SURF (phiên bản chuẩn) có bao nhiêu chiều?
+A. 32.
+B. 64.
+C. 128.
+D. 256.
+=>B
+Bộ mô tả SURF dựa trên đặc điểm nào của vùng lân cận keypoint?
+A. Histogram của cường độ sáng.
+B. Phân bố của các đáp ứng Haar-wavelet.
+C. Ma trận đồng xuất hiện mức xám.
+D. Biểu đồ màu HSV.
+=>B
+So với SIFT, bộ lọc Box trong SURF có ưu điểm gì?
+A. Cho kết quả chính xác hơn tuyệt đối.
+B. Có thể tính toán rất nhanh nhờ ảnh tích phân.
+C. Không cần chọn kích thước kernel.
+D. Bất biến với phép chiếu phối cảnh.
+=>B
+Nhược điểm của SURF so với SIFT là gì?
+A. Chậm hơn SIFT.
+B. Ít bất biến với các phép biến đổi affine phức tạp hơn.
+C. Không thể xử lý ảnh xám.
+D. Không có sẵn trong OpenCV.
+=>B
+SURF có thể được sử dụng trong ứng dụng nào sau đây?
+A. Ghép ảnh toàn cảnh.
+B. Theo dõi vật thể trong video.
+C. Tái tạo 3D từ ảnh.
+D. Tất cả các ứng dụng trên.
+=>D
+Một hạn chế về mặt pháp lý của SURF (trong quá khứ) là gì?
+A. Mã nguồn mở hoàn toàn.
+B. Bị ràng buộc bởi bằng sáng chế, hạn chế sử dụng thương mại.
+C. Chỉ chạy được trên Windows.
+D. Yêu cầu GPU để hoạt động.
+=>B
+ORB là sự kết hợp của hai thuật toán nào?
+A. SIFT và SURF.
+B. FAST (phát hiện góc) và BRIEF (mô tả nhị phân).
+C. Canny và Hough.
+D. CNN và RNN.
+=>B
+FAST dùng để làm gì trong ORB?
+A. Tạo vector mô tả.
+B. Phát hiện nhanh các điểm góc (keypoint).
+C. Lọc nhiễu ảnh.
+D. Gán hướng cho keypoint.
+=>B
+Làm thế nào ORB thêm thông tin hướng (orientation) vào FAST?
+A. Dùng Laplacian of Gaussian.
+B. Tính toán tâm cường độ sáng (intensity centroid) của vùng lân cận.
+C. Xoay kernel Sobel.
+D. Sử dụng phép biến đổi Hough.
+=>B
+Bộ mô tả BRIEF thuộc loại nào?
+A. Mô tả số thực (float).
+B. Mô tả nhị phân (binary descriptor).
+C. Mô tả dựa trên histogram.
+D. Mô tả dựa trên mạng nơ-ron.
+=>B
+Để so sánh hai bộ mô tả ORB, ta thường dùng độ đo nào?
+A. Khoảng cách Euclidean.
+B. Khoảng cách Hamming.
+C. Khoảng cách Cosine.
+D. Khoảng cách Mahalanobis.
+=>B
+Ưu điểm nổi bật nhất của ORB so với SIFT và SURF là gì?
+A. Độ chính xác cao hơn.
+B. Tốc độ cực nhanh và hoàn toàn miễn phí bản quyền.
+C. Vector mô tả dài hơn.
+D. Hoạt động tốt hơn trong điều kiện thiếu sáng.
+=>B
+Nhược điểm chính của ORB là gì?
+A. Không có sẵn trong OpenCV.
+B. Kém bất biến hơn với các thay đổi quan điểm lớn và phép biến đổi affine phức tạp.
+C. Không thể xác định hướng của đặc trưng.
+D. Luôn tạo ra ít keypoint hơn SIFT.
+=>B
+Trong ORB, rBRIEF (Rotated BRIEF) giải quyết vấn đề gì?
+A. Tăng tốc độ tính toán.
+B. Làm cho bộ mô tả BRIEF bất biến với phép quay.
+C. Giảm số bit của bộ mô tả.
+D. Tăng độ tương phản của ảnh.
+=>B
+ORB đặc biệt phù hợp cho loại ứng dụng nào?
+A. Phân tích ảnh y tế độ chính xác tuyệt đối.
+B. Ứng dụng thời gian thực trên thiết bị di động và robot (SLAM).
+C. Xử lý hậu kỳ ảnh nghệ thuật.
+D. Nén ảnh không mất dữ liệu.
+=>B
+Trong OpenCV, để khởi tạo bộ phát hiện ORB, ta dùng hàm nào?
+A. cv2.SIFT_create()
+B. cv2.SURF_create()
+C. cv2.ORB_create()
+D. cv2.FAST()
+=>C
+Sắp xếp các thuật toán SIFT, SURF, ORB theo thứ tự tốc độ từ nhanh đến chậm (thông thường):
+A. SIFT → SURF → ORB.
+B. SURF → SIFT → ORB.
+C. ORB → SURF → SIFT.
+D. ORB → SIFT → SURF.
+=>C
+Thuật toán nào có vector mô tả là một chuỗi nhị phân?
+A. SIFT.
+B. SURF.
+C. ORB.
+D. Cả SIFT và SURF.
+=>C
+Thuật toán nào sử dụng Difference of Gaussians (DoG) để phát hiện điểm?
+A. ORB.
+B. SURF.
+C. SIFT.
+D. Cả ORB và SURF.
+=>C
+Phát biểu nào sau đây là SAI?
+A. SIFT và SURF đều là thuật toán được cấp bằng sáng chế (trước đây).
+B. ORB là thuật toán mã nguồn mở hoàn toàn miễn phí.
+C. SURF chậm hơn SIFT trong mọi trường hợp.
+D. ORB dùng FAST để phát hiện keypoint.
+=>C
+Trong bài toán ghép ảnh toàn cảnh (panorama) yêu cầu độ chính xác cao, thuật toán nào thường được ưu tiên?
+A. ORB.
+B. FAST.
+C. SIFT.
+D. BRIEF.
+=>C
+Trong bài toán SLAM trên robot di động (cần tốc độ cao, tài nguyên hạn chế), thuật toán nào thường được chọn?
+A. SIFT.
+B. SURF.
+C. ORB.
+D. DoG.
+=>C
+Cả ba thuật toán SIFT, SURF, ORB đều cố gắng đạt được tính bất biến đối với yếu tố nào?
+A. Phép chiếu phối cảnh.
+B. Xoay (rotation) và tỉ lệ (scale).
+C. Biến dạng phi tuyến.
+D. Thay đổi nội dung ảnh.
+=>B
+Mạng Siamese (Siamese Network) trong đối sánh ảnh có đặc điểm gì?
+A. Gồm ba nhánh CNN riêng biệt.
+B. Gồm hai nhánh CNN có chung trọng số (shared weights).
+C. Chỉ sử dụng một CNN duy nhất.
+D. Không sử dụng CNN.
+=>B
+Hàm mất mát nào thường được dùng trong mạng Siamese để huấn luyện?
+A. Cross-Entropy Loss.
+B. Contrastive Loss.
+C. Mean Squared Error (MSE).
+D. Dice Loss.
+=>B
+Mạng Triplet (Triplet Network) yêu cầu đầu vào gồm những gì?
+A. Hai ảnh: ảnh gốc và ảnh đích.
+B. Ba ảnh: Anchor (A), Positive (P), Negative (N).
+C. Một ảnh và nhãn lớp của nó.
+D. Một cặp ảnh và nhãn 0/1.
+=>B
+FaceNet là mô hình nổi tiếng dựa trên kiến trúc nào?
+A. SIFT kết hợp SVM.
+B. Triplet Network.
+C. ORB kết hợp K-means.
+D. Autoencoder.
+=>B
+Đầu ra của FaceNet cho một ảnh khuôn mặt là gì?
+A. Tọa độ bounding box.
+B. Một vector embedding (ví dụ 128 chiều) đại diện cho khuôn mặt.
+C. Xác suất thuộc về từng lớp.
+D. Ma trận đặc trưng SIFT.
+=>B
+Trong FaceNet, hai ảnh của cùng một người sẽ có embedding như thế nào?
+A. Khoảng cách Euclidean giữa hai vector rất nhỏ.
+B. Khoảng cách Euclidean rất lớn.
+C. Hai vector trực giao với nhau.
+D. Không có mối quan hệ hình học nào.
+=>A
+Phương pháp Self-Supervised Learning (SSL) trong đối sánh ảnh có ưu điểm gì?
+A. Luôn cho độ chính xác tuyệt đối 100%.
+B. Không cần nhiều dữ liệu được gán nhãn thủ công.
+C. Tốc độ suy luận nhanh hơn ORB.
+D. Chỉ hoạt động trên ảnh đen trắng.
+=>B
+Vision Transformer (ViT) khi áp dụng vào bài toán so khớp ảnh có ưu điểm gì so với CNN truyền thống?
+A. Học được mối quan hệ không gian toàn cục tốt hơn nhờ cơ chế Attention.
+B. Yêu cầu ít tài nguyên tính toán hơn.
+C. Không cần dữ liệu huấn luyện.
+D. Tốc độ nhanh hơn ORB trên CPU.
+=>A
+SIFT sử dụng DoG (Difference of Gaussians) để xấp xỉ:
+A. Laplacian of Gaussian (LoG).
+B. Gradient của ảnh.
+C. Hessian matrix.
+D. Harris corner detector.
+=>A
+Điểm cực trị trong không gian tỉ lệ của SIFT được xác định bằng cách so sánh với bao nhiêu lân cận?
+A. 8
+B. 9
+C. 26
+D. 16
+=>C
+Vector mô tả SIFT 128 chiều được tạo thành từ:
+A. 16 vùng 4×4, mỗi vùng tính histogram 8 hướng gradient.
+B. 8 vùng 4×4, mỗi vùng 16 hướng.
+C. 4 vùng 8×8, mỗi vùng 32 hướng.
+D. 128 điểm lấy mẫu ngẫu nhiên.
+=>A
+Để đạt bất biến với phép quay, SIFT thực hiện:
+A. Xoay kernel Sobel.
+B. Tính hướng chính từ histogram gradient và xoay vùng lân cận về hướng đó.
+C. Dùng mô tả bất biến quay tự nhiên.
+D. Bỏ qua hướng.
+=>B
+SIFT loại bỏ các keypoint có độ tương phản thấp hoặc nằm trên cạnh vì:
+A. Chúng không ổn định và dễ bị nhiễu.
+B. Chúng làm tăng số chiều mô tả.
+C. Không đủ bộ nhớ.
+D. Chúng thuộc về background.
+=>A
+SURF sử dụng Hessian matrix để tìm điểm đặc trưng dạng:
+A. Góc (corner).
+B. Đốm (blob).
+C. Cạnh (edge).
+D. Đường thẳng.
+=>B
+SURF xấp xỉ bộ lọc Gaussian bằng:
+A. Bộ lọc Box.
+B. Bộ lọc Sobel.
+C. Bộ lọc Laplacian.
+D. Bộ lọc Gabor.
+=>A
+Bộ mô tả SURF thông thường có kích thước:
+A. 64 chiều (hoặc 128 chiều mở rộng).
+B. 32 chiều.
+C. 256 chiều.
+D. 512 chiều.
+=>A
+FAST phát hiện góc bằng cách:
+A. So sánh cường độ pixel trung tâm với 16 pixel trên đường tròn bán kính 3.
+B. Tính đạo hàm bậc hai.
+C. Dùng Hessian matrix.
+D. Tìm điểm cực trị DoG.
+=>A
+BRIEF tạo mô tả nhị phân bằng cách:
+A. So sánh cường độ của các cặp pixel được chọn ngẫu nhiên trong vùng đã làm mịn.
+B. Tính histogram gradient.
+C. Dùng Haar-wavelet.
+D. Lấy mẫu trên lưới cố định.
+=>A
+Để tăng tốc độ đối sánh đặc trưng ORB, ta sử dụng:
+A. Khoảng cách Euclidean.
+B. Khoảng cách Hamming (XOR).
+C. Khoảng cách Cosine.
+D. Khoảng cách Mahalanobis.
+=>B
+Một nhược điểm của ORB so với SIFT là:
+A. Không bất biến với phép quay.
+B. Ít bất biến với thay đổi tỉ lệ lớn (scale changes).
+C. Không có sẵn trong OpenCV.
+D. Chỉ hoạt động trên ảnh màu.
+=>B
+SIFT và SURF từng bị hạn chế sử dụng thương mại vì:
+A. Yêu cầu cấu hình cao.
+B. Được bảo hộ bởi bằng sáng chế.
+C. Mã nguồn đóng.
+D. Chỉ chạy trên MATLAB.
+=>B
+Để khớp đặc trưng giữa hai ảnh, sau khi tính mô tả, ta thường dùng:
+A. Brute-Force Matcher hoặc FLANN.
+B. K-means clustering.
+C. RANSAC trước tiên.
+D. Mạng nơ-ron.
+=>A
+RANSAC được dùng trong đối sánh ảnh để:
+A. Tăng số lượng keypoint.
+B. Ước lượng mô hình biến đổi hình học và loại bỏ outliers.
+C. Tạo mô tả đặc trưng.
+D. Phát hiện keypoint.
+=>B
+Phương pháp đối sánh dựa trên mô hình (model-based matching) phù hợp khi:
+A. Không biết trước gì về đối tượng.
+B. Có mô hình toán học hoặc thống kê về hình dạng/kết cấu của đối tượng.
+C. Ảnh có độ phân giải thấp.
+D. Cần tốc độ cao.
+=>B
+Trong bài toán tìm ảnh tương tự dùng hàm băm wavelet (wavelet hash), khoảng cách Hamming giữa hai mã băm đo:
+A. Sự khác biệt về màu sắc.
+B. Số bit khác nhau giữa hai chuỗi nhị phân.
+C. Khoảng cách Euclidean trong không gian wavelet.
+D. Độ tương quan về biên độ.
+=>B
+Mạng Siamese cho bài toán so khớp ảnh gồm:
+A. Hai nhánh CNN có trọng số chia sẻ.
+B. Hai nhánh CNN độc lập.
+C. Một CNN và một RNN.
+D. Ba nhánh CNN.
+=>A
+Hàm Contrastive Loss trong Siamese Network có dạng:
+A. L = y·d² + (1-y)·max(0, m-d)²
+B. L = -log(p)
+C. L = ||f(A)-f(P)||² - ||f(A)-f(N)||² + α
+D. L = IoU
+=>A
+Triplet Loss yêu cầu khoảng cách giữa Anchor và Positive phải __ so với Anchor và Negative.
+A. Lớn hơn ít nhất một khoảng margin α.
+B. Nhỏ hơn ít nhất một khoảng margin α.
+C. Bằng nhau.
+D. Không ràng buộc.
+=>B
+FaceNet tạo ra embedding cho khuôn mặt. Để nhận dạng, ta thường dùng:
+A. Softmax classifier.
+B. So sánh khoảng cách Euclidean giữa các embedding với ngưỡng.
+C. SVM.
+D. K-NN.
+=>B
+Trong pipeline FaceNet + MTCNN, MTCNN có vai trò:
+A. Trích xuất embedding.
+B. Phát hiện khuôn mặt (face detection) và căn chỉnh (alignment).
+C. Phân loại cảm xúc.
+D. Tăng cường ảnh.
+=>B
+Vision Transformer (ViT) áp dụng cho so khớp ảnh có ưu điểm:
+A. Mô hình hóa quan hệ toàn cục giữa các patch ảnh nhờ self-attention.
+B. Ít tham số hơn CNN.
+C. Không cần dữ liệu huấn luyện.
+D. Luôn nhanh hơn CNN.
+=>A
+Self-Supervised Learning (SSL) trong đối sánh ảnh học đặc trưng bằng cách:
+A. Sử dụng nhãn giả tự động sinh ra từ dữ liệu (ví dụ: dự đoán góc xoay, so sánh các augmented view).
+B. Không cần bất kỳ nhãn nào và không có tín hiệu giám sát.
+C. Dùng một lượng nhỏ nhãn.
+D. Học từ feedback của môi trường.
+=>A
+Phương pháp nào sau đây không được sử dụng để cải thiện hiệu suất đối sánh ảnh?
+A. Sử dụng GPU.
+B. Giảm chiều dữ liệu bằng PCA.
+C. Tăng kích thước ảnh gốc lên gấp 10 lần.
+D. Sử dụng RANSAC để lọc outliers.
+=>C
+Trong đối sánh ảnh dựa trên đặc trưng cục bộ, việc 'tiền xử lý' thường bao gồm:
+A. Cân bằng histogram, lọc nhiễu.
+B. Tăng số lượng keypoint.
+C. Giảm kích thước ảnh.
+D. Chuyển sang ảnh nhị phân.
+=>A
+Yếu tố nào ảnh hưởng ít nhất đến độ chính xác của SIFT matching?
+A. Thay đổi độ sáng tuyến tính.
+B. Xoay ảnh 90 độ.
+C. Phóng to ảnh gấp 2 lần.
+D. Thay đổi màu sắc (hue).
+=>D
+Trong OpenCV, để khởi tạo một FLANN based matcher cho SIFT, ta cần chỉ định:
+A. Chỉ số cây và số lần kiểm tra.
+B. Khoảng cách Hamming.
+C. Ngưỡng ratio test.
+D. Kích thước kernel.
+=>A
+Khoảng cách Euclidean giữa hai vector SIFT u và v được tính bằng:
+A. Σ|ui - vi|
+B. √(Σ(ui - vi)²)
+C. Σui·vi
+D. max|ui - vi|
+=>B
+Trong bài toán image stitching (ghép ảnh), sau khi tìm được các cặp điểm khớp và ước lượng homography, bước cuối cùng thường là:
+A. Blending (hòa trộn) hai ảnh để loại bỏ đường nối.
+B. Phát hiện thêm keypoint.
+C. Chạy lại SIFT.
+D. Lưu ảnh dưới dạng PNG.
+=>A
+[C4] Chương 4 (70 câu)
+Phân đoạn ảnh (Image Segmentation) là quá trình gì?
+A. Tăng cường độ sáng và độ tương phản của ảnh.
+B. Chia ảnh thành các vùng đồng nhất về màu sắc, kết cấu hoặc đặc trưng khác.
+C. Nén ảnh để giảm dung lượng lưu trữ.
+D. Phát hiện và nhận dạng các đối tượng cụ thể trong ảnh.
+=>B
+Phân đoạn ảnh KHÔNG được ứng dụng trong lĩnh vực nào sau đây?
+A. Xe tự lái (nhận biết làn đường, chướng ngại vật).
+B. Phân tích ảnh y tế (phát hiện khối u).
+C. Tăng độ phân giải ảnh (Super-Resolution).
+D. Biên tập ảnh (tách nền, thay đổi màu sắc vùng).
+=>C
+Phân đoạn ngữ nghĩa (Semantic Segmentation) có đặc điểm gì?
+A. Gán nhãn cho từng pixel theo lớp đối tượng, không phân biệt các đối tượng cùng lớp.
+B. Phân biệt từng đối tượng riêng biệt ngay cả khi cùng lớp.
+C. Chỉ xác định vị trí bounding box của đối tượng.
+D. Chia ảnh thành các vùng dựa trên ngưỡng cường độ.
+=>A
+Phân đoạn cá thể (Instance Segmentation) khác với phân đoạn ngữ nghĩa ở điểm nào?
+A. Instance Segmentation chỉ làm việc với ảnh nhị phân.
+B. Instance Segmentation phân biệt được các đối tượng riêng biệt cùng lớp.
+C. Instance Segmentation không cần dùng mạng nơ-ron.
+D. Instance Segmentation không gán nhãn pixel mà chỉ vẽ bounding box.
+=>B
+Phân đoạn toàn cảnh (Panoptic Segmentation) kết hợp những loại phân đoạn nào?
+A. Phân đoạn ngữ nghĩa và phát hiện đối tượng.
+B. Phân đoạn ngữ nghĩa và phân đoạn cá thể.
+C. Phân đoạn cá thể và phân đoạn dựa trên biên.
+D. Phân đoạn dựa trên vùng và phân đoạn dựa trên biên.
+=>B
+Trong phân đoạn ngữ nghĩa, mỗi pixel được gán:
+A. Một giá trị cường độ xám.
+B. Một nhãn lớp (class label).
+C. Một vector đặc trưng SIFT.
+D. Một tọa độ không gian mới.
+=>B
+Đâu là ví dụ về bài toán phân đoạn cá thể?
+A. Tô màu tất cả các pixel thuộc 'người' bằng màu đỏ.
+B. Xác định và tô màu riêng biệt từng người trong đám đông.
+C. Phân loại toàn bộ ảnh là 'có người' hay 'không có người'.
+D. Tách nền ảnh thành hai phần foreground và background.
+=>B
+Trong ảnh chụp đường phố, 'bầu trời' và 'mặt đường' thường được coi là:
+A. 'Things' - đối tượng đếm được, cần phân biệt instance.
+B. 'Stuff' - vùng nền không đếm được, chỉ cần gán nhãn semantic.
+C. Không cần phân đoạn.
+D. Luôn thuộc về lớp 'background'.
+=>B
+Chỉ số IoU (Intersection over Union) được tính như thế nào?
+A. Diện tích phần giao chia cho diện tích phần bù.
+B. Diện tích phần giao chia cho diện tích phần hợp.
+C. Diện tích phần hợp chia cho diện tích phần giao.
+D. Tổng diện tích hai vùng chia cho diện tích phần giao.
+=>B
+Giá trị IoU càng cao thể hiện điều gì?
+A. Kết quả phân đoạn càng khớp với ground truth.
+B. Thuật toán chạy càng nhanh.
+C. Mô hình càng nhẹ.
+D. Số lượng tham số càng ít.
+=>A
+mIoU (Mean IoU) là gì?
+A. IoU lớn nhất trong tất cả các lớp.
+B. IoU nhỏ nhất trong tất cả các lớp.
+C. Trung bình cộng IoU trên tất cả các lớp.
+D. Tích của IoU trên tất cả các lớp.
+=>C
+Pixel Accuracy là chỉ số:
+A. Tỷ lệ pixel được phân loại đúng trên tổng số pixel.
+B. Tỷ lệ pixel bị phân loại sai trên tổng số pixel.
+C. Độ chính xác của đường biên phân đoạn.
+D. Độ tương đồng về màu sắc giữa các vùng.
+=>A
+Hạn chế của Pixel Accuracy khi dùng để đánh giá phân đoạn ảnh là gì?
+A. Không tính được cho ảnh màu.
+B. Không phản ánh tốt nếu các lớp có diện tích mất cân bằng.
+C. Chỉ áp dụng được cho ảnh y tế.
+D. Yêu cầu phải có GPU để tính toán.
+=>B
+Dice Coefficient (hệ số Dice) thường được sử dụng nhiều trong lĩnh vực nào?
+A. Phân đoạn ảnh vệ tinh.
+B. Phân đoạn ảnh y tế.
+C. Phân đoạn ảnh thể thao.
+D. Phân đoạn ảnh phong cảnh.
+=>B
+Boundary F1-score đánh giá khía cạnh nào của kết quả phân đoạn?
+A. Độ chính xác của màu sắc vùng.
+B. Độ chính xác của đường biên giữa các vùng.
+C. Độ đồng nhất của kết cấu bên trong vùng.
+D. Tốc độ thực thi của thuật toán.
+=>B
+Phân ngưỡng (Thresholding) thuộc loại phương pháp phân đoạn nào?
+A. Dựa trên học sâu.
+B. Dựa trên phân cụm.
+C. Dựa trên ngưỡng cường độ pixel.
+D. Dựa trên phát hiện biên.
+=>C
+Trong phân ngưỡng toàn cục, điều gì xảy ra?
+A. Mỗi pixel được so sánh với các lân cận để quyết định nhãn.
+B. Một ngưỡng duy nhất được áp dụng cho toàn bộ ảnh.
+C. Mỗi vùng ảnh có một ngưỡng riêng biệt.
+D. Ngưỡng được tính dựa trên mạng nơ-ron.
+=>B
+Phương pháp Otsu dùng để làm gì?
+A. Tự động tìm ngưỡng tối ưu cho phân ngưỡng toàn cục.
+B. Xác định số cụm K tối ưu cho K-means.
+C. Phát hiện biên trong ảnh.
+D. Lọc nhiễu trước khi phân đoạn.
+=>A
+Nguyên lý của phương pháp Otsu là:
+A. Cực đại hóa phương sai giữa các lớp (between-class variance).
+B. Cực tiểu hóa phương sai trong cùng lớp (within-class variance).
+C. Cân bằng histogram của ảnh.
+D. Tìm điểm uốn của hàm mật độ xác suất.
+=>A
+Phân ngưỡng cục bộ (Adaptive Thresholding) khác phân ngưỡng toàn cục ở điểm nào?
+A. Sử dụng nhiều ngưỡng khác nhau cho các vùng khác nhau.
+B. Không cần chọn ngưỡng.
+C. Luôn cho kết quả là ảnh màu.
+D. Không áp dụng được cho ảnh xám.
+=>A
+Ưu điểm chính của phân ngưỡng là gì?
+A. Độ chính xác cao với mọi loại ảnh.
+B. Đơn giản, dễ thực hiện, nhanh.
+C. Không bị ảnh hưởng bởi nhiễu.
+D. Có thể phân đoạn được nhiều đối tượng chồng lấn.
+=>B
+Nhược điểm của phân ngưỡng toàn cục với ngưỡng cố định là:
+A. Khó chọn ngưỡng phù hợp khi ảnh có ánh sáng không đều.
+B. Luôn yêu cầu chuyển sang HSV.
+C. Không thể áp dụng cho ảnh kích thước lớn.
+D. Chỉ cho ra ảnh có 2 màu đen trắng.
+=>A
+Phân ngưỡng thường được sử dụng để tạo ra loại ảnh nào?
+A. Ảnh xám.
+B. Ảnh nhị phân (binary).
+C. Ảnh âm bản.
+D. Ảnh HDR.
+=>B
+Khi nào phân ngưỡng toàn cục hoạt động hiệu quả nhất?
+A. Khi ảnh có độ tương phản cao giữa foreground và background.
+B. Khi ảnh có nhiều chi tiết nhỏ.
+C. Khi ảnh có nhiễu cao.
+D. Khi ảnh có ánh sáng thay đổi liên tục.
+=>A
+Phương pháp Region Growing (phát triển vùng) bắt đầu từ đâu?
+A. Từ các đường biên đã được phát hiện.
+B. Từ một hoặc nhiều pixel hạt nhân (seed pixel).
+C. Từ việc chia ảnh thành các khối đều nhau.
+D. Từ việc phân cụm toàn bộ pixel.
+=>B
+Tiêu chí để gộp một pixel lân cận vào vùng trong Region Growing thường dựa trên:
+A. Khoảng cách Euclidean đến tâm ảnh.
+B. Độ chênh lệch cường độ hoặc màu sắc so với vùng hiện tại.
+C. Hướng gradient của pixel.
+D. Vị trí tuyệt đối của pixel.
+=>B
+Phương pháp Split and Merge hoạt động dựa trên cấu trúc dữ liệu nào?
+A. Mảng một chiều.
+B. Danh sách liên kết.
+C. Cây tứ phân (Quadtree).
+D. Đồ thị vô hướng.
+=>C
+Trong Split and Merge, một khối được quyết định 'chia' khi nào?
+A. Khi nó quá nhỏ.
+B. Khi nó không đủ đồng nhất theo tiêu chí đã định.
+C. Khi nó nằm ở biên ảnh.
+D. Khi nó chứa ít hơn 4 pixel.
+=>B
+Watershed Segmentation coi ảnh gradient như:
+A. Một bề mặt địa hình với các đỉnh và thung lũng.
+B. Một ma trận nhị phân.
+C. Một tập hợp các vector đặc trưng.
+D. Một đồ thị liên thông.
+=>A
+Trong Watershed, 'đường phân thủy' hình thành tại vị trí nào?
+A. Nơi có cường độ gradient thấp nhất.
+B. Nơi nước từ các thung lũng khác nhau gặp nhau.
+C. Nơi có cường độ sáng cao nhất.
+D. Nơi người dùng đặt marker.
+=>B
+Một vấn đề thường gặp của Watershed Segmentation là gì?
+A. Không thể áp dụng cho ảnh màu.
+B. Quá phân đoạn (oversegmentation) do nhiễu và chi tiết nhỏ.
+C. Quá chậm để chạy trên CPU.
+D. Không có sẵn trong OpenCV.
+=>B
+Để giảm quá phân đoạn trong Watershed, người ta thường dùng kỹ thuật gì?
+A. Marker-controlled Watershed.
+B. Lọc trung vị trước khi phân đoạn.
+C. Tăng độ tương phản của ảnh.
+D. Sử dụng ảnh có độ phân giải thấp hơn.
+=>A
+Ưu điểm của phân vùng dựa trên vùng so với phân ngưỡng là gì?
+A. Kết quả phân đoạn thường mịn hơn và ít bị nhiễu hơn.
+B. Luôn nhanh hơn.
+C. Không cần chọn tham số.
+D. Có thể phân biệt được các đối tượng cùng màu.
+=>A
+Hạn chế chung của các phương pháp phân vùng dựa trên vùng là gì?
+A. Không thể xử lý ảnh có kích thước lớn.
+B. Phụ thuộc vào việc chọn hạt nhân hoặc tiêu chí đồng nhất.
+C. Chỉ áp dụng cho ảnh nhị phân.
+D. Không hoạt động trên ảnh màu.
+=>B
+Phân đoạn dựa trên biên (Edge-based Segmentation) dựa vào giả định gì?
+A. Các vùng đồng nhất được bao bọc bởi các đường biên.
+B. Các pixel trong cùng vùng có cùng giá trị cường độ.
+C. Biên là nơi có gradient thấp.
+D. Biên không quan trọng trong phân đoạn.
+=>A
+Để có được vùng phân đoạn từ các cạnh, bước quan trọng sau khi phát hiện cạnh là gì?
+A. Làm mờ ảnh.
+B. Kết nối các cạnh để tạo thành đường viền kín.
+C. Phân ngưỡng ảnh gốc.
+D. Chuyển ảnh sang không gian màu khác.
+=>B
+Hạn chế lớn nhất của phân đoạn dựa trên biên là gì?
+A. Không phát hiện được cạnh trong ảnh màu.
+B. Khó tạo được đường viền kín hoàn hảo do cạnh bị đứt đoạn.
+C. Luôn chậm hơn các phương pháp khác.
+D. Không thể kết hợp với các phương pháp khác.
+=>B
+Trong phân đoạn bằng K-means, mỗi pixel được coi là:
+A. Một điểm dữ liệu trong không gian đặc trưng (ví dụ: RGB).
+B. Một tâm cụm.
+C. Một nhãn lớp.
+D. Một vector nhị phân.
+=>A
+Số lượng cụm K trong K-means segmentation ảnh hưởng đến điều gì?
+A. Độ phân giải của ảnh đầu ra.
+B. Số lượng vùng phân đoạn (màu sắc khác nhau) trong kết quả.
+C. Tốc độ hội tụ của thuật toán.
+D. Định dạng file ảnh đầu ra.
+=>B
+Kết quả của K-means segmentation phụ thuộc vào yếu tố nào?
+A. Cách khởi tạo tâm cụm ban đầu.
+B. Thứ tự duyệt pixel trong ảnh.
+C. Hệ điều hành đang chạy.
+D. Độ sâu bit của ảnh gốc.
+=>A
+Phương pháp K-means++ được đề xuất để giải quyết vấn đề gì?
+A. Tăng tốc độ tính toán.
+B. Cải thiện việc khởi tạo tâm cụm, tránh rơi vào cực tiểu địa phương xấu.
+C. Tự động xác định số cụm K.
+D. Áp dụng K-means cho ảnh màu.
+=>B
+Để chọn số cụm K tối ưu trong K-means, có thể dùng phương pháp nào?
+A. Phương pháp Otsu.
+B. Elbow Method (phương pháp khuỷu tay).
+C. Cân bằng histogram.
+D. Biến đổi Hough.
+=>B
+Khi áp dụng K-means, không gian đặc trưng có thể mở rộng bằng cách thêm thành phần nào để khuyến khích vùng liên thông?
+A. Giá trị cường độ trung bình.
+B. Tọa độ không gian (x, y) của pixel.
+C. Giá trị gradient.
+D. Hướng của cạnh.
+=>B
+Phân đoạn dựa trên phân cụm thuộc loại học máy nào?
+A. Học có giám sát.
+B. Học không giám sát.
+C. Học bán giám sát.
+D. Học tăng cường.
+=>B
+So với phân ngưỡng, K-means segmentation có ưu điểm gì?
+A. Luôn nhanh hơn.
+B. Có thể phân đoạn ảnh thành nhiều hơn 2 vùng.
+C. Không cần chỉ định tham số nào.
+D. Hoạt động tốt với độ tương phản thấp.
+=>B
+Kiến trúc Encoder-Decoder trong phân đoạn ảnh có đặc điểm gì?
+A. Encoder tăng kích thước không gian, Decoder giảm kích thước.
+B. Encoder trích xuất đặc trưng và giảm không gian; Decoder khôi phục kích thước tạo bản đồ.
+C. Chỉ dùng fully connected layers.
+D. Không dùng cho phân đoạn ảnh.
+=>B
+FCN (Fully Convolutional Network) khác CNN phân loại ảnh ở điểm nào?
+A. FCN không có lớp convolution nào.
+B. FCN thay thế các lớp fully connected cuối cùng bằng lớp convolution 1x1.
+C. FCN chỉ hoạt động trên ảnh xám.
+D. FCN sử dụng nhiều dữ liệu hơn.
+=>B
+Đầu ra của FCN cho bài toán phân đoạn ngữ nghĩa là gì?
+A. Một vector xác suất của các lớp.
+B. Một heatmap (bản đồ nhiệt) có cùng kích thước không gian với ảnh đầu vào.
+C. Một bounding box.
+D. Một số nguyên duy nhất.
+=>B
+Hạn chế chính của FCN cơ bản là gì?
+A. Không thể huấn luyện trên GPU.
+B. Độ phân giải đầu ra bị thô do quá trình down-sampling liên tiếp.
+C. Không thể phân đoạn nhiều đối tượng.
+D. Chỉ dự đoán được một lớp duy nhất.
+=>B
+Để cải thiện độ phân giải đầu ra trong FCN, người ta thường dùng kỹ thuật gì?
+A. Thêm nhiều lớp pooling hơn.
+B. Sử dụng skip connections kết hợp feature map từ các tầng nông hơn.
+C. Giảm kích thước ảnh đầu vào.
+D. Dùng hàm kích hoạt sigmoid.
+=>B
+Skip connections trong mạng phân đoạn có tác dụng gì?
+A. Tăng tốc độ tính toán.
+B. Kết hợp thông tin chi tiết không gian từ encoder vào decoder để khôi phục biên tốt hơn.
+C. Giảm số lượng tham số.
+D. Ngăn chặn overfitting.
+=>B
+FCN-8s, FCN-16s, FCN-32s khác nhau ở điểm nào?
+A. Số lượng lớp convolutional.
+B. Mức độ sử dụng skip connections (stride của lớp dự đoán cuối cùng).
+C. Hàm mất mát sử dụng.
+D. Kích thước ảnh đầu vào.
+=>B
+U-Net có tên gọi như vậy vì lý do gì?
+A. Được phát triển bởi Đại học Utrecht.
+B. Có cấu trúc hình chữ U đối xứng.
+C. Là mạng hợp nhất (Unified Network).
+D. Sử dụng Uniform sampling.
+=>B
+Đặc điểm nổi bật nhất của U-Net là gì?
+A. Sử dụng atrous convolution.
+B. Sử dụng skip connections nối trực tiếp từ encoder sang decoder cùng cấp.
+C. Không có phần decoder.
+D. Chỉ dùng cho ảnh tự nhiên.
+=>B
+U-Net được ứng dụng rất thành công trong lĩnh vực nào?
+A. Phân đoạn ảnh y tế (tế bào, khối u).
+B. Nhận dạng khuôn mặt.
+C. Tạo ảnh giả (GAN).
+D. Nén ảnh.
+=>A
+So với FCN, U-Net có ưu điểm gì về khả năng khôi phục chi tiết?
+A. U-Net khôi phục chi tiết tốt hơn nhờ các skip connections dày đặc.
+B. U-Net không khôi phục được chi tiết.
+C. Cả hai như nhau.
+D. FCN khôi phục chi tiết tốt hơn.
+=>A
+SegNet lưu trữ thông tin gì từ quá trình pooling để dùng cho up-sampling?
+A. Giá trị trung bình của vùng pooling.
+B. Chỉ số vị trí của giá trị lớn nhất (max pooling indices).
+C. Toàn bộ feature map.
+D. Giá trị độ lệch chuẩn.
+=>B
+So với U-Net, SegNet có ưu điểm gì về mặt bộ nhớ?
+A. SegNet dùng nhiều bộ nhớ hơn.
+B. SegNet tiết kiệm bộ nhớ hơn vì không cần lưu toàn bộ feature map cho skip connections.
+C. Cả hai dùng lượng bộ nhớ như nhau.
+D. SegNet không thể chạy trên GPU.
+=>B
+Về khả năng khôi phục chi tiết, so sánh nào sau đây là đúng?
+A. U-Net tốt hơn SegNet.
+B. SegNet tốt hơn U-Net.
+C. Cả hai hoàn toàn như nhau.
+D. Không thể so sánh.
+=>A
+Cả U-Net và SegNet đều thuộc kiến trúc nào?
+A. Chỉ có encoder.
+B. Encoder-Decoder.
+C. Chỉ có decoder.
+D. Mạng đối kháng (GAN).
+=>B
+DeepLab được phát triển bởi công ty nào?
+A. Facebook.
+B. Microsoft.
+C. Google.
+D. Apple.
+=>C
+Atrous convolution (dilated convolution) trong DeepLab có tác dụng gì?
+A. Giảm số lượng tham số.
+B. Tăng vùng tiếp nhận (receptive field) mà không giảm kích thước feature map.
+C. Tăng tốc độ tính toán.
+D. Chuyển đổi ảnh màu thành xám.
+=>B
+ASPP (Atrous Spatial Pyramid Pooling) trong DeepLab dùng để:
+A. Giảm nhiễu trong ảnh.
+B. Nắm bắt thông tin ngữ cảnh ở nhiều tỷ lệ khác nhau.
+C. Tăng số lượng kênh của feature map.
+D. Thay thế cho skip connections.
+=>B
+DeepLabv3+ cải tiến so với DeepLabv3 ở điểm nào?
+A. Thêm một decoder đơn giản để tinh chỉnh biên đối tượng.
+B. Bỏ hoàn toàn atrous convolution.
+C. Chỉ sử dụng một tỷ lệ giãn duy nhất.
+D. Không sử dụng ASPP.
+=>A
+PSPNet (Pyramid Scene Parsing Network) sử dụng mô-đun đặc trưng nào?
+A. Atrous convolution.
+B. Skip connections.
+C. Pyramid Pooling Module.
+D. Max pooling indices.
+=>C
+Mục đích của Pyramid Pooling Module trong PSPNet là gì?
+A. Nắm bắt thông tin ngữ cảnh toàn cục ở nhiều cấp độ.
+B. Tăng độ phân giải không gian.
+C. Giảm số lượng kênh feature map.
+D. Loại bỏ các vùng không liên quan.
+=>A
+DeepLab và PSPNet đều tập trung vào việc cải thiện điều gì trong phân đoạn ngữ nghĩa?
+A. Tốc độ suy luận (inference speed).
+B. Khả năng nắm bắt ngữ cảnh đa tỷ lệ (multi-scale context).
+C. Giảm bộ nhớ sử dụng.
+D. Đơn giản hóa kiến trúc mạng.
+=>B
+So với U-Net, DeepLab có xu hướng phù hợp hơn với loại ảnh nào?
+A. Ảnh y tế có ít dữ liệu.
+B. Ảnh tự nhiên đa dạng, yêu cầu ngữ cảnh toàn cục phức tạp.
+C. Ảnh nhị phân đơn giản.
+D. Ảnh có độ phân giải rất thấp.
+=>B
+Trong DeepLab, backbone thường được sử dụng là gì?
+A. LeNet-5.
+B. ResNet hoặc Xception.
+C. AlexNet.
+D. VGG-16 không có skip connections.
+=>B
+Kỹ thuật atrous convolution có thể được mô tả như thế nào?
+A. Bỏ qua một số pixel trong kernel khi tính tích chập.
+B. Chèn các số 0 vào giữa các trọng số của kernel.
+C. Chỉ áp dụng tích chập lên các vùng có biên độ lớn.
+D. Dùng kernel có kích thước 1x1.
+=>B
+[C5] Chương 5 (60 câu)
+Object detection khác với image classification ở điểm nào?
+A. Object detection chỉ dự đoán nhãn của toàn bộ ảnh.
+B. Object detection vừa định vị (bounding box) vừa phân loại đối tượng.
+C. Object detection không cần dùng mạng CNN.
+D. Object detection chỉ làm việc với ảnh xám.
+=>B
+Bốn thành phần chính của một hệ thống object detection là:
+A. Backbone, Neck, Head, Loss.
+B. Model, Ground Truth Encoding, Loss Function, Model Prediction Decoding.
+C. Input, Hidden Layers, Output, Optimizer.
+D. CNN, RPN, RoI Pooling, Classifier.
+=>A
+Trong pipeline object detection, bước 'Model Prediction Decoding' thường bao gồm kỹ thuật gì để loại bỏ các box trùng lặp?
+A. Non-Maximum Suppression (NMS).
+B. Intersection over Union (IoU).
+C. Mean Average Precision (mAP).
+D. Focal Loss.
+=>A
+Backbone trong object detection model có vai trò gì?
+A. Dự đoán trực tiếp bounding box.
+B. Trích xuất đặc trưng từ ảnh đầu vào.
+C. Tăng cường độ phân giải ảnh.
+D. Gán nhãn cho anchor.
+=>B
+Feature Pyramid Network (FPN) thuộc thành phần nào trong kiến trúc model?
+A. Backbone.
+B. Neck.
+C. Head.
+D. Loss Function.
+=>B
+Neck trong kiến trúc object detection (như FPN, PANet) giúp ích gì?
+A. Tăng tốc độ tính toán của backbone.
+B. Tổng hợp đặc trưng đa tỉ lệ để phát hiện vật ở nhiều kích thước.
+C. Thay thế hoàn toàn backbone.
+D. Giảm số lượng anchor cần dùng.
+=>B
+Non-Maximum Suppression (NMS) được áp dụng ở giai đoạn nào?
+A. Trong quá trình huấn luyện để tính loss.
+B. Trong quá trình tiền xử lý ảnh.
+C. Sau khi model đưa ra dự đoán (post-processing).
+D. Trong quá trình khởi tạo anchor.
+=>C
+Phát biểu nào sau đây là SAI về object detection?
+A. Object detection là bài toán khó hơn image classification.
+B. Object detection có thể thực hiện bằng one-stage và two-stage.
+C. Tất cả các object detector đều yêu cầu anchor boxes.
+D. mAP là chỉ số phổ biến để đánh giá object detector.
+=>C
+Two-stage detectors có đặc điểm gì?
+A. Dự đoán trực tiếp class và box từ feature map.
+B. Gồm hai bước: region proposal và classification/refinement.
+C. Luôn nhanh hơn one-stage detectors.
+D. Không sử dụng CNN.
+=>B
+Đại diện tiêu biểu của two-stage detectors là:
+A. SSD, YOLO, RetinaNet.
+B. R-CNN, Fast R-CNN, Faster R-CNN.
+C. CenterNet, FCOS.
+D. EfficientDet, DETR.
+=>B
+One-stage detectors có ưu điểm gì so với two-stage?
+A. Độ chính xác luôn cao hơn.
+B. Tốc độ suy luận nhanh hơn, phù hợp thời gian thực.
+C. Không cần huấn luyện end-to-end.
+D. Dễ dàng phát hiện vật nhỏ hơn.
+=>B
+YOLO thuộc loại detector nào?
+A. Two-stage.
+B. One-stage.
+C. Anchor-free only.
+D. Transformer-based.
+=>B
+Faster R-CNN cải tiến so với Fast R-CNN bằng cách thay thế Selective Search bằng:
+A. Region Proposal Network (RPN).
+B. Feature Pyramid Network (FPN).
+C. RoI Align.
+D. Atrous convolution.
+=>A
+Mask R-CNN mở rộng từ Faster R-CNN bằng cách thêm nhánh dự đoán gì?
+A. Bounding box regression.
+B. Class probability.
+C. Segmentation mask.
+D. Anchor boxes.
+=>C
+Mô hình nào sau đây thuộc họ two-stage?
+A. SSD.
+B. RetinaNet.
+C. Faster R-CNN.
+D. YOLOv4.
+=>C
+R-CNN sử dụng phương pháp nào để đề xuất region proposals?
+A. Region Proposal Network (RPN).
+B. Selective Search.
+C. Sliding Window.
+D. Edge Boxes.
+=>B
+Điểm yếu lớn nhất của R-CNN nguyên bản là gì?
+A. Độ chính xác thấp.
+B. Tốc độ rất chậm vì phải chạy CNN trên hàng nghìn region proposals.
+C. Không thể huấn luyện trên GPU.
+D. Không phát hiện được nhiều đối tượng.
+=>B
+Fast R-CNN cải thiện tốc độ bằng cách nào?
+A. Loại bỏ hoàn toàn bước region proposal.
+B. Chỉ chạy CNN một lần trên toàn ảnh và dùng RoI Pooling để trích xuất đặc trưng cho từng proposal.
+C. Sử dụng mạng nhẹ hơn.
+D. Giảm số lượng region proposal xuống còn 10.
+=>B
+Trong Faster R-CNN, RPN (Region Proposal Network) dùng để làm gì?
+A. Trích xuất đặc trưng từ ảnh.
+B. Phân loại đối tượng.
+C. Đề xuất các vùng có khả năng chứa đối tượng.
+D. Tính toán mAP.
+=>C
+Anchor boxes trong Faster R-CNN là gì?
+A. Các bounding box thực tế của ground truth.
+B. Các hộp có kích thước và tỉ lệ cố định được dùng làm tham chiếu để dự đoán.
+C. Các vùng ảnh được cắt ra từ ảnh gốc.
+D. Các kernel convolution.
+=>B
+RoI Pooling trong Fast/Faster R-CNN có tác dụng gì?
+A. Tăng kích thước feature map.
+B. Chuyển đổi các region proposal có kích thước khác nhau thành feature vector có kích thước cố định.
+C. Giảm số lượng anchor boxes.
+D. Tính loss cho bounding box regression.
+=>B
+RoI Align (trong Mask R-CNN) khắc phục nhược điểm gì của RoI Pooling?
+A. Tốc độ chậm.
+B. Sai số lượng tử hóa (quantization error) gây lệch vị trí.
+C. Không hỗ trợ anchor.
+D. Không tương thích với FPN.
+=>B
+SSD (Single Shot MultiBox Detector) dự đoán đối tượng dựa trên:
+A. Feature maps từ nhiều tầng khác nhau với các default boxes có tỉ lệ khác nhau.
+B. Chỉ một feature map duy nhất.
+C. Region proposals từ RPN.
+D. Heatmap của tâm đối tượng.
+=>A
+RetinaNet nổi tiếng vì đã giải quyết vấn đề gì của one-stage detectors?
+A. Tốc độ chậm.
+B. Mất cân bằng lớp giữa foreground và background khi huấn luyện.
+C. Không có anchor boxes.
+D. Không thể phát hiện vật lớn.
+=>B
+Focal Loss được giới thiệu lần đầu trong model nào?
+A. YOLOv3.
+B. SSD.
+C. RetinaNet.
+D. Faster R-CNN.
+=>C
+Công thức Focal Loss: FL = -α·(1-p)^γ · log(p). Tham số γ có tác dụng gì?
+A. Cân bằng số lượng mẫu giữa các lớp.
+B. Giảm loss của các mẫu dễ (well-classified), tập trung vào mẫu khó.
+C. Điều chỉnh tốc độ học.
+D. Tăng kích thước anchor.
+=>B
+CenterNet thuộc loại detector nào?
+A. Anchor-based two-stage.
+B. Anchor-free one-stage.
+C. Anchor-based one-stage.
+D. Transformer-based.
+=>B
+CenterNet dự đoán đối tượng bằng cách nào?
+A. Hồi quy offset từ anchor boxes.
+B. Dự đoán tâm của đối tượng và kích thước (width, height) của nó.
+C. Phân loại từng pixel.
+D. Dùng RPN và RoI Align.
+=>B
+YOLOv1 chia ảnh thành lưới S×S. Giá trị S thường là bao nhiêu?
+A. 3
+B. 5
+C. 7
+D. 13
+=>C
+Backbone của YOLOv3 là:
+A. Darknet-19.
+B. Darknet-53.
+C. CSPDarknet53.
+D. ResNet-50.
+=>B
+YOLOv4 sử dụng Neck gồm những thành phần nào?
+A. FPN.
+B. SPP và PANet.
+C. Chỉ có SPP.
+D. Chỉ có PANet.
+=>B
+YOLOv5 được phát triển bởi tổ chức/cá nhân nào?
+A. Joseph Redmon.
+B. Ultralytics.
+C. Google Research.
+D. Facebook AI Research.
+=>B
+YOLOv8 hỗ trợ những tác vụ nào?
+A. Chỉ object detection.
+B. Object detection, image classification, instance segmentation.
+C. Chỉ instance segmentation.
+D. Chỉ pose estimation.
+=>B
+Đặc điểm chung của các model YOLO từ v2 trở đi là gì?
+A. Không sử dụng anchor boxes.
+B. Sử dụng anchor boxes để dự đoán bounding box.
+C. Luôn có kiến trúc Transformer.
+D. Không cần Non-Maximum Suppression.
+=>B
+Mosaic augmentation (dùng trong YOLOv4, v5) là kỹ thuật gì?
+A. Ghép 4 ảnh thành một ảnh huấn luyện để tăng độ đa dạng dữ liệu.
+B. Cắt ảnh thành nhiều mảnh nhỏ.
+C. Xoay ảnh 90 độ.
+D. Thay đổi màu sắc ngẫu nhiên.
+=>A
+Anchor box trong object detection là gì?
+A. Bounding box thực tế của đối tượng.
+B. Các hộp tham chiếu có kích thước và tỉ lệ được định nghĩa trước.
+C. Vùng ảnh chứa đối tượng sau khi crop.
+D. Kernel dùng trong convolution.
+=>B
+Một nhược điểm của anchor-based methods là:
+A. Luôn có độ chính xác thấp hơn anchor-free.
+B. Cần thiết kế và tinh chỉnh kích thước/tỉ lệ anchor phù hợp với dataset.
+C. Không thể áp dụng cho bài toán nhiều lớp.
+D. Không tương thích với backbone CNN.
+=>B
+Anchor-free methods dự đoán bounding box bằng cách nào?
+A. Dự đoán offset từ anchor có sẵn.
+B. Dự đoán trực tiếp các điểm chính (ví dụ: tâm, góc) hoặc khoảng cách đến biên.
+C. Dùng sliding window để quét toàn ảnh.
+D. Phân loại từng pixel và nhóm lại.
+=>B
+Model nào sau đây là anchor-free?
+A. Faster R-CNN.
+B. SSD.
+C. CenterNet.
+D. YOLOv3.
+=>C
+Ưu điểm của anchor-free so với anchor-based là gì?
+A. Giảm số lượng tham số siêu dữ liệu cần tuning (kích thước/tỉ lệ anchor).
+B. Luôn đạt mAP cao hơn trên COCO.
+C. Không cần NMS.
+D. Không cần backbone.
+=>A
+Cross-Entropy loss gặp vấn đề gì khi áp dụng trực tiếp cho one-stage detectors?
+A. Không khả vi.
+B. Bị ảnh hưởng nặng bởi mất cân bằng lớp (quá nhiều background).
+C. Không tính được cho multi-label.
+D. Chỉ dùng cho binary classification.
+=>B
+Trong Focal Loss, khi pt (xác suất dự đoán đúng) rất cao (mẫu dễ), modulating factor (1-pt)^γ sẽ:
+A. Gần bằng 0, làm giảm loss của mẫu đó.
+B. Gần bằng 1, giữ nguyên loss.
+C. Lớn hơn 1, tăng loss của mẫu đó.
+D. Không ảnh hưởng gì.
+=>A
+Tham số α trong Focal Loss dùng để:
+A. Cân bằng giữa các lớp (foreground/background).
+B. Điều chỉnh mức độ tập trung vào mẫu khó.
+C. Tăng tốc độ hội tụ.
+D. Chuẩn hóa gradient.
+=>A
+Smooth L1 Loss thường được dùng cho tác vụ nào trong object detection?
+A. Classification loss.
+B. Bounding box regression loss.
+C. IoU calculation.
+D. NMS thresholding.
+=>B
+Label assignment là quá trình gì?
+A. Gán nhãn lớp cho toàn bộ ảnh.
+B. Xác định anchor nào là positive (có đối tượng), anchor nào là negative (nền).
+C. Tạo ground truth bounding box.
+D. Chia tập dữ liệu thành train/val/test.
+=>B
+Phương pháp label assignment truyền thống (IoU-based) có hạn chế gì?
+A. Tính toán quá chậm.
+B. Có sự không khớp giữa cách gán nhãn khi training và NMS khi inference.
+C. Không xác định được negative samples.
+D. Chỉ áp dụng cho anchor-free.
+=>B
+ATSS (Adaptive Training Sample Selection) cải tiến label assignment bằng cách nào?
+A. Dùng ngưỡng IoU cố định 0.5.
+B. Chọn positive samples dựa trên thống kê IoU (trung bình + độ lệch chuẩn) cho từng ground truth.
+C. Gán tất cả anchor có IoU > 0 là positive.
+D. Sử dụng học tăng cường để chọn anchor.
+=>B
+Label Assignment Distillation (LAD) là kỹ thuật gì?
+A. Dùng teacher model để hướng dẫn quá trình gán nhãn cho student model.
+B. Chưng cất model object detection thành model nhẹ hơn.
+C. Tự động tìm số anchor tối ưu.
+D. Kết hợp nhiều IoU threshold để gán nhãn.
+=>A
+IoU (Intersection over Union) được tính bằng công thức nào?
+A. Diện tích phần giao chia cho diện tích phần bù.
+B. Diện tích phần giao chia cho diện tích phần hợp.
+C. Diện tích phần hợp chia cho diện tích phần giao.
+D. Tổng diện tích hai box trừ diện tích phần giao.
+=>B
+Trong object detection, một dự đoán được coi là True Positive (TP) khi nào?
+A. Có confidence score cao nhất.
+B. Có IoU với ground truth ≥ ngưỡng quy định (ví dụ 0.5) và đúng class.
+C. Có IoU với ground truth = 1.0.
+D. Không bị NMS loại bỏ.
+=>B
+Precision trong object detection được định nghĩa là:
+A. TP / (TP + FP)
+B. TP / (TP + FN)
+C. TP / Tổng số ground truth
+D. (TP + TN) / Tổng số dự đoán
+=>A
+Recall trong object detection được định nghĩa là:
+A. TP / (TP + FP)
+B. TP / (TP + FN)
+C. TP / Tổng số dự đoán
+D. (TP + TN) / Tổng số ground truth
+=>B
+Precision-Recall (PR) Curve được vẽ bằng cách thay đổi tham số nào?
+A. Ngưỡng IoU.
+B. Ngưỡng confidence score của model.
+C. Số lượng anchor boxes.
+D. Kích thước ảnh đầu vào.
+=>B
+Average Precision (AP) cho một lớp được tính bằng:
+A. Giá trị Precision trung bình ở tất cả các ngưỡng confidence.
+B. Diện tích dưới đường Precision-Recall curve.
+C. Giá trị Recall cao nhất đạt được.
+D. (Precision + Recall) / 2.
+=>B
+Mean Average Precision (mAP) là:
+A. Trung bình cộng của AP trên tất cả các lớp.
+B. Giá trị AP lớn nhất trong các lớp.
+C. Giá trị AP ở ngưỡng IoU = 0.5.
+D. Tích của AP trên tất cả các lớp.
+=>A
+Trên tập dữ liệu COCO, chỉ số mAP@[.5:.95] có nghĩa là gì?
+A. mAP được tính ở ngưỡng IoU cố định 0.5.
+B. mAP được tính trung bình trên các ngưỡng IoU từ 0.5 đến 0.95 (bước 0.05).
+C. mAP chỉ tính cho 50% lớp có AP cao nhất.
+D. mAP của model đạt 95% độ chính xác.
+=>B
+So sánh YOLOv4 với YOLOv3, YOLOv4 sử dụng thêm kỹ thuật gì ở Neck?
+A. FPN.
+B. SPP và PANet.
+C. Chỉ dùng skip connections.
+D. Atrous convolution.
+=>B
+Backbone CSPDarknet53 được sử dụng trong model nào?
+A. YOLOv3.
+B. YOLOv4 và YOLOv5.
+C. RetinaNet.
+D. SSD.
+=>B
+Theo biểu đồ so sánh trên COCO, xu hướng chung của các model hiện đại (YOLOv5, v8, EfficientDet) là:
+A. Tăng mAP nhưng giảm tốc độ.
+B. Cân bằng tốt giữa mAP cao và runtime thấp.
+C. Chỉ tập trung vào runtime, bỏ qua mAP.
+D. Tất cả đều dùng kiến trúc Transformer.
+=>B
+Face detector thường sử dụng kiến trúc nào cho tốc độ nhanh trên thiết bị di động?
+A. Faster R-CNN với ResNet-101.
+B. SSD với MobileNet hoặc CenterNet nhẹ.
+C. Mask R-CNN với ResNet-50.
+D. R-CNN với AlexNet.
+=>B

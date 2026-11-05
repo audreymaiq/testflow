@@ -78,6 +78,18 @@ npm --prefix frontend run dev
 
 Open <http://localhost:5173>.
 
+## Licensed Quiz Rush sample deck
+
+The owner authorized use and distribution of the built-in 300-question Computer Vision deck. The exported [TXT fixture](data/seed/quiz-rush-cv.txt) is committed in TestFlow, so the app has no runtime dependency on `quiz-rush`.
+
+Create two distinct Admin/Reviewer accounts first. Then run:
+
+```powershell
+backend\.venv\Scripts\python.exe backend\manage.py seed_quiz_rush --owner ADMIN_USERNAME --reviewer REVIEWER_USERNAME
+```
+
+The command creates the deck privately through the normal exam service, then requests and approves publication through the existing moderation services. It is idempotent. Omitting `--reviewer` leaves the deck private. The fixture can be reproduced from the authorized legacy source with `backend\.venv\Scripts\python.exe scripts\check_quiz_rush_parser.py T:\coding\quiz-rush\js\data.js --output data\seed\quiz-rush-cv.txt`; the converter checks all 300 questions and answers before writing.
+
 ## Configuration
 
 Settings are read from `.env` in the project root. See [.env.example](.env.example) for all variables.

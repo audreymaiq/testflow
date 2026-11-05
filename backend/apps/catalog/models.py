@@ -100,6 +100,7 @@ class Exam(Timestamped):
     source_kind = models.CharField(max_length=10)
     source_job = models.UUIDField(null=True, blank=True)
     source = models.CharField(max_length=500, blank=True)
+    is_system_sample = models.BooleanField(default=False)
     search_text = models.TextField(blank=True)
 
     class Meta:

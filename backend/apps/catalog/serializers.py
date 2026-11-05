@@ -69,6 +69,7 @@ class ExamListSerializer(serializers.ModelSerializer):
             "visibility",
             "has_answer_key",
             "question_count",
+            "is_system_sample",
             "attempt_count",
             "created_at",
         )

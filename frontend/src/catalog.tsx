@@ -7,6 +7,7 @@ type ExamSummary = {
   id: string; title: string; subtitle: string; level: string; grade: number | null
   subject: string; exam_type: string; visibility: string; question_count: number
   duration_minutes: number | null; has_answer_key: boolean; year: number | null
+  is_system_sample: boolean
 }
 type ExamDetail = ExamSummary & {
   is_owner: boolean
@@ -95,7 +96,7 @@ export function LibraryPage() {
         {exams.data.count === 0 ? <p>Chưa có đề phù hợp với bộ lọc.</p> : <section className="exam-table" aria-label="Danh sách đề">
           <div className="exam-row table-head" aria-hidden="true"><span>TÊN ĐỀ</span><span>MÔN</span><span>SỐ CÂU</span><span>HIỂN THỊ</span></div>
           {exams.data.results.map((exam) => <Link className="exam-row" key={exam.id} to={`/exams/${exam.id}`}>
-            <span className="exam-name"><strong>{exam.title}</strong><small>{exam.subtitle || levelNames[exam.level]}</small></span>
+            <span className="exam-name"><strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong><small>{exam.subtitle || levelNames[exam.level]}</small></span>
             <span>{exam.subject}</span><span className="mono">{exam.question_count}</span>
             <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
           </Link>)}
@@ -196,7 +197,7 @@ export function ExamDetailPage() {
   return <section className="paper detail-panel">
     <Link to="/library">← Thư viện</Link>
     <p className="eyebrow">{levelNames[exam.data.level]} / {exam.data.subject}</p>
-    <h1>{exam.data.title}</h1>
+    <h1>{exam.data.title} {exam.data.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</h1>
     {exam.data.subtitle && <p className="lede">{exam.data.subtitle}</p>}
     <dl className="exam-facts">
       <div><dt>Số câu</dt><dd>{exam.data.question_count}</dd></div>
