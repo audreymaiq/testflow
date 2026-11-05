@@ -11,7 +11,7 @@ from pydantic import ValidationError as ContractValidationError
 from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.models import Exam, Subject, Visibility
+from apps.catalog.models import Exam, School, Subject, Visibility
 from apps.catalog.selectors import list_exams
 from apps.catalog.services import create_exam, export_exam
 from apps.common.errors import ValidationFailed
@@ -30,7 +30,6 @@ def draft_data():
             "scoring_preset": "UNIFORM_10",
             "max_score": "10.00",
             "source": "Tự biên soạn",
-            "schools": ["Trường Mẫu"],
             "year": 2026,
         },
         "chapters": [{"code": "C1", "name": "Đại số", "order": 1}],
@@ -64,6 +63,7 @@ def draft_data():
 @pytest.fixture
 def users(db):
     Subject.objects.update_or_create(code="toan", defaults={"name": "Toán", "levels": ["THPT"]})
+    School.objects.get_or_create(name="Trường Mẫu")
     owner = get_user_model().objects.create_user(
         username="owner", email="owner@example.com", password="HardToGuess#2026"
     )
@@ -166,3 +166,112 @@ def test_catalog_list_query_count_does_not_grow_per_exam(users):
     with CaptureQueriesContext(connection) as many:
         assert client.get(reverse("exam-list")).data["count"] == 4
     assert len(many) <= len(first) + 2
+
+
+@pytest.mark.django_db
+def test_taxonomy_exact_variants_and_unknown_name_guard(users):
+    owner, _ = users
+    data = draft_data()
+    data["metadata"].update(subject=" TOÁN  ", schools=["  trƯờng   mẫU "])
+    exam = create_exam(ExamDraft.model_validate(data), owner=owner)
+    assert exam.subject.name == "Toán"
+    assert list(exam.schools.values_list("name", flat=True)) == ["Trường Mẫu"]
+    assert School.objects.count() == 1
+    data["metadata"]["schools"] = ["Trường Máu"]
+    with pytest.raises(ValidationFailed) as error:
+        create_exam(ExamDraft.model_validate(data), owner=owner)
+    assert error.value.code == "SCHOOL_UNREVIEWED"
+    assert Exam.objects.count() == 1
+
+
+@pytest.mark.django_db
+def test_taxonomy_proposal_review_alias_and_permissions(users):
+    from django.contrib.auth.models import Group
+
+    from apps.catalog.models import TaxonomyAlias, TaxonomyProposal
+
+    owner, other = users
+    admin = get_user_model().objects.create_user(
+        username="taxonomy_admin", password="HardToGuess#2026", is_staff=True
+    )
+    admin.groups.add(Group.objects.get_or_create(name="Admin")[0])
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    lookup = client.get(reverse("taxonomy-lookup"), {"kind": "SUBJECT", "name": "toánn"})
+    assert lookup.status_code == 200
+    assert lookup.data["match"] is None
+    assert lookup.data["suggestions"][0]["name"] == "Toán"
+    first = client.post(reverse("taxonomy-propose"), {"kind": "SUBJECT", "name": "Toán học"})
+    assert first.status_code == 201
+    client.force_authenticate(user=other)
+    second = client.post(reverse("taxonomy-propose"), {"kind": "SUBJECT", "name": "toán  HỌC"})
+    assert second.status_code == 201
+    assert first.data["id"] == second.data["id"]
+    assert client.get(reverse("taxonomy-queue")).status_code == 403
+    assert (
+        client.post(
+            reverse("taxonomy-decide", kwargs={"proposal_id": first.data["id"]}),
+            {"action": "MAP", "target_id": 1},
+        ).status_code
+        == 403
+    )
+    client.force_authenticate(user=admin)
+    assert client.get(reverse("taxonomy-queue")).data["count"] == 1
+    decision = client.post(
+        reverse("taxonomy-decide", kwargs={"proposal_id": first.data["id"]}),
+        {"action": "CREATE", "canonical_name": "Toán học", "levels": ["THPT"]},
+        format="json",
+    )
+    assert decision.status_code == 200, decision.data
+    assert decision.data["status"] == "APPROVED"
+    assert TaxonomyProposal.objects.get(pk=first.data["id"]).reviewed_by == admin
+    assert TaxonomyAlias.objects.filter(kind="SUBJECT").count() == 1
+    client.force_authenticate(user=owner)
+    exact = client.get(reverse("taxonomy-lookup"), {"kind": "SUBJECT", "name": "toán HỌC"})
+    assert exact.data["match"]["name"] == "Toán học"
+    data = draft_data()
+    data["metadata"]["subject"] = "TOÁN HỌC"
+    assert create_exam(ExamDraft.model_validate(data), owner=owner).subject.name == "Toán học"
+
+
+@pytest.mark.django_db
+def test_taxonomy_school_typo_requires_mapping_and_major_creation(users):
+    from django.contrib.auth.models import Group
+
+    from apps.catalog.models import Major
+
+    owner, _ = users
+    admin = get_user_model().objects.create_user(
+        username="taxonomy_admin2", password="HardToGuess#2026", is_staff=True
+    )
+    admin.groups.add(Group.objects.get_or_create(name="Admin")[0])
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    school = client.post(reverse("taxonomy-propose"), {"kind": "SCHOOL", "name": "Trường Mẫuu"})
+    assert school.status_code == 201
+    major = client.post(reverse("taxonomy-propose"), {"kind": "MAJOR", "name": "Khoa học dữ liệu"})
+    assert major.status_code == 201
+    client.force_authenticate(user=admin)
+    mapped = client.post(
+        reverse("taxonomy-decide", kwargs={"proposal_id": school.data["id"]}),
+        {"action": "MAP", "target_id": School.objects.get(name="Trường Mẫu").pk},
+    )
+    assert mapped.status_code == 200
+    created = client.post(
+        reverse("taxonomy-decide", kwargs={"proposal_id": major.data["id"]}),
+        {"action": "CREATE", "canonical_name": "Khoa học dữ liệu"},
+    )
+    assert created.status_code == 200
+    assert Major.objects.count() == 1
+    assert (
+        client.post(
+            reverse("taxonomy-decide", kwargs={"proposal_id": major.data["id"]}),
+            {"action": "CREATE"},
+        ).status_code
+        == 409
+    )
+    data = draft_data()
+    data["metadata"].update(schools=["trường mẫUU"], majors=["KHOA HỌC DỮ LIỆU"])
+    exam = create_exam(ExamDraft.model_validate(data), owner=owner)
+    assert list(exam.schools.values_list("name", flat=True)) == ["Trường Mẫu"]
+    assert list(exam.majors.values_list("name", flat=True)) == ["Khoa học dữ liệu"]

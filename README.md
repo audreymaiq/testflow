@@ -137,10 +137,14 @@ The API is served under `/api/v1/`:
 | `/api/v1/practice/` | Practice sessions, answers, and results |
 | `/api/v1/imports/` | Text imports and draft review |
 | `/api/v1/ops/` | Operations summary (admins only) |
+| `/api/v1/taxonomy/lookup/` | Resolve a reviewed subject, school or major and suggest close names |
+| `/api/v1/taxonomy/proposals/` | Submit a new name for review; Admin queue and decisions use `/pending/` and `/<id>/decision/` |
 | `/api/v1/schema/` | OpenAPI schema |
 | `/healthz` | Database and Redis health check |
 
 Access tokens are short-lived. The refresh token is stored in an HttpOnly cookie.
+
+In manual exam creation and TXT review, enter a subject, school or major and use **Kiểm tra tên**. Case and whitespace variants resolve to the canonical record. Close spellings are suggestions; select one or submit a proposal. Admin handles proposals on **Vận hành** by mapping to an existing record, creating a canonical record, or rejecting with a reason. Exams can only reference reviewed names. [Decision and limits](docs/adr/025-reviewed-taxonomy-names.md).
 
 ## Testing
 

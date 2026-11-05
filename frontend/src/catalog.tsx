@@ -2,6 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
+import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type ExamSummary = {
   id: string; title: string; subtitle: string; level: string; grade: number | null
@@ -11,6 +12,8 @@ type ExamSummary = {
 }
 type ExamDetail = ExamSummary & {
   is_owner: boolean
+  schools: string[]
+  majors: string[]
   chapters: { id: number; name: string; code: string }[]
   sections: { id: number; title: string; kind: string }[]
   section_stats: { id: number; title: string; count: number }[]
@@ -204,6 +207,8 @@ export function ExamDetailPage() {
       <div><dt>Thời gian</dt><dd>{exam.data.duration_minutes ? `${exam.data.duration_minutes} phút` : 'Không giới hạn'}</dd></div>
       <div><dt>Hiển thị</dt><dd>{exam.data.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</dd></div>
       <div><dt>Đáp án</dt><dd>{exam.data.has_answer_key ? 'Có' : 'Chưa đủ'}</dd></div>
+      {exam.data.schools.length > 0 && <div><dt>Trường</dt><dd>{exam.data.schools.join(', ')}</dd></div>}
+      {exam.data.majors.length > 0 && <div><dt>Ngành</dt><dd>{exam.data.majors.join(', ')}</dd></div>}
     </dl>
     <h2>Cấu trúc đề</h2>
     <ul>{exam.data.section_stats.map((item) => <li key={item.id}>{item.title}: {item.count} câu</li>)}</ul>
@@ -261,6 +266,9 @@ export function ManualExamPage() {
   const subjects = useQuery({ queryKey: ['subjects'], queryFn: () => api<Subject[]>('/subjects/') })
   const [title, setTitle] = useState('')
   const [subject, setSubject] = useState('toan')
+  const [subjectName, setSubjectName] = useState('')
+  const [schools, setSchools] = useState<string[]>([])
+  const [majors, setMajors] = useState<string[]>([])
   const [level, setLevel] = useState('THPT')
   const [grade, setGrade] = useState(12)
   const [duration, setDuration] = useState(30)
@@ -278,7 +286,7 @@ export function ManualExamPage() {
       schema_version: 1,
       metadata: {
         title, level, grade: ['THPT', 'THCS', 'TIEU_HOC'].includes(level) ? grade : null,
-        subject, exam_type: 'ON_TAP', scoring_preset: 'UNIFORM_10',
+        subject: subjectName.trim() || subject, schools, majors, exam_type: 'ON_TAP', scoring_preset: 'UNIFORM_10',
         max_score: 10, duration_minutes: duration, source: 'Tự biên soạn',
       },
       chapters: [],
@@ -310,7 +318,7 @@ export function ManualExamPage() {
     <form onSubmit={submit} className="manual-form">
       <label>Tên đề<input required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} /></label>
       <div className="form-grid">
-        <label>Môn học<select value={subject} onChange={(event) => setSubject(event.target.value)}>
+        <label>Môn học<select value={subject} onChange={(event) => { setSubject(event.target.value); setSubjectName('') }}>
           {subjects.data?.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
         </select></label>
         <label>Cấp học<select value={level} onChange={(event) => { setLevel(event.target.value); setGrade(event.target.value === 'THPT' ? 12 : event.target.value === 'THCS' ? 9 : 5) }}>
@@ -319,6 +327,10 @@ export function ManualExamPage() {
         {['THPT', 'THCS', 'TIEU_HOC'].includes(level) && <label>Lớp<input type="number" min={level === 'THPT' ? 10 : level === 'THCS' ? 6 : 1} max={level === 'THPT' ? 12 : level === 'THCS' ? 9 : 5} value={grade} onChange={(event) => setGrade(Number(event.target.value))} /></label>}
         <label>Thời gian (phút)<input type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
       </div>
+      <TaxonomyEntry kind="SUBJECT" label="Tên môn khác" value={subjectName} onChange={setSubjectName} />
+      <p>Chọn tên đã được duyệt để đề xuất hiện đúng trong bộ lọc thư viện.</p>
+      <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} />
+      <TaxonomyNames kind="MAJOR" label="Ngành" values={majors} onChange={setMajors} />
       <h2>Câu hỏi</h2>
       {questions.map((question, index) => <fieldset className="question-editor" key={index}>
         <legend>Câu {index + 1}</legend>

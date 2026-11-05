@@ -8,7 +8,7 @@ from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.models import Exam, Subject, Visibility
+from apps.catalog.models import Exam, Major, School, Subject, Visibility
 from apps.catalog.services import (
     create_exam,
     decide_publication,
@@ -89,6 +89,10 @@ class Command(BaseCommand):
             defaults={"name": "Thị giác máy tính", "levels": ["DAI_HOC"], "has_formula": True},
         )
         Subject.objects.select_for_update().get(code="thi-giac-may-tinh")
+        for name in draft.metadata.schools:
+            School.objects.get_or_create(name=name)
+        for name in draft.metadata.majors:
+            Major.objects.get_or_create(name=name)
         existing = Exam.objects.filter(
             is_system_sample=True, source__startswith=SOURCE_PREFIX
         ).first()

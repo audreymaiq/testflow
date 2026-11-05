@@ -8,23 +8,21 @@ from django.utils import timezone
 from testflow_contracts.exam import ExamDraft
 
 from apps.common.errors import Conflict, DomainPermissionDenied, NotFound, ValidationFailed
-from apps.common.text import normalize_text, search_fold
+from apps.common.text import search_fold
 
 from .models import (
     Chapter,
     Choice,
     Exam,
-    Major,
     Passage,
     PublishRequest,
     PublishRequestStatus,
     Question,
-    School,
     Section,
     Statement,
-    Subject,
     Visibility,
 )
+from .taxonomy import lookup, resolve
 
 
 def _has_key(question) -> bool:
@@ -55,7 +53,7 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         raise ValidationFailed("E_NO_QUESTIONS", "Đề cần ít nhất một câu hỏi.")
     if source_kind not in {"MANUAL", "TXT", "OCR"}:
         raise ValidationFailed("SOURCE_KIND_INVALID", "Nguồn đề không hợp lệ.")
-    subject = Subject.objects.filter(code=metadata.subject, is_active=True).first()
+    subject = resolve("SUBJECT", metadata.subject)
     if subject is None or (subject.levels and metadata.level not in subject.levels):
         raise ValidationFailed(
             "SUBJECT_INVALID", "Môn học không tồn tại hoặc không áp dụng cho cấp học."
@@ -77,6 +75,27 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         max_score = Decimal("100.00")
     elif max_score is None:
         raise ValidationFailed("MAX_SCORE_REQUIRED", "Thang điểm tùy chỉnh cần điểm tối đa.")
+
+    schools = []
+    for name in metadata.schools:
+        school = resolve("SCHOOL", name)
+        if school is None:
+            raise ValidationFailed(
+                "SCHOOL_UNREVIEWED",
+                "Trường chưa có trong danh mục chuẩn.",
+                {"name": name, **lookup("SCHOOL", name)},
+            )
+        schools.append(school)
+    majors = []
+    for name in metadata.majors:
+        major = resolve("MAJOR", name)
+        if major is None:
+            raise ValidationFailed(
+                "MAJOR_UNREVIEWED",
+                "Ngành chưa có trong danh mục chuẩn.",
+                {"name": name, **lookup("MAJOR", name)},
+            )
+        majors.append(major)
 
     exam = Exam(
         title=metadata.title,
@@ -109,16 +128,8 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         ) from exc
     exam.save()
 
-    for school_name in metadata.schools:
-        name = normalize_text(school_name)
-        if name:
-            school, _ = School.objects.get_or_create(name=name)
-            exam.schools.add(school)
-    for major_name in metadata.majors:
-        name = normalize_text(major_name)
-        if name:
-            major, _ = Major.objects.get_or_create(name=name)
-            exam.majors.add(major)
+    exam.schools.add(*schools)
+    exam.majors.add(*majors)
 
     chapter_by_code = {}
     for chapter_draft in draft.chapters:

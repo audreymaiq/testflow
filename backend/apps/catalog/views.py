@@ -1,5 +1,6 @@
 """Read-only public catalog and authenticated manual creation."""
 
+from django.db import IntegrityError
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -7,9 +8,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from apps.common.errors import DomainPermissionDenied
+from apps.common.errors import Conflict, DomainPermissionDenied
 
-from .models import PublishRequest, Subject, Visibility
+from .models import PublishRequest, Subject, TaxonomyProposal, Visibility
 from .selectors import list_exams, publication_queue, visible_exams
 from .serializers import (
     ExamDetailSerializer,
@@ -23,6 +24,9 @@ from .serializers import (
     PublicationFilterSerializer,
     PublicationRequestSerializer,
     SubjectSerializer,
+    TaxonomyDecisionSerializer,
+    TaxonomyLookupSerializer,
+    TaxonomyProposalSerializer,
     VisibilityChangeSerializer,
     VisibilityResponseSerializer,
 )
@@ -30,11 +34,13 @@ from .services import (
     create_exam,
     decide_publication,
     hide_exam,
+    is_admin,
     is_reviewer,
     make_private,
     request_publication,
     soft_delete_exam,
 )
+from .taxonomy import decide, lookup, propose
 
 
 class ExamListView(GenericAPIView):
@@ -143,6 +149,77 @@ class SubjectListView(GenericAPIView):
     def get(self, request):
         subjects = Subject.objects.filter(is_active=True).order_by("name")
         return Response(self.get_serializer(subjects, many=True).data)
+
+
+class TaxonomyLookupView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaxonomyLookupSerializer
+    throttle_scope = "taxonomy_lookup"
+
+    def get(self, request):
+        serializer = self.get_serializer(data=request.query_params)
+        serializer.is_valid(raise_exception=True)
+        return Response(
+            lookup(serializer.validated_data["kind"], serializer.validated_data["name"])
+        )
+
+
+class TaxonomyProposalView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaxonomyLookupSerializer
+    throttle_scope = "taxonomy_propose"
+
+    @extend_schema(responses={200: TaxonomyProposalSerializer, 201: TaxonomyProposalSerializer})
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        proposal, match = propose(
+            serializer.validated_data["kind"], serializer.validated_data["name"], request.user
+        )
+        if match:
+            return Response(
+                {
+                    "match": {
+                        "id": match.pk,
+                        "name": match.name,
+                        "code": getattr(match, "code", None),
+                    }
+                }
+            )
+        return Response(TaxonomyProposalSerializer(proposal).data, status=status.HTTP_201_CREATED)
+
+
+class TaxonomyQueueView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaxonomyProposalSerializer
+
+    def get(self, request):
+        if not is_admin(request.user):
+            raise DomainPermissionDenied("ADMIN_REQUIRED", "Cần quyền Admin.")
+        queue = (
+            TaxonomyProposal.objects.filter(status=TaxonomyProposal.Status.PENDING)
+            .select_related("requested_by")
+            .order_by("created_at")
+        )
+        page = self.paginate_queryset(queue)
+        return self.get_paginated_response(self.get_serializer(page, many=True).data)
+
+
+class TaxonomyDecisionView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = TaxonomyDecisionSerializer
+
+    @extend_schema(responses={200: TaxonomyProposalSerializer})
+    def post(self, request, proposal_id):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        try:
+            proposal = decide(proposal_id, admin=request.user, **serializer.validated_data)
+        except IntegrityError as exc:
+            raise Conflict(
+                "TAXONOMY_CONFLICT", "Danh mục vừa thay đổi; hãy tải lại hàng đợi."
+            ) from exc
+        return Response(TaxonomyProposalSerializer(proposal).data)
 
 
 class VisibilityView(GenericAPIView):

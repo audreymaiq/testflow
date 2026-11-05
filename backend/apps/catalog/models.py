@@ -69,6 +69,77 @@ class Major(Timestamped):
     name = models.CharField(max_length=200, unique=True)
 
 
+class TaxonomyKind(models.TextChoices):
+    SUBJECT = "SUBJECT"
+    SCHOOL = "SCHOOL"
+    MAJOR = "MAJOR"
+
+
+class TaxonomyAlias(Timestamped):
+    kind = models.CharField(max_length=7, choices=TaxonomyKind.choices)
+    key = models.CharField(max_length=200)
+    subject = models.ForeignKey(Subject, null=True, blank=True, on_delete=models.CASCADE)
+    school = models.ForeignKey(School, null=True, blank=True, on_delete=models.CASCADE)
+    major = models.ForeignKey(Major, null=True, blank=True, on_delete=models.CASCADE)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(fields=("kind", "key"), name="taxonomy_alias_key_unique"),
+            models.CheckConstraint(
+                condition=(
+                    Q(
+                        kind="SUBJECT",
+                        subject__isnull=False,
+                        school__isnull=True,
+                        major__isnull=True,
+                    )
+                    | Q(
+                        kind="SCHOOL",
+                        subject__isnull=True,
+                        school__isnull=False,
+                        major__isnull=True,
+                    )
+                    | Q(
+                        kind="MAJOR", subject__isnull=True, school__isnull=True, major__isnull=False
+                    )
+                ),
+                name="taxonomy_alias_one_target",
+            ),
+        )
+
+
+class TaxonomyProposal(Timestamped):
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        APPROVED = "APPROVED"
+        REJECTED = "REJECTED"
+
+    kind = models.CharField(max_length=7, choices=TaxonomyKind.choices)
+    name = models.CharField(max_length=200)
+    key = models.CharField(max_length=200)
+    status = models.CharField(max_length=8, choices=Status.choices, default=Status.PENDING)
+    requested_by = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.PROTECT)
+    reviewed_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="reviewed_taxonomy_proposals",
+    )
+    target_id = models.PositiveBigIntegerField(null=True, blank=True)
+    reason = models.TextField(blank=True)
+    decided_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(
+                fields=("kind", "key"),
+                condition=Q(status="PENDING"),
+                name="one_pending_taxonomy_name",
+            ),
+        )
+
+
 class Exam(Timestamped):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     title = models.CharField(max_length=300)

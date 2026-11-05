@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
+import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type Issue = { line: number; code: string; message: string; severity: 'ERROR' | 'WARNING' }
 type DraftChoice = { label: string; text: string; is_correct: boolean }
@@ -128,6 +129,11 @@ export function ImportReviewPage() {
     setMetadataDirty(true)
   }
 
+  function fieldList(name: 'schools' | 'majors', values: string[]) {
+    setMetadata((current) => ({ ...current, [name]: values }))
+    setMetadataDirty(true)
+  }
+
   async function saveMetadata(event: FormEvent) {
     event.preventDefault()
     if (!job?.draft) return
@@ -188,11 +194,14 @@ export function ImportReviewPage() {
           <h2>Thông tin đề</h2>
           <label>Tên đề<input required maxLength={300} value={String(metadata.title || '')} onChange={(event) => field('title', event.target.value)} /></label>
           <div className="form-grid">
-            <label>Môn học<select required value={String(metadata.subject || '')} onChange={(event) => field('subject', event.target.value)}><option value="">Chọn môn</option>{subjects.map((subject) => <option key={subject.code} value={subject.code}>{subject.name}</option>)}</select></label>
+            <label>Môn học<select required={!metadata.subject} value={subjects.some((item) => item.code === metadata.subject) ? String(metadata.subject) : ''} onChange={(event) => field('subject', event.target.value)}><option value="">Chọn môn</option>{subjects.map((subject) => <option key={subject.code} value={subject.code}>{subject.name}</option>)}</select></label>
             <label>Cấp học<select required value={String(metadata.level || '')} onChange={(event) => { field('level', event.target.value); field('grade', null) }}><option value="">Chọn cấp</option><option value="TIEU_HOC">Tiểu học</option><option value="THCS">THCS</option><option value="THPT">THPT</option><option value="DAI_HOC">Đại học</option><option value="KHAC">Khác</option></select></label>
             {['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level || '')) && <label>Lớp<input required type="number" min={metadata.level === 'THPT' ? 10 : metadata.level === 'THCS' ? 6 : 1} max={metadata.level === 'THPT' ? 12 : metadata.level === 'THCS' ? 9 : 5} value={metadata.grade == null ? '' : String(metadata.grade)} onChange={(event) => field('grade', event.target.value ? Number(event.target.value) : null)} /></label>}
             <label>Loại đề<select required value={String(metadata.exam_type || '')} onChange={(event) => field('exam_type', event.target.value)}><option value="">Chọn loại</option><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
           </div>
+          <TaxonomyEntry kind="SUBJECT" label="Tên môn khác" value={subjects.some((item) => item.code === metadata.subject) ? '' : String(metadata.subject || '')} onChange={(value) => field('subject', value)} />
+          <TaxonomyNames kind="SCHOOL" label="Trường" values={Array.isArray(metadata.schools) ? metadata.schools as string[] : []} onChange={(values) => fieldList('schools', values)} />
+          <TaxonomyNames kind="MAJOR" label="Ngành" values={Array.isArray(metadata.majors) ? metadata.majors as string[] : []} onChange={(values) => fieldList('majors', values)} />
           <label>Nguồn đề<input maxLength={300} value={String(metadata.source || '')} onChange={(event) => field('source', event.target.value)} /></label>
           <button type="submit" className="button secondary" disabled={pending}>Lưu thông tin đề</button>
         </form>
