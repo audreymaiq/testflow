@@ -85,7 +85,7 @@ REST_FRAMEWORK = {
         "refresh": env("THROTTLE_REFRESH", default="120/min"),
         "logout": env("THROTTLE_LOGOUT", default="60/min"),
         "taxonomy_lookup": env("THROTTLE_TAXONOMY_LOOKUP", default="60/min"),
-        "taxonomy_propose": env("THROTTLE_TAXONOMY_PROPOSE", default="10/day"),
+        "taxonomy_create": env("THROTTLE_TAXONOMY_CREATE", default="20/day"),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.common.errors.api_exception_handler",

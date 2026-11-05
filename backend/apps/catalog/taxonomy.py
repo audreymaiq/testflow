@@ -1,12 +1,13 @@
-"""Canonical taxonomy lookup and human-reviewed additions."""
+"""Canonical taxonomy lookup and explicit self-service additions."""
 
+import hashlib
 import re
 from difflib import SequenceMatcher
 
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
-from apps.common.errors import Conflict, DomainPermissionDenied, NotFound, ValidationFailed
+from apps.common.errors import Conflict, ValidationFailed
 from apps.common.text import normalize_text, search_fold
 
 from .models import Major, School, Subject, TaxonomyAlias, TaxonomyKind, TaxonomyProposal
@@ -93,99 +94,51 @@ def lookup(kind: str, value: str) -> dict:
     }
 
 
-def propose(kind: str, value: str, user):
-    _model(kind)
+def register(kind: str, value: str, user, *, has_formula: bool = False):
+    """Create a distinct canonical item only after the user explicitly chooses new."""
+    if not user or not user.is_authenticated:
+        raise ValidationFailed("OWNER_REQUIRED", "Cần đăng nhập để tạo tên mới.")
+    model = _model(kind)
     name = clean_name(value)
+    if kind == TaxonomyKind.SUBJECT and len(name) > 120:
+        raise ValidationFailed("SUBJECT_NAME_TOO_LONG", "Tên môn dài tối đa 120 ký tự.")
     match = resolve(kind, name)
     if match:
-        return None, match
+        return match, False
     key = name_key(name)
+    if any(name_key(item.name) == key for item in model.objects.all()):
+        raise Conflict("TAXONOMY_AMBIGUOUS", "Có nhiều tên cũ trùng nhau; chưa thể tạo tên mới.")
     try:
         with transaction.atomic():
-            proposal, _ = TaxonomyProposal.objects.get_or_create(
+            if kind == TaxonomyKind.SUBJECT:
+                base = re.sub(r"[^a-z0-9]+", "-", search_fold(name)).strip("-")[:36]
+                if not base:
+                    base = "mon"
+                digest = hashlib.sha256(key.encode("utf-8")).hexdigest()
+                code = f"{base}-{digest[:12]}"
+                if Subject.objects.filter(code=code).exists():
+                    raise Conflict(
+                        "SUBJECT_CODE_CONFLICT", "Mã môn bị trùng; cần kiểm tra dữ liệu."
+                    )
+                target = Subject.objects.create(
+                    code=code, name=name, levels=[], has_formula=has_formula
+                )
+            else:
+                target = model.objects.create(name=name)
+            TaxonomyAlias.objects.create(kind=kind, key=key, **{FIELDS[kind]: target})
+            TaxonomyProposal.objects.create(
                 kind=kind,
                 key=key,
-                status=TaxonomyProposal.Status.PENDING,
-                defaults={"name": name, "requested_by": user},
+                name=name,
+                status=TaxonomyProposal.Status.APPROVED,
+                requested_by=user,
+                target_id=target.pk,
+                reason="SELF_SERVICE",
+                decided_at=timezone.now(),
             )
-            return proposal, None
+            return target, True
     except IntegrityError as exc:
-        raise Conflict("TAXONOMY_CONFLICT", "Tên này đang được xử lý; vui lòng tải lại.") from exc
-
-
-@transaction.atomic
-def decide(
-    proposal_id: int,
-    *,
-    admin,
-    action: str,
-    target_id: int | None = None,
-    canonical_name: str = "",
-    code: str = "",
-    levels: list[str] | None = None,
-    has_formula: bool = False,
-    reason: str = "",
-):
-    from .services import is_admin
-
-    if not is_admin(admin):
-        raise DomainPermissionDenied("ADMIN_REQUIRED", "Cần quyền Admin để duyệt danh mục.")
-    proposal = TaxonomyProposal.objects.select_for_update().filter(pk=proposal_id).first()
-    if proposal is None:
-        raise NotFound("PROPOSAL_NOT_FOUND", "Không tìm thấy đề xuất.")
-    if proposal.status != TaxonomyProposal.Status.PENDING:
-        raise Conflict("PROPOSAL_DECIDED", "Đề xuất đã được xử lý.")
-    if action not in {"MAP", "CREATE", "REJECT"}:
-        raise ValidationFailed("ACTION_INVALID", "Quyết định không hợp lệ.")
-    target = None
-    if action == "MAP":
-        target = _model(proposal.kind).objects.filter(pk=target_id).first()
-        if target is None or (proposal.kind == TaxonomyKind.SUBJECT and not target.is_active):
-            raise ValidationFailed(
-                "TARGET_INVALID", "Bản ghi chuẩn không tồn tại hoặc đã ngừng dùng."
-            )
-    elif action == "CREATE":
-        name = clean_name(canonical_name or proposal.name)
-        if any(
-            name_key(item.name) == name_key(name) for item in _model(proposal.kind).objects.all()
-        ):
-            raise Conflict("CANONICAL_EXISTS", "Tên chuẩn đã tồn tại. Hãy chọn liên kết.")
-        if resolve(proposal.kind, name):
-            raise Conflict("CANONICAL_EXISTS", "Tên chuẩn đã tồn tại. Hãy chọn liên kết.")
-        if proposal.kind == TaxonomyKind.SUBJECT:
-            subject_code = code or re.sub(r"[^a-z0-9]+", "-", search_fold(name)).strip("-")
-            if (
-                not subject_code
-                or len(subject_code) > 50
-                or Subject.objects.filter(code=subject_code).exists()
-            ):
-                raise ValidationFailed(
-                    "SUBJECT_CODE_INVALID", "Mã môn không hợp lệ hoặc đã tồn tại."
-                )
-            target = Subject.objects.create(
-                code=subject_code, name=name, levels=levels or [], has_formula=has_formula
-            )
-        else:
-            target = _model(proposal.kind).objects.create(name=name)
-        TaxonomyAlias.objects.create(
-            kind=proposal.kind, key=name_key(name), **{FIELDS[proposal.kind]: target}
-        )
-    elif not reason.strip():
-        raise ValidationFailed("REASON_REQUIRED", "Cần lý do khi từ chối.")
-    if target is not None:
-        existing = TaxonomyAlias.objects.filter(kind=proposal.kind, key=proposal.key).first()
-        if existing and getattr(existing, f"{FIELDS[proposal.kind]}_id") != target.pk:
-            raise Conflict("ALIAS_CONFLICT", "Tên này đã liên kết với bản ghi khác.")
-        if not existing:
-            TaxonomyAlias.objects.create(
-                kind=proposal.kind, key=proposal.key, **{FIELDS[proposal.kind]: target}
-            )
-    proposal.status = (
-        TaxonomyProposal.Status.REJECTED if action == "REJECT" else TaxonomyProposal.Status.APPROVED
-    )
-    proposal.reviewed_by = admin
-    proposal.target_id = target.pk if target else None
-    proposal.reason = reason.strip()
-    proposal.decided_at = timezone.now()
-    proposal.save()
-    return proposal
+        match = resolve(kind, name)
+        if match:
+            return match, False
+        raise Conflict("TAXONOMY_CONFLICT", "Danh mục vừa thay đổi; vui lòng thử lại.") from exc

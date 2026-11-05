@@ -328,7 +328,7 @@ export function ManualExamPage() {
         <label>Thời gian (phút)<input type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
       </div>
       <TaxonomyEntry kind="SUBJECT" label="Tên môn khác" value={subjectName} onChange={setSubjectName} />
-      <p>Chọn tên đã được duyệt để đề xuất hiện đúng trong bộ lọc thư viện.</p>
+      <p>Chọn tên đã có hoặc tự tạo tên mới để đề xuất hiện đúng trong bộ lọc thư viện.</p>
       <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} />
       <TaxonomyNames kind="MAJOR" label="Ngành" values={majors} onChange={setMajors} />
       <h2>Câu hỏi</h2>

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useRef, useState } from 'react'
 import { useAuth } from './auth'
 
 type Kind = 'SUBJECT' | 'SCHOOL' | 'MAJOR'
@@ -13,42 +13,51 @@ export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed }: {
   const [lookup, setLookup] = useState<Lookup | null>(null)
   const [message, setMessage] = useState('')
   const [busy, setBusy] = useState(false)
+  const [hasFormula, setHasFormula] = useState(false)
+  const currentValue = useRef(value)
+  currentValue.current = value
 
   async function check() {
     if (!value.trim()) return
+    const query = value
     setBusy(true); setMessage(''); setLookup(null)
     try {
-      const result = await api<Lookup>(`/taxonomy/lookup/?kind=${kind}&name=${encodeURIComponent(value)}`)
+      const result = await api<Lookup>(`/taxonomy/lookup/?kind=${kind}&name=${encodeURIComponent(query)}`)
+      if (currentValue.current !== query) return
       setLookup(result)
       if (result.match) { onChange(result.match.name); onConfirmed?.(result.match.name) }
     } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Không tra cứu được danh mục.') }
     finally { setBusy(false) }
   }
 
-  async function propose() {
+  async function createName() {
+    const name = value
     setBusy(true); setMessage('')
     try {
-      const result = await api<{ id?: number; match?: Match }>('/taxonomy/proposals/', {
-        method: 'POST', body: JSON.stringify({ kind, name: value }),
+      const result = await api<{ match: Match; created: boolean }>('/taxonomy/names/', {
+        method: 'POST', body: JSON.stringify({ kind, name, has_formula: hasFormula }),
       })
-      if (result.match) { onChange(result.match.name); onConfirmed?.(result.match.name) }
-      else setMessage(`Đã gửi đề xuất #${result.id}. Bạn có thể dùng tên này sau khi Admin duyệt.`)
-    } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Không gửi được đề xuất.') }
+      setLookup({ match: result.match, suggestions: [] })
+      onChange(result.match.name); onConfirmed?.(result.match.name)
+      setMessage(result.created ? 'Đã tạo tên mới.' : 'Đã chọn tên chuẩn có sẵn.')
+    } catch (cause) { setMessage(cause instanceof Error ? cause.message : 'Không tạo được tên mới.') }
     finally { setBusy(false) }
   }
 
   return <div className="taxonomy-entry">
-    <label>{label}<input maxLength={200} value={value} onChange={(event) => {
+    <label>{label}<input disabled={busy} maxLength={kind === 'SUBJECT' ? 120 : 200} value={value} onChange={(event) => {
       onChange(event.target.value); setLookup(null); setMessage('')
     }} /></label>
     <button type="button" disabled={busy || !value.trim()} onClick={check}>Kiểm tra tên</button>
-    {busy && <p role="status">Đang tra cứu…</p>}
+    {busy && <p role="status">Đang xử lý…</p>}
     {lookup?.match && <p role="status">Tên chuẩn: {lookup.match.name}</p>}
     {lookup && !lookup.match && <div>
       {lookup.suggestions.length > 0 && <p>Có thể bạn muốn chọn: {lookup.suggestions.map((item) => <button
         key={item.id} type="button" onClick={() => { onChange(item.name); onConfirmed?.(item.name); setLookup({ match: item, suggestions: [] }) }}
       >{item.name}</button>)}</p>}
-      <button type="button" disabled={busy} onClick={propose}>Đề xuất tên mới</button>
+      <p>Nếu không tên nào đúng, bạn có thể tạo một tên riêng. Tên này sẽ xuất hiện trong danh mục.</p>
+      {kind === 'SUBJECT' && <label><input type="checkbox" checked={hasFormula} onChange={(event) => setHasFormula(event.target.checked)} /> Môn có công thức</label>}
+      <button type="button" disabled={busy} onClick={createName}>Tạo tên mới</button>
     </div>}
     {message && <p role="status">{message}</p>}
   </div>

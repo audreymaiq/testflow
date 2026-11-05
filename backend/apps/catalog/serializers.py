@@ -9,13 +9,11 @@ from testflow_contracts.exam import ExamDraft
 from .models import (
     Chapter,
     Exam,
-    Level,
     PublishRequest,
     PublishRequestStatus,
     Section,
     Subject,
     TaxonomyKind,
-    TaxonomyProposal,
     Visibility,
 )
 
@@ -180,37 +178,8 @@ class ProfileSchoolSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200, allow_blank=True)
 
 
-class TaxonomyDecisionSerializer(serializers.Serializer):
-    action = serializers.ChoiceField(choices=("MAP", "CREATE", "REJECT"))
-    target_id = serializers.IntegerField(required=False, min_value=1)
-    canonical_name = serializers.CharField(required=False, allow_blank=True, max_length=200)
-    code = serializers.SlugField(required=False, allow_blank=True, max_length=50)
-    levels = serializers.ListField(child=serializers.CharField(max_length=10), required=False)
+class TaxonomyCreateSerializer(TaxonomyLookupSerializer):
     has_formula = serializers.BooleanField(required=False)
-    reason = serializers.CharField(required=False, allow_blank=True, max_length=2000)
-
-    def validate_levels(self, value):
-        if any(level not in Level.values for level in value):
-            raise serializers.ValidationError("Cấp học không hợp lệ.")
-        return value
-
-
-class TaxonomyProposalSerializer(serializers.ModelSerializer):
-    requested_by_name = serializers.CharField(source="requested_by.username", read_only=True)
-
-    class Meta:
-        model = TaxonomyProposal
-        fields = (
-            "id",
-            "kind",
-            "name",
-            "status",
-            "requested_by_name",
-            "target_id",
-            "reason",
-            "created_at",
-            "decided_at",
-        )
 
 
 class VisibilityChangeSerializer(serializers.Serializer):

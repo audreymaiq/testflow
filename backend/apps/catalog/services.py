@@ -81,8 +81,8 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         school = resolve("SCHOOL", name)
         if school is None:
             raise ValidationFailed(
-                "SCHOOL_UNREVIEWED",
-                "Trường chưa có trong danh mục chuẩn.",
+                "SCHOOL_UNKNOWN",
+                "Chọn trường đã có hoặc tạo tên mới trong danh mục.",
                 {"name": name, **lookup("SCHOOL", name)},
             )
         schools.append(school)
@@ -91,8 +91,8 @@ def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_
         major = resolve("MAJOR", name)
         if major is None:
             raise ValidationFailed(
-                "MAJOR_UNREVIEWED",
-                "Ngành chưa có trong danh mục chuẩn.",
+                "MAJOR_UNKNOWN",
+                "Chọn ngành đã có hoặc tạo tên mới trong danh mục.",
                 {"name": name, **lookup("MAJOR", name)},
             )
         majors.append(major)

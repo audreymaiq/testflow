@@ -1,16 +1,11 @@
-import { execFileSync } from 'node:child_process'
-import { fileURLToPath } from 'node:url'
 import { expect, test } from '@playwright/test'
 
-const root = fileURLToPath(new URL('../..', import.meta.url))
-const python = process.platform === 'win32' ? 'backend\\.venv\\Scripts\\python.exe' : 'backend/.venv/bin/python'
-
-test('user proposes a school, Admin approves it, and the exam uses its canonical name', async ({ page }) => {
+test('users create new names themselves and reuse the same canonical records', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
-  const owner = `taxonomy${suffix}`
-  const admin = `taxadmin${suffix}`
   const password = 'Zebra!Planet#42'
+  const subject = `Toán học ${suffix}`
   const school = `Trường Kiểm Chứng ${suffix}`
+  const major = `Khoa học dữ liệu ${suffix}`
 
   async function register(username: string) {
     await page.goto('/register')
@@ -20,37 +15,26 @@ test('user proposes a school, Admin approves it, and the exam uses its canonical
     await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
     await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible()
   }
-  async function logout() {
-    await page.getByRole('button', { name: 'Đăng xuất' }).click()
-    await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
+
+  await register(`taxonomyA${suffix}`)
+  await page.goto('/exams/new')
+  await page.getByLabel('Tên môn khác').fill(subject)
+  await page.getByRole('button', { name: 'Kiểm tra tên' }).first().click()
+  await page.getByRole('button', { name: 'Tạo tên mới' }).click()
+  await expect(page.getByText(`Tên chuẩn: ${subject}`)).toBeVisible()
+
+  for (const [group, label, name] of [['Trường', 'Thêm trường', school], ['Ngành', 'Thêm ngành', major]]) {
+    const field = page.getByRole('group', { name: group })
+    await field.getByLabel(label).fill(name)
+    await field.getByRole('button', { name: 'Kiểm tra tên' }).click()
+    await field.getByRole('button', { name: 'Tạo tên mới' }).click()
+    await expect(field.locator('.taxonomy-chip').filter({ hasText: name })).toBeVisible()
   }
 
-  await register(owner)
-  await page.goto('/exams/new')
-  await page.getByLabel('Thêm trường').fill(school)
-  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Kiểm tra tên' }).click()
-  await expect(page.getByRole('button', { name: 'Đề xuất tên mới' })).toBeVisible()
-  await page.getByRole('button', { name: 'Đề xuất tên mới' }).click()
-  await expect(page.getByText(/Đã gửi đề xuất/)).toBeVisible()
-  await logout()
-
-  await register(admin)
-  const code = `from django.contrib.auth import get_user_model; from django.contrib.auth.models import Group; u=get_user_model().objects.get(username='${admin}'); u.is_staff=True; u.save(update_fields=['is_staff']); u.groups.add(Group.objects.get_or_create(name='Admin')[0])`
-  execFileSync(python, ['backend/manage.py', 'shell', '-c', code], { cwd: root })
-  await page.reload()
-  await expect(page.getByRole('link', { name: 'Vận hành' })).toBeVisible()
-  await page.goto('/ops')
-  const row = page.locator('.taxonomy-proposal').filter({ hasText: school })
-  await expect(row).toBeVisible()
-  await row.getByRole('button', { name: 'Tạo tên chuẩn' }).click()
-  await expect(row).toHaveCount(0)
-  await logout()
-
-  await page.goto('/login')
-  await page.getByLabel('Tên đăng nhập hoặc email').fill(owner)
-  await page.getByLabel('Mật khẩu').fill(password)
-  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible()
+  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
+  await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
+  await register(`taxonomyB${suffix}`)
   await page.getByLabel('Trường').fill(school.toUpperCase())
   await page.getByRole('button', { name: 'Kiểm tra tên' }).click()
   await expect(page.getByText(`Tên chuẩn: ${school}`)).toBeVisible()
@@ -58,11 +42,18 @@ test('user proposes a school, Admin approves it, and the exam uses its canonical
   await expect(page.getByText('Đã lưu hồ sơ.')).toBeVisible()
   await page.reload()
   await expect(page.getByLabel('Trường')).toHaveValue(school)
+
   await page.goto('/exams/new')
   await page.getByLabel('Tên đề').fill(`Đề danh mục ${suffix}`)
-  await page.getByLabel('Thêm trường').fill(school.toUpperCase())
-  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Kiểm tra tên' }).click()
-  await expect(page.getByText(`Tên chuẩn: ${school}`)).toBeVisible()
+  await page.getByLabel('Tên môn khác').fill(subject.toUpperCase())
+  await page.getByRole('button', { name: 'Kiểm tra tên' }).first().click()
+  await expect(page.getByText(`Tên chuẩn: ${subject}`)).toBeVisible()
+  for (const [group, label, name] of [['Trường', 'Thêm trường', school], ['Ngành', 'Thêm ngành', major]]) {
+    const field = page.getByRole('group', { name: group })
+    await field.getByLabel(label).fill(name.toUpperCase())
+    await field.getByRole('button', { name: 'Kiểm tra tên' }).click()
+    await expect(field.getByText(`Tên chuẩn: ${name}`)).toBeVisible()
+  }
   await page.getByLabel('Nội dung').fill('Một cộng một bằng bao nhiêu?')
   await page.getByLabel('Đáp án A', { exact: true }).fill('Một')
   await page.getByLabel('Đáp án B', { exact: true }).fill('Hai')
@@ -70,5 +61,6 @@ test('user proposes a school, Admin approves it, and the exam uses its canonical
   await page.getByLabel('Đáp án D', { exact: true }).fill('Bốn')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
   await expect(page.getByRole('heading', { name: `Đề danh mục ${suffix}` })).toBeVisible()
-  await expect(page.getByRole('definition').filter({ hasText: school })).toBeVisible()
+  await expect(page.getByText(school, { exact: true })).toBeVisible()
+  await expect(page.getByText(major, { exact: true })).toBeVisible()
 })

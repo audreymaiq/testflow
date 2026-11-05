@@ -180,105 +180,106 @@ def test_taxonomy_exact_variants_and_unknown_name_guard(users):
     data["metadata"]["schools"] = ["Trường Máu"]
     with pytest.raises(ValidationFailed) as error:
         create_exam(ExamDraft.model_validate(data), owner=owner)
-    assert error.value.code == "SCHOOL_UNREVIEWED"
+    assert error.value.code == "SCHOOL_UNKNOWN"
     assert Exam.objects.count() == 1
 
 
 @pytest.mark.django_db
-def test_taxonomy_proposal_review_alias_and_permissions(users):
-    from django.contrib.auth.models import Group
-
-    from apps.catalog.models import TaxonomyAlias, TaxonomyProposal
+def test_taxonomy_self_service_creation_and_exact_reuse(users):
+    from apps.catalog.models import Major, TaxonomyAlias, TaxonomyProposal
 
     owner, other = users
-    admin = get_user_model().objects.create_user(
-        username="taxonomy_admin", password="HardToGuess#2026", is_staff=True
-    )
-    admin.groups.add(Group.objects.get_or_create(name="Admin")[0])
     client = APIClient()
+    assert (
+        client.post(reverse("taxonomy-create"), {"kind": "SUBJECT", "name": "Toán học"}).status_code
+        == 401
+    )
     client.force_authenticate(user=owner)
     lookup = client.get(reverse("taxonomy-lookup"), {"kind": "SUBJECT", "name": "toánn"})
     assert lookup.status_code == 200
     assert lookup.data["match"] is None
     assert lookup.data["suggestions"][0]["name"] == "Toán"
-    first = client.post(reverse("taxonomy-propose"), {"kind": "SUBJECT", "name": "Toán học"})
-    assert first.status_code == 201
+    accented = client.get(reverse("taxonomy-lookup"), {"kind": "SCHOOL", "name": "Trường Máu"})
+    assert accented.status_code == 200
+    assert accented.data["match"] is None
+    assert accented.data["suggestions"][0]["name"] == "Trường Mẫu"
+    first = client.post(
+        reverse("taxonomy-create"),
+        {"kind": "SUBJECT", "name": "Toán học", "has_formula": True},
+    )
+    assert first.status_code == 201, first.data
+    assert first.data["match"]["name"] == "Toán học"
+    assert Subject.objects.get(pk=first.data["match"]["id"]).has_formula
     client.force_authenticate(user=other)
-    second = client.post(reverse("taxonomy-propose"), {"kind": "SUBJECT", "name": "toán  HỌC"})
-    assert second.status_code == 201
-    assert first.data["id"] == second.data["id"]
-    assert client.get(reverse("taxonomy-queue")).status_code == 403
-    assert (
-        client.post(
-            reverse("taxonomy-decide", kwargs={"proposal_id": first.data["id"]}),
-            {"action": "MAP", "target_id": 1},
-        ).status_code
-        == 403
-    )
-    client.force_authenticate(user=admin)
-    assert client.get(reverse("taxonomy-queue")).data["count"] == 1
-    decision = client.post(
-        reverse("taxonomy-decide", kwargs={"proposal_id": first.data["id"]}),
-        {"action": "CREATE", "canonical_name": "Toán học", "levels": ["THPT"]},
-        format="json",
-    )
-    assert decision.status_code == 200, decision.data
-    assert decision.data["status"] == "APPROVED"
-    assert TaxonomyProposal.objects.get(pk=first.data["id"]).reviewed_by == admin
+    second = client.post(reverse("taxonomy-create"), {"kind": "SUBJECT", "name": "  toán  HỌC "})
+    assert second.status_code == 200
+    assert second.data["match"]["id"] == first.data["match"]["id"]
+    assert Subject.objects.filter(name="Toán học").count() == 1
     assert TaxonomyAlias.objects.filter(kind="SUBJECT").count() == 1
-    client.force_authenticate(user=owner)
-    exact = client.get(reverse("taxonomy-lookup"), {"kind": "SUBJECT", "name": "toán HỌC"})
-    assert exact.data["match"]["name"] == "Toán học"
-    data = draft_data()
-    data["metadata"]["subject"] = "TOÁN HỌC"
-    assert create_exam(ExamDraft.model_validate(data), owner=owner).subject.name == "Toán học"
-
-
-@pytest.mark.django_db
-def test_taxonomy_school_typo_requires_mapping_and_major_creation(users):
-    from django.contrib.auth.models import Group
-
-    from apps.catalog.models import Major
-
-    owner, _ = users
-    admin = get_user_model().objects.create_user(
-        username="taxonomy_admin2", password="HardToGuess#2026", is_staff=True
-    )
-    admin.groups.add(Group.objects.get_or_create(name="Admin")[0])
-    client = APIClient()
-    client.force_authenticate(user=owner)
-    school = client.post(reverse("taxonomy-propose"), {"kind": "SCHOOL", "name": "Trường Mẫuu"})
+    audit = TaxonomyProposal.objects.get(kind="SUBJECT", reason="SELF_SERVICE")
+    assert audit.status == "APPROVED" and audit.reviewed_by is None
+    school = client.post(reverse("taxonomy-create"), {"kind": "SCHOOL", "name": "Trường Mẫuu"})
+    major = client.post(reverse("taxonomy-create"), {"kind": "MAJOR", "name": "Khoa học dữ liệu"})
     assert school.status_code == 201
-    major = client.post(reverse("taxonomy-propose"), {"kind": "MAJOR", "name": "Khoa học dữ liệu"})
     assert major.status_code == 201
-    client.force_authenticate(user=admin)
-    mapped = client.post(
-        reverse("taxonomy-decide", kwargs={"proposal_id": school.data["id"]}),
-        {"action": "MAP", "target_id": School.objects.get(name="Trường Mẫu").pk},
-    )
-    assert mapped.status_code == 200
-    created = client.post(
-        reverse("taxonomy-decide", kwargs={"proposal_id": major.data["id"]}),
-        {"action": "CREATE", "canonical_name": "Khoa học dữ liệu"},
-    )
-    assert created.status_code == 200
+    assert School.objects.count() == 2
     assert Major.objects.count() == 1
-    assert (
-        client.post(
-            reverse("taxonomy-decide", kwargs={"proposal_id": major.data["id"]}),
-            {"action": "CREATE"},
-        ).status_code
-        == 409
-    )
     data = draft_data()
-    data["metadata"].update(schools=["trường mẫUU"], majors=["KHOA HỌC DỮ LIỆU"])
+    data["metadata"].update(
+        subject="TOÁN HỌC", schools=["trường mẫUU"], majors=["KHOA HỌC DỮ LIỆU"]
+    )
     exam = create_exam(ExamDraft.model_validate(data), owner=owner)
-    assert list(exam.schools.values_list("name", flat=True)) == ["Trường Mẫu"]
+    assert exam.subject.name == "Toán học"
+    assert list(exam.schools.values_list("name", flat=True)) == ["Trường Mẫuu"]
     assert list(exam.majors.values_list("name", flat=True)) == ["Khoa học dữ liệu"]
 
 
 @pytest.mark.django_db
-def test_profile_school_uses_same_reviewed_catalog(users):
+def test_old_pending_taxonomy_is_migrated_without_admin(users):
+    from importlib import import_module
+
+    from django.apps import apps
+
+    from apps.catalog.models import TaxonomyProposal
+
+    owner, _ = users
+    proposal = TaxonomyProposal.objects.create(
+        kind="SCHOOL", name="Trường Chờ Cũ", key="trường chờ cũ", requested_by=owner
+    )
+    import_module("apps.catalog.migrations.0007_self_service_taxonomy").migrate_pending(
+        apps, connection.schema_editor()
+    )
+    proposal.refresh_from_db()
+    assert proposal.status == "APPROVED"
+    assert proposal.reason == "SELF_SERVICE_MIGRATED"
+    assert School.objects.get(pk=proposal.target_id).name == "Trường Chờ Cũ"
+
+
+@pytest.mark.django_db
+def test_old_ambiguous_pending_taxonomy_requires_reentry(users):
+    from importlib import import_module
+
+    from django.apps import apps
+
+    from apps.catalog.models import TaxonomyProposal
+
+    owner, _ = users
+    School.objects.create(name="Trường Cũ")
+    School.objects.create(name="trường cũ")
+    proposal = TaxonomyProposal.objects.create(
+        kind="SCHOOL", name="TRƯỜNG CŨ", key="trường cũ", requested_by=owner
+    )
+    import_module("apps.catalog.migrations.0007_self_service_taxonomy").migrate_pending(
+        apps, connection.schema_editor()
+    )
+    proposal.refresh_from_db()
+    assert proposal.status == "REJECTED"
+    assert proposal.reason == "SELF_SERVICE_REENTER_REQUIRED"
+    assert School.objects.count() == 3
+
+
+@pytest.mark.django_db
+def test_profile_school_uses_same_canonical_catalog(users):
     owner, other = users
     client = APIClient()
     assert (
@@ -287,6 +288,7 @@ def test_profile_school_uses_same_reviewed_catalog(users):
     client.force_authenticate(user=owner)
     unknown = client.post(reverse("taxonomy-profile-school"), {"name": "Trường Máu"})
     assert unknown.status_code == 400
+    assert unknown.data["error"]["code"] == "SCHOOL_UNKNOWN"
     assert owner.school == ""
     selected = client.post(reverse("taxonomy-profile-school"), {"name": "  TRƯỜNG   MẪU  "})
     assert selected.status_code == 200

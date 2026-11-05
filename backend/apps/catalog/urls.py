@@ -12,10 +12,8 @@ from .views import (
     PublicationDetailView,
     PublicationQueueView,
     SubjectListView,
-    TaxonomyDecisionView,
+    TaxonomyCreateView,
     TaxonomyLookupView,
-    TaxonomyProposalView,
-    TaxonomyQueueView,
     VisibilityView,
 )
 
@@ -47,12 +45,6 @@ urlpatterns = [
     path("facets/", FacetsView.as_view(), name="facets"),
     path("subjects/", SubjectListView.as_view(), name="subjects"),
     path("taxonomy/lookup/", TaxonomyLookupView.as_view(), name="taxonomy-lookup"),
-    path("taxonomy/proposals/", TaxonomyProposalView.as_view(), name="taxonomy-propose"),
+    path("taxonomy/names/", TaxonomyCreateView.as_view(), name="taxonomy-create"),
     path("taxonomy/profile-school/", ProfileSchoolView.as_view(), name="taxonomy-profile-school"),
-    path("taxonomy/proposals/pending/", TaxonomyQueueView.as_view(), name="taxonomy-queue"),
-    path(
-        "taxonomy/proposals/<int:proposal_id>/decision/",
-        TaxonomyDecisionView.as_view(),
-        name="taxonomy-decide",
-    ),
 ]

@@ -140,7 +140,7 @@ function Account() {
     <p className="eyebrow">HỒ SƠ CỦA BẠN</p>
     <h1>Xin chào, {user?.display_name || user?.username}</h1>
     <dl><div><dt>Email</dt><dd>{user?.email}</dd></div><div><dt>Vai trò</dt><dd>{user?.roles.join(', ')}</dd></div></dl>
-    <p>Trường trong hồ sơ cần là tên chuẩn đã được duyệt. Bạn có thể tra cứu hoặc đề xuất tên mới.</p>
+    <p>Tra cứu tên trường đã có. Nếu chưa có tên phù hợp, bạn có thể tự tạo tên mới.</p>
     <form className="profile-form" onSubmit={save}>
       <label>Tên hiển thị<input maxLength={160} value={displayName} onChange={(event) => setDisplayName(event.target.value)} /></label>
       <TaxonomyEntry kind="SCHOOL" label="Trường" value={school} onChange={setSchool} />
