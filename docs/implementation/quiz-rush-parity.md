@@ -11,7 +11,7 @@ Date: 2026-11-06. Scope: PRD §23.1 items 1–28 and §23.4. `PASS LOCAL` means 
 | 5 School/major filter chips plus level/grade/subject | PARTIAL | AND filtering and data-driven facets exist, but the UI uses dropdowns rather than the retained chip carousel. |
 | 6 TXT parser and format guide | PASS LOCAL | v1/v2 parser and issue reports pass; the upload page has a text-only guide modal with a v1 example, v2 variants, Escape dismissal and 360px Chrome check before real import. |
 | 7 Private/public choice | PASS LOCAL | Private-first save and separate moderated publication pass API/browser tests. |
-| 8 Owner visibility, delete and confirmation | PARTIAL | Owner controls and server rules pass; delete cancel/confirm uses the shared modal and Chrome test. PUBLIC withdrawal still has no confirmation. |
+| 8 Owner visibility, delete and confirmation | PASS LOCAL | Owner controls and server rules pass; delete and PUBLIC withdrawal use shared cancel/confirm modals. Chrome covers delete, withdrawal and guest denial. |
 | 9 Two-step email/password login | PARTIAL | Registration/login are real; two-step legacy UX and password reset are absent. |
 | 10 Google login | OUT OF R1 | Explicit non-goal in PRD §1.3. |
 | 11 Fake Apple login | PASS LOCAL | No Apple control in TestFlow. |

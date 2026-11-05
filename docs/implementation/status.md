@@ -114,6 +114,12 @@ Requirements: PRD §§6, 8.3–8.5 and 11.2 (private read isolation). Auth login
 
 Evidence: `AuthProvider` clears React Query cache when bootstrap establishes a session or guest state, on successful registration/login/logout, and after failed refresh. Private practice and publication query keys include the account ID. A new unit test seeds a private session cache entry, signs out through the UI and verifies removal. Frontend TypeScript/Vitest 3, build, full Chrome E2E 11/11, backend 59/59, Ruff, mypy (68 files), and import-linter 9/9 passed locally. This reduces same-tab stale-data exposure; hosted CI and production security review remain open.
 
+## S1b package 8: public withdrawal confirmation (local implementation verified)
+
+Requirements: PRD §23.1 item 8 and FR-L2. When an owner requests PUBLIC-to-PRIVATE, show the shared text-only confirmation. Escape/Close makes no API call and leaves visibility PUBLIC; confirming invokes the existing server transition once and removes guest access immediately. The button and modal block repeat action while pending. The real Chrome publication journey must cover cancellation, confirmation and subsequent guest denial; full local gates must pass before marking verified.
+
+Evidence: the owner withdraw button opens the shared modal; Escape cancels and confirmation calls the existing server transition. The real publication Chrome journey checks cancel, confirm and guest denial after withdrawal. Focused publication E2E 1/1, full Chrome E2E 11/11, backend 59/59, TypeScript/Vitest 3, build, Ruff, mypy (68 files) and import-linter 9/9 passed. Hosted CI and clean Linux bootstrap remain unverified.
+
 ## Open decisions
 
 - Use **TestFlow** everywhere in new product surfaces and package names (owner decision).

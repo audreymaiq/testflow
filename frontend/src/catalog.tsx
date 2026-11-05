@@ -126,7 +126,7 @@ export function ExamDetailPage() {
   const [startError, setStartError] = useState('')
   const [ownerBusy, setOwnerBusy] = useState(false)
   const [ownerMessage, setOwnerMessage] = useState('')
-  const [confirmation, setConfirmation] = useState<'DELETE' | 'HIDE' | null>(null)
+  const [confirmation, setConfirmation] = useState<'DELETE' | 'HIDE' | 'WITHDRAW' | null>(null)
   const closeConfirmation = useCallback(() => { if (!ownerBusy) setConfirmation(null) }, [ownerBusy])
   const [chapterIds, setChapterIds] = useState<string[]>([])
   const [includeWrong, setIncludeWrong] = useState(false)
@@ -185,7 +185,7 @@ export function ExamDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['exams'] })
       setOwnerMessage(visibility === 'PUBLIC' ? `Đã gửi yêu cầu công khai #${result.request_id}.` : 'Đề đã chuyển về riêng tư.')
     } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không đổi được trạng thái đề.') }
-    finally { setOwnerBusy(false) }
+    finally { setOwnerBusy(false); setConfirmation(null) }
   }
   async function removeExam() {
     setOwnerBusy(true); setOwnerMessage('')
@@ -205,6 +205,11 @@ export function ExamDetailPage() {
       setOwnerMessage('Đề đã được ẩn.')
     } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không ẩn được đề.') }
     finally { setOwnerBusy(false); setConfirmation(null) }
+  }
+  const confirmationCopy = {
+    DELETE: { title: 'Xóa đề?', body: 'Đề sẽ bị xóa khỏi thư viện của bạn.', action: 'Xác nhận xóa' },
+    HIDE: { title: 'Ẩn đề?', body: 'Đề sẽ bị ẩn khỏi mọi người dùng.', action: 'Xác nhận ẩn' },
+    WITHDRAW: { title: 'Chuyển về riêng tư?', body: 'Đề sẽ không còn hiển thị cho người khác ngay sau khi xác nhận.', action: 'Xác nhận chuyển' },
   }
   if (exam.isPending) return <p role="status">Đang tải đề…</p>
   if (exam.isError) return <section className="paper detail-panel"><h1>Không thể mở đề</h1><p role="alert">{exam.error.message}</p><Link to="/library">Về thư viện</Link></section>
@@ -253,7 +258,7 @@ export function ExamDetailPage() {
       <h2>Quản lý đề của tôi</h2>
       {exam.data.visibility === 'PRIVATE'
         ? <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PUBLIC')}>Gửi duyệt công khai</button>
-        : <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PRIVATE')}>Chuyển về riêng tư</button>}
+        : <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => setConfirmation('WITHDRAW')}>Chuyển về riêng tư</button>}
       <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => setConfirmation('DELETE')}>Xóa đề</button>
       {ownerMessage && <p role="status">{ownerMessage}</p>}
     </div>}
@@ -267,11 +272,11 @@ export function ExamDetailPage() {
       <h3>Câu {index + 1}</h3><p>{question.text}</p>
       <ol type="A">{question.choices.map((choice) => <li key={choice.label}>{choice.text}</li>)}</ol>
     </article>)}
-    {confirmation && <Modal title={confirmation === 'DELETE' ? 'Xóa đề?' : 'Ẩn đề?'} onClose={closeConfirmation}>
-      <p>{confirmation === 'DELETE' ? 'Đề sẽ bị xóa khỏi thư viện của bạn.' : 'Đề sẽ bị ẩn khỏi mọi người dùng.'}</p>
+    {confirmation && <Modal title={confirmationCopy[confirmation].title} onClose={closeConfirmation}>
+      <p>{confirmationCopy[confirmation].body}</p>
       <button type="button" className="button primary" disabled={ownerBusy}
-        onClick={() => { void (confirmation === 'DELETE' ? removeExam() : hide()) }}>
-        {ownerBusy ? 'Đang xử lý…' : confirmation === 'DELETE' ? 'Xác nhận xóa' : 'Xác nhận ẩn'}
+        onClick={() => { void (confirmation === 'DELETE' ? removeExam() : confirmation === 'HIDE' ? hide() : changeVisibility('PRIVATE')) }}>
+        {ownerBusy ? 'Đang xử lý…' : confirmationCopy[confirmation].action}
       </button>
     </Modal>}
   </section>
