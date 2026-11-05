@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
+import { Modal } from './shared'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type Issue = { line: number; code: string; message: string; severity: 'ERROR' | 'WARNING' }
@@ -28,6 +29,7 @@ export function TxtImportPage() {
   const [file, setFile] = useState<File | null>(null)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
+  const [showGuide, setShowGuide] = useState(false)
 
   async function submit(event: FormEvent) {
     event.preventDefault()
@@ -47,12 +49,30 @@ export function TxtImportPage() {
     <p className="eyebrow">THƯ VIỆN / NHẬP TXT</p>
     <h1>Nhập bộ câu hỏi TXT</h1>
     <p className="lede">Hỗ trợ định dạng Quiz Rush v1 và TXT v2. Tệp tối đa 2 MB, mã hóa UTF-8. Đề chỉ hiển thị cho bạn sau khi xác nhận.</p>
+    <button className="text-button" type="button" onClick={() => setShowGuide(true)}>Xem hướng dẫn định dạng TXT</button>
     <form onSubmit={submit}>
       <label>Chọn tệp .txt<input type="file" accept=".txt,text/plain" required onChange={(event) => setFile(event.target.files?.[0] || null)} /></label>
       <ErrorText message={error} />
       <button className="button primary" type="submit" disabled={!file || pending}>{pending ? 'Đang phân tích…' : 'Phân tích tệp'}</button>
     </form>
     <p><Link to="/imports">Xem các tệp đã nhập</Link></p>
+    {showGuide && <Modal title="Định dạng tệp TXT" onClose={() => setShowGuide(false)}>
+      <p>Mỗi câu hỏi nằm trong một chương. Viết câu hỏi, các lựa chọn A–F, rồi một dòng đáp án bắt đầu bằng <code>=&gt;</code>. Ví dụ tương thích Quiz Rush v1:</p>
+      <pre className="txt-format-example"><code>{`#TITLE: Ôn tập
+[CH1] Số học
+2 + 2 bằng bao nhiêu?
+A. 3
+B. 4
+=>B`}</code></pre>
+      <p>TXT v2 có thể thêm <code>#SUBJECT</code>, <code>#LEVEL</code>, <code>#GRADE</code>, <code>#TYPE</code> và các trường khác ở đầu tệp. Các dạng đáp án thêm:</p>
+      <ul>
+        <li><code>=&gt;A,C</code>: chọn nhiều đáp án.</li>
+        <li><code>=&gt;T</code> hoặc <code>=&gt;F</code>: đúng/sai, không có lựa chọn.</li>
+        <li><code>=&gt;#3.5</code>: câu trả lời ngắn, không có lựa chọn.</li>
+        <li><code>#EXPLAIN: …</code> ngay sau đáp án: lời giải.</li>
+      </ul>
+      <p>Có thể thêm <code>#TRUONG</code> và <code>#NGANH</code>; bạn sẽ kiểm tra tên chuẩn ở bước xem lại. Lưu tệp bằng UTF-8, tối đa 2 MB và 20.000 dòng. Hệ thống báo lỗi theo dòng và cho xem bản nháp trước khi lưu đề riêng tư.</p>
+    </Modal>}
   </section>
 }
 

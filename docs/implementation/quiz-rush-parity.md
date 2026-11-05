@@ -9,7 +9,7 @@ Date: 2026-11-06. Scope: PRD §23.1 items 1–28 and §23.4. `PASS LOCAL` means 
 | 3 System sample badge | PASS LOCAL | `is_system_sample` appears as “Bộ mẫu” in catalog/detail; `test_quiz_rush_seed.py` covers the seeded deck. |
 | 4 Title/subtitle search | PASS LOCAL | Accent-insensitive `search_text` and catalog query tests; library search calls the real API. |
 | 5 School/major filter chips plus level/grade/subject | PARTIAL | AND filtering and data-driven facets exist, but the UI uses dropdowns rather than the retained chip carousel. |
-| 6 TXT parser and format guide | PARTIAL | v1/v2 parser, reports and import E2E pass; a user-facing format guide modal is absent. |
+| 6 TXT parser and format guide | PASS LOCAL | v1/v2 parser and issue reports pass; the upload page has a text-only guide modal with a v1 example, v2 variants, Escape dismissal and 360px Chrome check before real import. |
 | 7 Private/public choice | PASS LOCAL | Private-first save and separate moderated publication pass API/browser tests. |
 | 8 Owner visibility, delete and confirmation | PARTIAL | Owner controls and server rules pass; delete uses `window.confirm` instead of the shared modal. |
 | 9 Two-step email/password login | PARTIAL | Registration/login are real; two-step legacy UX and password reset are absent. |

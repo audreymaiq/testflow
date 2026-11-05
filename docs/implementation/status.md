@@ -96,6 +96,12 @@ Requirements: FR-L4, PRD §§2.2, 5.5, 11.2 and 23.1 item 12. A visitor can insp
 
 Implementation: mode-specific guest links retain intent through login or registration, then start one server-owned session. The import navigation returns to the real TXT form. Starting a different mode while an unfinished session exists now returns an explicit 409 instead of silently reusing the wrong mode. Logout moves to a public route, waits for the server to revoke the refresh token and blocks duplicate confirmation; tests wait for guest state before private access checks. The owner intentionally removed the one-time Quiz Rush converter and the environment setup script; the authorized fixture remains committed, setup now creates its secret directly, and CI/README/traceability no longer depend on the removed files. Full backend: 59 passed; full Chrome E2E: 11 passed; Ruff, mypy (68 files), import-linter 9/9, Django/schema/migration checks, TypeScript/Vitest (2) and Vite build passed. Hosted CI and clean Linux bootstrap remain unverified. The separate `quiz-rush-parity.md` audit records remaining S1b gaps.
 
+## S1b package 5: TXT format guide (local implementation verified)
+
+Requirements: PRD §9.0.1 and §23.1 item 6, FR-I11. The TXT upload page exposes a text-only guide with a valid Quiz Rush v1 example, required chapter/question/choice/answer order, v2 metadata and answer variants, UTF-8 and size limits, and the review report behavior. The shared modal must open and close with keyboard Escape, remain readable at 360px, and leave the upload form usable. A Chrome journey must verify the guide before importing a real TXT fixture. Backend parser semantics and upload authorization stay unchanged.
+
+Evidence: the shared modal now presents the v1 example, v2 answer variants and limits with text-only markup. Its viewport height is bounded and scrollable. Chrome found a pre-existing file-input overflow at 360px (368px document); constraining that input resolved it. The import browser journey opens the guide, checks examples and no horizontal overflow, closes with Escape, then uploads and confirms a real TXT exam. Focused import E2E passed; full Chrome E2E 11/11 passed. TypeScript/Vitest 2 and Vite build passed. Backend code did not change from the prior 59/59 gate. Hosted CI and clean Linux bootstrap remain unverified.
+
 ## Open decisions
 
 - Use **TestFlow** everywhere in new product surfaces and package names (owner decision).
