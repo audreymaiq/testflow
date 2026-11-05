@@ -26,3 +26,4 @@ eval/results/
 *.db
 *.egg-info/
 frontend/tsconfig.tsbuildinfo
+docs/

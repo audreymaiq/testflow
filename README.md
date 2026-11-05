@@ -109,7 +109,7 @@ Settings are read from `.env` in the project root. See [.env.example](.env.examp
 
 The database password in `.env.example` is for local development only. PostgreSQL and Redis listen on `127.0.0.1` only.
 
-Local health, logs, quota, and admin operations checks are described in [the operations runbook](docs/runbooks/local-operations.md).
+Local health, logs, quota, and admin operations checks are described in the local, untracked `docs/runbooks/local-operations.md` runbook.
 
 ## Importing exams from text
 
@@ -145,7 +145,7 @@ The API is served under `/api/v1/`:
 
 Access tokens are short-lived. The refresh token is stored in an HttpOnly cookie.
 
-In manual exam creation, TXT review and account profile, enter a subject, school or major and use **Kiểm tra tên**. Case and whitespace variants resolve to the canonical record. Close spellings are suggestions; select the right one or explicitly choose **Tạo tên mới**. A new name becomes available immediately without Admin review. Exams and profile school reference canonical names. [Decision and limits](docs/adr/025-reviewed-taxonomy-names.md).
+In manual exam creation, TXT review and account profile, enter a subject, school or major and use **Kiểm tra tên**. Case and whitespace variants resolve to the canonical record. Close spellings are suggestions; select the right one or explicitly choose **Tạo tên mới**. A new name becomes available immediately without Admin review. Exams and profile school reference canonical names. The decision and limits are recorded locally in the untracked `docs/adr/025-reviewed-taxonomy-names.md`.
 
 ## Testing
 
