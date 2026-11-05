@@ -18,7 +18,6 @@ test('registration, logout and login use the running API and PostgreSQL', async 
   await page.reload()
   await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible()
   await page.getByLabel('Tên hiển thị').fill('Người học thử nghiệm')
-  await page.getByLabel('Trường').fill('Trường kiểm thử')
   await page.getByLabel('Lớp').fill('12A')
   await page.getByRole('button', { name: 'Lưu hồ sơ' }).click()
   await expect(page.getByRole('heading', { name: 'Xin chào, Người học thử nghiệm' })).toBeVisible()

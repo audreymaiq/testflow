@@ -8,7 +8,7 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from apps.common.errors import Conflict, DomainPermissionDenied
+from apps.common.errors import Conflict, DomainPermissionDenied, ValidationFailed
 
 from .models import PublishRequest, Subject, TaxonomyProposal, Visibility
 from .selectors import list_exams, publication_queue, visible_exams
@@ -19,6 +19,7 @@ from .serializers import (
     FacetsResponseSerializer,
     ManualCreateSerializer,
     PreviewResponseSerializer,
+    ProfileSchoolSerializer,
     PublicationDecisionSerializer,
     PublicationDetailSerializer,
     PublicationFilterSerializer,
@@ -40,7 +41,7 @@ from .services import (
     request_publication,
     soft_delete_exam,
 )
-from .taxonomy import decide, lookup, propose
+from .taxonomy import decide, lookup, propose, resolve
 
 
 class ExamListView(GenericAPIView):
@@ -187,6 +188,26 @@ class TaxonomyProposalView(GenericAPIView):
                 }
             )
         return Response(TaxonomyProposalSerializer(proposal).data, status=status.HTTP_201_CREATED)
+
+
+class ProfileSchoolView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+    serializer_class = ProfileSchoolSerializer
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        name = serializer.validated_data["name"]
+        target = resolve("SCHOOL", name) if name.strip() else None
+        if name.strip() and target is None:
+            raise ValidationFailed(
+                "SCHOOL_UNREVIEWED",
+                "Trường chưa có trong danh mục chuẩn.",
+                {"name": name, **lookup("SCHOOL", name)},
+            )
+        request.user.school = target.name if target else ""
+        request.user.save(update_fields=("school",))
+        return Response({"school": request.user.school})
 
 
 class TaxonomyQueueView(GenericAPIView):

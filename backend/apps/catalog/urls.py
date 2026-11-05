@@ -7,6 +7,7 @@ from .views import (
     ExamPreviewView,
     FacetsView,
     ManualExamView,
+    ProfileSchoolView,
     PublicationDecisionView,
     PublicationDetailView,
     PublicationQueueView,
@@ -47,6 +48,7 @@ urlpatterns = [
     path("subjects/", SubjectListView.as_view(), name="subjects"),
     path("taxonomy/lookup/", TaxonomyLookupView.as_view(), name="taxonomy-lookup"),
     path("taxonomy/proposals/", TaxonomyProposalView.as_view(), name="taxonomy-propose"),
+    path("taxonomy/profile-school/", ProfileSchoolView.as_view(), name="taxonomy-profile-school"),
     path("taxonomy/proposals/pending/", TaxonomyQueueView.as_view(), name="taxonomy-queue"),
     path(
         "taxonomy/proposals/<int:proposal_id>/decision/",

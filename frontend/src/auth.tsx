@@ -74,18 +74,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }
 
   async function updateProfile(profile: Pick<User, 'display_name' | 'school' | 'grade'>) {
-    if (!access) throw new Error('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.')
-    const options = { method: 'PATCH', body: JSON.stringify(profile) }
-    let updated: User
-    try {
-      updated = await request<User>('/auth/me/', options, access)
-    } catch (cause) {
-      if (!(cause instanceof ApiError) || cause.status !== 401) throw cause
-      const refreshed = await rotateRefresh()
-      setAccess(refreshed.access)
-      updated = await request<User>('/auth/me/', options, refreshed.access)
-    }
-    setUser(updated)
+    const canonical = await api<{ school: string }>('/taxonomy/profile-school/', {
+      method: 'POST', body: JSON.stringify({ name: profile.school }),
+    })
+    const updated = await api<User>('/auth/me/', {
+      method: 'PATCH', body: JSON.stringify({ display_name: profile.display_name, grade: profile.grade }),
+    })
+    setUser({ ...updated, school: canonical.school })
   }
 
   async function api<T>(path: string, options: RequestInit = {}): Promise<T> {

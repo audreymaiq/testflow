@@ -176,6 +176,10 @@ class TaxonomyLookupSerializer(serializers.Serializer):
     name = serializers.CharField(max_length=200)
 
 
+class ProfileSchoolSerializer(serializers.Serializer):
+    name = serializers.CharField(max_length=200, allow_blank=True)
+
+
 class TaxonomyDecisionSerializer(serializers.Serializer):
     action = serializers.ChoiceField(choices=("MAP", "CREATE", "REJECT"))
     target_id = serializers.IntegerField(required=False, min_value=1)

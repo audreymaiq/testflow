@@ -275,3 +275,25 @@ def test_taxonomy_school_typo_requires_mapping_and_major_creation(users):
     exam = create_exam(ExamDraft.model_validate(data), owner=owner)
     assert list(exam.schools.values_list("name", flat=True)) == ["Trường Mẫu"]
     assert list(exam.majors.values_list("name", flat=True)) == ["Khoa học dữ liệu"]
+
+
+@pytest.mark.django_db
+def test_profile_school_uses_same_reviewed_catalog(users):
+    owner, other = users
+    client = APIClient()
+    assert (
+        client.post(reverse("taxonomy-profile-school"), {"name": "Trường Mẫu"}).status_code == 401
+    )
+    client.force_authenticate(user=owner)
+    unknown = client.post(reverse("taxonomy-profile-school"), {"name": "Trường Máu"})
+    assert unknown.status_code == 400
+    assert owner.school == ""
+    selected = client.post(reverse("taxonomy-profile-school"), {"name": "  TRƯỜNG   MẪU  "})
+    assert selected.status_code == 200
+    assert selected.data["school"] == "Trường Mẫu"
+    assert client.patch(reverse("me"), {"school": "Trường Máu"}).status_code == 200
+    owner.refresh_from_db()
+    other.refresh_from_db()
+    assert owner.school == "Trường Mẫu"
+    assert other.school == ""
+    assert client.post(reverse("taxonomy-profile-school"), {"name": ""}).data["school"] == ""

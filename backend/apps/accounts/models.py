@@ -14,7 +14,7 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     email = models.EmailField(unique=True)
     display_name = models.CharField(max_length=160, blank=True)
-    school = models.CharField(max_length=160, blank=True)
+    school = models.CharField(max_length=200, blank=True)
     grade = models.CharField(max_length=20, blank=True)
 
     class Meta:

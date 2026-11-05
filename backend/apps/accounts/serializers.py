@@ -13,7 +13,7 @@ class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ("id", "username", "email", "display_name", "school", "grade", "roles")
-        read_only_fields = ("id", "username", "email", "roles")
+        read_only_fields = ("id", "username", "email", "school", "roles")
 
     @extend_schema_field(serializers.ListField(child=serializers.CharField()))
     def get_roles(self, obj) -> list[str]:
