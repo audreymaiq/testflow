@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
+import { Modal } from './shared'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type ExamSummary = {
@@ -125,6 +126,8 @@ export function ExamDetailPage() {
   const [startError, setStartError] = useState('')
   const [ownerBusy, setOwnerBusy] = useState(false)
   const [ownerMessage, setOwnerMessage] = useState('')
+  const [confirmation, setConfirmation] = useState<'DELETE' | 'HIDE' | null>(null)
+  const closeConfirmation = useCallback(() => { if (!ownerBusy) setConfirmation(null) }, [ownerBusy])
   const [chapterIds, setChapterIds] = useState<string[]>([])
   const [includeWrong, setIncludeWrong] = useState(false)
   const [onlyWrong, setOnlyWrong] = useState(false)
@@ -185,17 +188,15 @@ export function ExamDetailPage() {
     finally { setOwnerBusy(false) }
   }
   async function removeExam() {
-    if (!window.confirm('Xóa đề này khỏi thư viện?')) return
     setOwnerBusy(true); setOwnerMessage('')
     try {
       await api<void>(`/exams/${id}/`, { method: 'DELETE' })
       await queryClient.invalidateQueries({ queryKey: ['exams'] })
       navigate('/library')
     } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không xóa được đề.') }
-    finally { setOwnerBusy(false) }
+    finally { setOwnerBusy(false); setConfirmation(null) }
   }
   async function hide() {
-    if (!window.confirm('Ẩn đề này khỏi mọi người dùng?')) return
     setOwnerBusy(true); setOwnerMessage('')
     try {
       await api(`/exams/${id}/hide/`, { method: 'POST' })
@@ -203,7 +204,7 @@ export function ExamDetailPage() {
       await queryClient.invalidateQueries({ queryKey: ['exams'] })
       setOwnerMessage('Đề đã được ẩn.')
     } catch (cause) { setOwnerMessage(cause instanceof Error ? cause.message : 'Không ẩn được đề.') }
-    finally { setOwnerBusy(false) }
+    finally { setOwnerBusy(false); setConfirmation(null) }
   }
   if (exam.isPending) return <p role="status">Đang tải đề…</p>
   if (exam.isError) return <section className="paper detail-panel"><h1>Không thể mở đề</h1><p role="alert">{exam.error.message}</p><Link to="/library">Về thư viện</Link></section>
@@ -253,10 +254,10 @@ export function ExamDetailPage() {
       {exam.data.visibility === 'PRIVATE'
         ? <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PUBLIC')}>Gửi duyệt công khai</button>
         : <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => changeVisibility('PRIVATE')}>Chuyển về riêng tư</button>}
-      <button type="button" className="button secondary" disabled={ownerBusy} onClick={removeExam}>Xóa đề</button>
+      <button type="button" className="button secondary" disabled={ownerBusy} onClick={() => setConfirmation('DELETE')}>Xóa đề</button>
       {ownerMessage && <p role="status">{ownerMessage}</p>}
     </div>}
-    {user?.roles.includes('Admin') && <div className="owner-actions"><button type="button" className="button secondary" disabled={ownerBusy} onClick={hide}>Ẩn đề với mọi người</button>{ownerMessage && !exam.data.is_owner && <p role="status">{ownerMessage}</p>}</div>}
+    {user?.roles.includes('Admin') && <div className="owner-actions"><button type="button" className="button secondary" disabled={ownerBusy} onClick={() => setConfirmation('HIDE')}>Ẩn đề với mọi người</button>{ownerMessage && !exam.data.is_owner && <p role="status">{ownerMessage}</p>}</div>}
     <h2>Nội dung đề</h2>
     <ul>{exam.data.sections.map((section) => <li key={section.id}>{section.title} · {section.kind}</li>)}</ul>
     <h2>Xem trước</h2>
@@ -266,6 +267,13 @@ export function ExamDetailPage() {
       <h3>Câu {index + 1}</h3><p>{question.text}</p>
       <ol type="A">{question.choices.map((choice) => <li key={choice.label}>{choice.text}</li>)}</ol>
     </article>)}
+    {confirmation && <Modal title={confirmation === 'DELETE' ? 'Xóa đề?' : 'Ẩn đề?'} onClose={closeConfirmation}>
+      <p>{confirmation === 'DELETE' ? 'Đề sẽ bị xóa khỏi thư viện của bạn.' : 'Đề sẽ bị ẩn khỏi mọi người dùng.'}</p>
+      <button type="button" className="button primary" disabled={ownerBusy}
+        onClick={() => { void (confirmation === 'DELETE' ? removeExam() : hide()) }}>
+        {ownerBusy ? 'Đang xử lý…' : confirmation === 'DELETE' ? 'Xác nhận xóa' : 'Xác nhận ẩn'}
+      </button>
+    </Modal>}
   </section>
 }
 

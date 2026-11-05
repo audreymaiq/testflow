@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
+import { Modal } from './shared'
 
 type Choice = { label: string; text: string }
 type Question = {
@@ -98,6 +99,7 @@ export function PracticePage() {
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({})
   const [flagDrafts, setFlagDrafts] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
+  const [confirmSubmit, setConfirmSubmit] = useState(false)
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)
   const [serverOffset, setServerOffset] = useState(0)
@@ -171,7 +173,7 @@ export function PracticePage() {
   }
 
   async function submit() {
-    if (!window.confirm('Nộp bài và xem kết quả?')) return
+    setConfirmSubmit(false)
     if (question && drafts[question.id] && !await save(drafts[question.id], question)) return
     setBusy(true); setError('')
     try {
@@ -218,7 +220,13 @@ export function PracticePage() {
         {active + 1 < questions.length && <button type="button" className="button secondary" onClick={() => { void goTo(active + 1) }} disabled={busy}>Câu tiếp</button>}
       </div>
     </article>
-    {!closed && <button type="button" className="button submit-button" onClick={submit} disabled={busy}>Nộp bài</button>}
+    {!closed && <button type="button" className="button submit-button" onClick={() => setConfirmSubmit(true)} disabled={busy}>Nộp bài</button>}
+    {confirmSubmit && <Modal title="Nộp bài?" onClose={() => { if (!busy) setConfirmSubmit(false) }}>
+      <p>Nộp bài và xem kết quả? Bạn sẽ không thể sửa câu trả lời sau khi nộp.</p>
+      <button type="button" className="button primary" disabled={busy} onClick={() => { void submit() }}>
+        {busy ? 'Đang nộp…' : 'Xác nhận nộp bài'}
+      </button>
+    </Modal>}
   </section>
 }
 

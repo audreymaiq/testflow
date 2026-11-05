@@ -102,6 +102,12 @@ Requirements: PRD §9.0.1 and §23.1 item 6, FR-I11. The TXT upload page exposes
 
 Evidence: the shared modal now presents the v1 example, v2 answer variants and limits with text-only markup. Its viewport height is bounded and scrollable. Chrome found a pre-existing file-input overflow at 360px (368px document); constraining that input resolved it. The import browser journey opens the guide, checks examples and no horizontal overflow, closes with Escape, then uploads and confirms a real TXT exam. Focused import E2E passed; full Chrome E2E 11/11 passed. TypeScript/Vitest 2 and Vite build passed. Backend code did not change from the prior 59/59 gate. Hosted CI and clean Linux bootstrap remain unverified.
 
+## S1b package 6: shared action confirmations (local implementation verified)
+
+Requirements: PRD §23.1 items 8 and 25, FR-T3. Owner delete, Admin hide and practice submit use the shared text-only modal instead of browser-native `confirm`. Escape or Close cancels without a server mutation. Confirm invokes the existing permission-checked service once; pending state blocks duplicate actions, and failure remains visible. Browser tests cover cancel and confirm for submit plus owner deletion/visibility behavior. Full Chrome, frontend and backend gates must remain green before marking this local package verified.
+
+Evidence: all three native confirmation calls were replaced. Chrome tests cancel and then confirm practice submit and owner deletion; existing owner visibility flow still passes. Focused Chrome E2E 6/6, full Chrome E2E 11/11, backend 59/59, Ruff, mypy (68 files), import-linter 9/9, TypeScript/Vitest 2 and Vite build passed. Withdrawal from PUBLIC to PRIVATE still lacks a confirmation step, so Quiz Rush parity item 8 remains partial. Admin hide has permission-checked backend evidence but its new modal is not yet covered by a browser test. Hosted CI is unverified.
+
 ## Open decisions
 
 - Use **TestFlow** everywhere in new product surfaces and package names (owner decision).

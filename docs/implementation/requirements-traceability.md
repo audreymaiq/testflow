@@ -67,7 +67,7 @@ Updated: 2026-11-06. Planned paths and tests must be replaced with real evidence
 | FR-R6 | PRD §5.3 / R1 | backend/apps/catalog/services.py; frontend/src/publication.tsx | backend/tests/test_publication.py; frontend/e2e/publication.spec.ts | Reviewer approval/rejection and owner status/reason locally verified | VERIFIED LOCAL |
 | FR-T1 | PRD §5.6 / R1 | design/palette.py; design/tokens.css; frontend/src/theme.tsx | design/palette.py | 288 contrast pairs passed; four themes and three mode choices built | VERIFIED LOCAL |
 | FR-T2 | PRD §5.6 / R1 | frontend/index.html | frontend/e2e/auth.spec.ts | prepaint script and reload persistence verified; visual flash measurement pending | IN PROGRESS |
-| FR-T3 | PRD §5.6 / R1 | frontend/src/shared.tsx; frontend/src/App.tsx | frontend/e2e/auth.spec.ts | modal Escape/cancel/confirm and axe audit passed | VERIFIED LOCAL |
+| FR-T3 | PRD §5.6 / R1 | frontend/src/{shared,App,catalog,practice}.tsx | frontend/e2e/{auth,catalog,practice,imports}.spec.ts | text-only modal Escape/cancel/confirm, owner delete and practice submit Chrome journeys; axe account audit passed | VERIFIED LOCAL |
 | FR-T4 | PRD §5.6 / R1 | frontend/src/style.css | browser reduced-motion audit pending | CSS disables motion under user preference | IN PROGRESS |
 | NFR-1 | PRD §6 / R1 | backend/apps/practice/grading.py | backend/apps/practice/grading.py | measured gate + targeted test | NOT STARTED |
 | NFR-2 | PRD §6 / R1 | backend/apps/imports/tasks.py | backend/apps/imports/tasks.py | measured gate + targeted test | NOT STARTED |

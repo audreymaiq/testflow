@@ -11,7 +11,7 @@ Date: 2026-11-06. Scope: PRD §23.1 items 1–28 and §23.4. `PASS LOCAL` means 
 | 5 School/major filter chips plus level/grade/subject | PARTIAL | AND filtering and data-driven facets exist, but the UI uses dropdowns rather than the retained chip carousel. |
 | 6 TXT parser and format guide | PASS LOCAL | v1/v2 parser and issue reports pass; the upload page has a text-only guide modal with a v1 example, v2 variants, Escape dismissal and 360px Chrome check before real import. |
 | 7 Private/public choice | PASS LOCAL | Private-first save and separate moderated publication pass API/browser tests. |
-| 8 Owner visibility, delete and confirmation | PARTIAL | Owner controls and server rules pass; delete uses `window.confirm` instead of the shared modal. |
+| 8 Owner visibility, delete and confirmation | PARTIAL | Owner controls and server rules pass; delete cancel/confirm uses the shared modal and Chrome test. PUBLIC withdrawal still has no confirmation. |
 | 9 Two-step email/password login | PARTIAL | Registration/login are real; two-step legacy UX and password reset are absent. |
 | 10 Google login | OUT OF R1 | Explicit non-goal in PRD §1.3. |
 | 11 Fake Apple login | PASS LOCAL | No Apple control in TestFlow. |
@@ -28,7 +28,7 @@ Date: 2026-11-06. Scope: PRD §23.1 items 1–28 and §23.4. `PASS LOCAL` means 
 | 22 Clear answered/correct progress labels | PARTIAL | Question index and answer navigation exist; live correct/answered totals are not shown together. |
 | 23 Four themes, persistence and no flash | PASS LOCAL | Theme E2E and 288 contrast checks; tokens are generated from `design/palette.py`. |
 | 24 Toast progress, hover pause and close | PARTIAL | Shared text-only Toast exists; timed progress, pause and dismiss are absent. |
-| 25 Shared modal alert/confirm | PARTIAL | Shared modal exists and logout uses it; other destructive actions still call `window.confirm`. |
+| 25 Shared modal alert/confirm | PASS LOCAL | Logout, delete, Admin hide and practice submit use the shared text-only modal. Chrome covers Escape cancellation and confirmation; no native `window.confirm` remains. |
 | 26 Firestore sync replaced by PostgreSQL/API | PASS LOCAL | No Firebase runtime; server state goes through API/PostgreSQL. |
 | 27 Built-in 300-question deck | PASS LOCAL | Authorized fixture parses 300/300 in four chapters; seed/publication/idempotency DB tests pass. Operator-owned environment seeding remains open. |
 | 28 Licensed replacement fonts | PASS LOCAL | IBM Plex Sans/Mono and Literata are self-hosted via `@fontsource`; old font folder is not a runtime dependency. |

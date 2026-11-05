@@ -1,6 +1,7 @@
 import { expect, test } from '@playwright/test'
 
 test('manual exam stays private across catalog and detail routes', async ({ page }) => {
+  test.setTimeout(90000)
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const owner = `owner${suffix}`
   const password = 'Zebra!Planet#42'
@@ -44,5 +45,25 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await page.goto(detailUrl)
   await expect(page.getByRole('heading', { name: 'Không thể mở đề' })).toBeVisible()
   await page.goto('/library')
+  await expect(page.getByText(`Đề riêng tư ${suffix}`)).toHaveCount(0)
+
+  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
+  await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
+  await page.goto('/login')
+  await page.getByLabel('Tên đăng nhập hoặc email').fill(owner)
+  await page.getByLabel('Mật khẩu').fill(password)
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible({ timeout: 15000 })
+  await page.goto(detailUrl)
+  await page.getByRole('button', { name: 'Xóa đề' }).click()
+  const confirmation = page.getByRole('dialog', { name: 'Xóa đề?' })
+  await expect(confirmation).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(confirmation).toBeHidden()
+  await expect(page.getByRole('heading', { name: `Đề riêng tư ${suffix}` })).toBeVisible()
+  await page.getByRole('button', { name: 'Xóa đề' }).click()
+  await confirmation.getByRole('button', { name: 'Xác nhận xóa' }).click()
+  await expect(page).toHaveURL(/\/library$/)
   await expect(page.getByText(`Đề riêng tư ${suffix}`)).toHaveCount(0)
 })
