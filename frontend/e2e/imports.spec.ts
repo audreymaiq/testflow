@@ -71,3 +71,23 @@ test('Quiz Rush v1 TXT can be completed with metadata form', async ({ page }) =>
   await page.waitForURL(/\/exams\//)
   await expect(page.getByRole('heading', { name: `Bộ v1 ${suffix}` })).toBeVisible()
 })
+
+test('owner can discard a TXT draft with a saved reason', async ({ page }) => {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const username = `discard${suffix}`
+  await page.goto('/register')
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(username)
+  await page.getByLabel('Email').fill(`${username}@example.test`)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible()
+  await page.goto('/imports/new')
+  const content = `#TITLE: Bản nháp ${suffix}\n#SUBJECT: toan\n#LEVEL: THPT\n#GRADE: 12\n#TYPE: ON_TAP\n[CH1] Số học\nHai cộng hai?\nA. Ba\nB. Bốn\n=>B\n`
+  await page.getByLabel('Chọn tệp .txt').setInputFiles({ name: `discard-${suffix}.txt`, mimeType: 'text/plain', buffer: Buffer.from(content) })
+  await page.getByRole('button', { name: 'Phân tích tệp' }).click()
+  await page.getByLabel('Lý do bỏ bản nháp (không bắt buộc)').fill('Thiếu lời giải')
+  await page.getByRole('button', { name: 'Bỏ bản nháp' }).click()
+  await expect(page.getByText('Lý do bỏ: Thiếu lời giải')).toBeVisible()
+  await page.reload()
+  await expect(page.getByText('Lý do bỏ: Thiếu lời giải')).toBeVisible()
+})

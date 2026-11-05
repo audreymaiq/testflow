@@ -100,7 +100,12 @@ def test_reject_allows_reupload_and_invalid_file(clients):
     assert upload(client, "\x00garbage").status_code == 415
     assert upload(client, "x" * (2 * 1024 * 1024 + 1)).status_code == 413
     job_id = upload(client).data["id"]
-    assert client.post(f"/api/v1/imports/{job_id}/discard/").status_code == 200
+    discarded = client.post(
+        f"/api/v1/imports/{job_id}/discard/", {"reason": "Tệp thiếu đáp án"}, format="json"
+    )
+    assert discarded.status_code == 200
+    assert discarded.data["discard_reason"] == "Tệp thiếu đáp án"
+    assert ImportJob.objects.get(pk=job_id).error_detail == "Tệp thiếu đáp án"
     assert upload(client).status_code == 201
 
 

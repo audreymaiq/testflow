@@ -8,7 +8,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from .models import ImportJob
-from .serializers import DraftReplaceSerializer, TxtUploadSerializer
+from .serializers import DiscardSerializer, DraftReplaceSerializer, TxtUploadSerializer
 from .services import confirm, create_txt_job, discard, job_payload, replace_draft
 
 
@@ -59,7 +59,13 @@ class ConfirmView(GenericAPIView):
 
 
 class DiscardView(GenericAPIView):
-    @extend_schema(operation_id="imports_discard", request=None, responses={200: dict})
+    serializer_class = DiscardSerializer
+
+    @extend_schema(operation_id="imports_discard", responses={200: dict})
     def post(self, request, job_id):
-        job = discard(job_id, user=request.user)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job = discard(
+            job_id, user=request.user, reason=serializer.validated_data.get("reason", "")
+        )
         return Response(job_payload(job))

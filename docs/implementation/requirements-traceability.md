@@ -1,6 +1,6 @@
 # TestFlow requirements traceability
 
-Updated: 2026-11-05 09:15 ICT. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 51 backend tests, 9 Chrome E2E, Ruff, mypy 64 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
+Updated: 2026-11-05 09:31 ICT. Planned paths and tests must be replaced with real evidence as each slice closes. The historical filenames are absent from this checkout; `docs/prd.md` is canonical. Latest broad local gates: 51 backend tests, 10 Chrome E2E, Ruff, mypy 64 files, import-linter 9/9, schema, TypeScript/Vitest/build pass. Hosted CI and production are unverified.
 
 | ID | Source/scope | Implementation target | Test target | Verification method | State |
 | --- | --- | --- | --- | --- | --- |
@@ -62,7 +62,7 @@ Updated: 2026-11-05 09:15 ICT. Planned paths and tests must be replaced with rea
 | FR-R1 | PRD §5.3 / R1 | backend/apps/imports; frontend/src/features/review | backend/apps/imports; frontend/src/features/review | review permission + E2E | NOT STARTED |
 | FR-R2 | PRD §5.3 / R1 | frontend/src/imports.tsx | frontend/e2e/imports.spec.ts | TXT per-question form edit/save/practice passes; page images and warning-to-question links open | PARTIAL LOCAL |
 | FR-R3 | PRD §5.3 / R1 | backend/apps/imports/services.py | backend/tests/test_txt_import.py; frontend/e2e/imports.spec.ts | TXT confirm creates PRIVATE exam atomically and once | PARTIAL LOCAL |
-| FR-R4 | PRD §5.3 / R1 | backend/apps/imports/services.py; frontend/src/imports.tsx | backend/tests/test_txt_import.py | TXT discard state works; optional reason absent | PARTIAL LOCAL |
+| FR-R4 | PRD §5.3 / R1 | backend/apps/imports/{services,views}.py; frontend/src/imports.tsx | backend/tests/test_txt_import.py; frontend/e2e/imports.spec.ts | TXT discard stores optional reason and owner can reload it; document drafts open | PARTIAL LOCAL |
 | FR-R5 | PRD §5.3 / R1 | backend/apps/imports/models.py; services.py | backend/tests/test_txt_import.py | ReviewEdit stores before/after on TXT draft save | PARTIAL LOCAL |
 | FR-R6 | PRD §5.3 / R1 | backend/apps/catalog/services.py; frontend/src/publication.tsx | backend/tests/test_publication.py; frontend/e2e/publication.spec.ts | Reviewer approval/rejection and owner status/reason locally verified | VERIFIED LOCAL |
 | FR-T1 | PRD §5.6 / R1 | design/palette.py; design/tokens.css; frontend/src/theme.tsx | design/palette.py | 288 contrast pairs passed; four themes and three mode choices built | VERIFIED LOCAL |

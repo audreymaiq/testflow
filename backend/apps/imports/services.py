@@ -62,6 +62,8 @@ def job_payload(job, *, include_draft=False):
         "exam_id": str(job.exam_id) if job.exam_id else None,
         "created_at": job.created_at.isoformat(),
     }
+    if job.status == ImportJob.Status.REJECTED:
+        payload["discard_reason"] = job.error_detail
     if hasattr(job, "draft"):
         payload["report"] = report(job)
         payload["draft_summary"] = {
@@ -210,9 +212,9 @@ def confirm(job_id, *, user):
 
 
 @transaction.atomic
-def discard(job_id, *, user):
+def discard(job_id, *, user, reason=""):
     job = _owned_job(job_id, user, lock=True)
     if job.status != ImportJob.Status.NEEDS_REVIEW:
         raise Conflict("IMPORT_STATE_CONFLICT", "Lần nhập đề đã được xử lý.")
-    job.transition(ImportJob.Status.REJECTED)
+    job.transition(ImportJob.Status.REJECTED, error_detail=reason)
     return job

@@ -92,6 +92,8 @@ class ImportJob(models.Model):
             )
             self.status = locked.status
             self.status_changed_at = locked.status_changed_at
+            self.error_code = locked.error_code
+            self.error_detail = locked.error_detail
             return locked
 
 
