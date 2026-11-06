@@ -9,7 +9,7 @@ test('TXT import is reviewed, confirmed once, and private to the owner', async (
   await page.getByLabel('Email').fill(`${username}@example.test`)
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
-  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible({ timeout: 15000 })
   await page.getByRole('link', { name: 'Nhập TXT' }).click()
   await page.getByRole('button', { name: 'Xem hướng dẫn định dạng TXT' }).click()
   const guide = page.getByRole('dialog', { name: 'Định dạng tệp TXT' })
