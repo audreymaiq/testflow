@@ -1,5 +1,7 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
+import { readFile, readdir, rmdir, unlink } from 'node:fs/promises'
+import { join } from 'node:path'
 
 test('registration, logout and login use the running API and PostgreSQL', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
@@ -56,4 +58,43 @@ test('theme choices persist across a reload', async ({ page }) => {
   await page.reload()
   await expect(page.locator('html')).toHaveAttribute('data-theme', 'sakura')
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
+})
+
+test('password reset email link changes credentials in the running app', async ({ page }) => {
+  test.setTimeout(90000)
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const username = `reset${suffix}`
+  const email = `${username}@example.test`
+  const mailDir = process.env.TESTFLOW_E2E_MAIL_DIR!
+  await page.goto('/register')
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(username)
+  await page.getByLabel('Email').fill(email)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible({ timeout: 15000 })
+  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
+  await page.goto('/login')
+  await page.getByRole('link', { name: 'Quên mật khẩu?' }).click()
+  await page.getByLabel('Email').fill(email)
+  await page.getByRole('button', { name: 'Gửi liên kết' }).click()
+  await expect(page.getByRole('status')).toContainText('Nếu email có tài khoản', { timeout: 30000 })
+  await expect.poll(async () => (await readdir(mailDir)).length, { timeout: 15000 }).toBe(1)
+  const [mailFile] = await readdir(mailDir)
+  const rawMail = (await readFile(join(mailDir, mailFile), 'utf8')).replace(/=\r?\n/g, '')
+  const resetUrl = rawMail.match(/http:\/\/localhost:15173\/reset-password\/[A-Za-z0-9_-]+\/[A-Za-z0-9-]+/)?.[0]
+  expect(resetUrl).toBeTruthy()
+  for (const file of await readdir(mailDir)) await unlink(join(mailDir, file))
+  await rmdir(mailDir)
+  await page.goto(resetUrl!)
+  await page.getByLabel('Mật khẩu mới').fill('NewZebra!Planet#42')
+  await page.getByLabel('Xác nhận mật khẩu').fill('NewZebra!Planet#42')
+  await page.getByRole('button', { name: 'Đổi mật khẩu' }).click()
+  await expect(page).toHaveURL(/\/login$/)
+  await expect(page.getByRole('status')).toContainText('Hãy đăng nhập lại')
+  await page.getByLabel('Tên đăng nhập hoặc email').fill(email)
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
+  await page.getByLabel('Mật khẩu').fill('NewZebra!Planet#42')
+  await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible({ timeout: 15000 })
 })
