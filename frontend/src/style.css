@@ -75,7 +75,11 @@ html:has(.home-page) .topbar { scroll-snap-align: start; }
 .modal h2 { margin-top: 0; }
 .modal .button { margin-right: .7rem; }
 .txt-format-example { padding: .8rem; border: 1px solid var(--border); background: var(--surface-alt); white-space: pre-wrap; overflow-wrap: anywhere; font: .85rem/1.5 'IBM Plex Mono', monospace; }
-.toast { position: fixed; bottom: 1rem; right: 1rem; padding: .8rem 1rem; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 8px 24px #0003; }
+.toast { position: fixed; bottom: 1rem; right: 1rem; width: min(360px, calc(100vw - 2rem)); padding: .8rem 1rem; background: var(--surface); border: 1px solid var(--border); box-shadow: 0 8px 24px #0003; z-index: 20; }
+.toast-content { display: flex; align-items: start; justify-content: space-between; gap: 1rem; }
+.toast-content button { flex: none; min-width: 36px; min-height: 36px; border: 0; background: transparent; color: var(--text); font-size: 1.4rem; line-height: 1; }
+.toast-progress { height: 3px; margin-top: .7rem; background: var(--surface-alt); }
+.toast-progress span { display: block; height: 100%; background: var(--accent); }
 .library-layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 1.4rem; align-items: start; }
 .library-filters { padding: 1.2rem; display: grid; gap: 1.2rem; }
 .library-filters label, .manual-form label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 600; }
