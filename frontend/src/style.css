@@ -214,10 +214,7 @@ h1 { font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1.16; font-weight: 600; l
 .status-wrong { --status-color: var(--error); }
 .status-skipped, .status-blank, .status-manual { --status-color: var(--skipped); }
 .result-segment { background: var(--status-color); }
-.result-legend { list-style: none; display: flex; flex-wrap: wrap; gap: .35rem 1rem; margin: 0 0 2rem; padding: 0; }
-.result-legend li { display: flex; align-items: center; gap: .35rem; font-size: .75rem; color: var(--muted); }
-.result-legend li span { width: 9px; height: 9px; border-radius: 50%; background: var(--status-color); }
-.result-legend strong { color: var(--text); font-family: 'IBM Plex Mono', monospace; }
+.result-summary { margin: 0 0 2rem; color: var(--muted); font-size: .84rem; line-height: 1.6; }
 .result-status { margin-left: .4rem; padding: .15rem .45rem; border: 1px solid var(--status-color); border-radius: 3px; color: var(--status-color); font: 600 .72rem 'IBM Plex Sans', sans-serif; vertical-align: middle; white-space: nowrap; }
 .result-question { border-top: 1px solid var(--border); padding: 1rem 0; }
 .pagination { display: flex; align-items: center; justify-content: flex-end; gap: .7rem; padding-top: 1.2rem; }
