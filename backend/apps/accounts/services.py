@@ -93,8 +93,14 @@ def confirm_password_reset(*, uid: str, token: str, password: str) -> None:
     try:
         user_id = force_str(urlsafe_base64_decode(uid))
         user = User.objects.select_for_update().get(pk=user_id, is_active=True)
-    except (TypeError, ValueError, OverflowError, UnicodeDecodeError, DjangoValidationError,
-            User.DoesNotExist) as exc:
+    except (
+        TypeError,
+        ValueError,
+        OverflowError,
+        UnicodeDecodeError,
+        DjangoValidationError,
+        User.DoesNotExist,
+    ) as exc:
         raise invalid from exc
     if not user.has_usable_password() or not default_token_generator.check_token(user, token):
         raise invalid
