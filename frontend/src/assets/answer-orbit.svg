@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 560 500" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Phiếu trả lời và hành trình học tập</title>
+  <defs>
+    <clipPath id="mark-half"><circle cx="280" cy="248" r="183"/></clipPath>
+    <clipPath id="sheet"><path d="M156 98 425 131 395 432 126 399Z"/></clipPath>
+  </defs>
+  <path d="M75 343C30 263 64 150 163 101c118-59 243-27 302 62 68 102 20 225-70 268-118 57-261 6-320-88Z" fill="#E8EEF4"/>
+  <circle cx="280" cy="248" r="183" stroke="#2547C4" stroke-width="3"/>
+  <path d="M97 65h183v366H97z" fill="#2547C4" clip-path="url(#mark-half)" opacity=".1"/>
+  <path d="M105 364c73 87 225 111 329 30" stroke="#2547C4" stroke-width="4" stroke-linecap="round"/>
+  <path d="m426 390 14-1-6 13" stroke="#2547C4" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="104" cy="364" r="11" fill="#2547C4" stroke="#fff" stroke-width="5"/>
+  <circle cx="462" cy="199" r="15" fill="#67B5A6" stroke="#fff" stroke-width="5"/>
+  <path d="m167 113 269 33-30 301-269-33Z" fill="#B9C8D5"/>
+  <path d="M156 98 425 131 395 432 126 399Z" fill="#fff" stroke="#183744" stroke-width="2.5" stroke-linejoin="round"/>
+  <g clip-path="url(#sheet)">
+    <path d="m158 104 267 33-7 63-267-33Z" fill="#183744"/>
+    <path d="m183 135 102 13M182 151l67 8" stroke="#F3F7F8" stroke-width="5" stroke-linecap="round"/>
+    <circle cx="374" cy="158" r="13" stroke="#E7B773" stroke-width="3"/>
+    <path d="M366 158h16" stroke="#E7B773" stroke-width="3"/>
+    <g stroke="#D2DDE2" stroke-width="1.5">
+      <path d="m146 233 268 33M140 291l268 33M134 349l268 33"/>
+    </g>
+    <g fill="#90A3AE">
+      <path d="m168 204 21 3M163 263l21 3M157 321l21 3M151 379l21 3" stroke="#90A3AE" stroke-width="5" stroke-linecap="round"/>
+    </g>
+    <g stroke="#6B8391" stroke-width="2.5">
+      <circle cx="227" cy="215" r="10"/><circle cx="270" cy="220" r="10"/><circle cx="313" cy="225" r="10"/><circle cx="356" cy="230" r="10"/>
+      <circle cx="221" cy="274" r="10"/><circle cx="264" cy="279" r="10"/><circle cx="307" cy="284" r="10"/><circle cx="350" cy="289" r="10"/>
+      <circle cx="215" cy="332" r="10"/><circle cx="258" cy="337" r="10"/><circle cx="301" cy="342" r="10"/><circle cx="344" cy="347" r="10"/>
+      <circle cx="209" cy="390" r="10"/><circle cx="252" cy="395" r="10"/><circle cx="295" cy="400" r="10"/><circle cx="338" cy="405" r="10"/>
+    </g>
+    <circle cx="270" cy="220" r="10" fill="#2547C4" stroke="#2547C4" stroke-width="2.5"/>
+    <circle cx="307" cy="284" r="10" fill="#2547C4" stroke="#2547C4" stroke-width="2.5"/>
+    <circle cx="215" cy="332" r="10" fill="#2547C4" stroke="#2547C4" stroke-width="2.5"/>
+    <circle cx="295" cy="400" r="10" fill="#67B5A6" stroke="#67B5A6" stroke-width="2.5"/>
+  </g>
+  <path d="M445 83a35 35 0 1 1-70 0 35 35 0 0 1 70 0Z" fill="#E7B773" stroke="#183744" stroke-width="2.5"/>
+  <path d="m393 83 11 11 20-23" stroke="#183744" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="m75 162 15 17 27-32" stroke="#67B5A6" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="76" cy="162" r="32" stroke="#67B5A6" stroke-width="2"/>
+</svg>
