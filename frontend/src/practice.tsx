@@ -74,8 +74,8 @@ function QuestionInput({ question, value, onChange, disabled }: {
   if (question.kind === 'TRUE_FALSE') return <fieldset className="answer-options" disabled={disabled}>
     <legend>Chọn đúng hoặc sai</legend>
     {[true, false].map((choice) => <label key={String(choice)} className={value.value === choice ? 'selected' : ''}>
-      <input type="radio" name={`answer-${question.id}`} checked={value.value === choice} onChange={() => onChange({ value: choice })} />
-      {choice ? 'Đúng' : 'Sai'}
+      <input type="radio" name={`answer-${question.id}`} aria-label={choice ? 'Đúng' : 'Sai'} checked={value.value === choice} onChange={() => onChange({ value: choice })} />
+      <strong>{choice ? 'Đ' : 'S'}</strong><span>{choice ? 'Đúng' : 'Sai'}</span>
     </label>)}
   </fieldset>
   if (question.kind === 'TF_GROUP') return <fieldset className="answer-options" disabled={disabled}>
@@ -303,11 +303,14 @@ export function ResultPage() {
   const result = useQuery({ queryKey: ['result', sessionId, user?.id], queryFn: () => api<Result>(`/practice/sessions/${sessionId}/result/`) })
   if (result.isPending) return <p role="status">Đang tải kết quả…</p>
   if (result.isError) return <section className="paper practice-panel"><h1>Chưa có kết quả</h1><p role="alert">{result.error.message}</p><Link to={`/practice/${sessionId}`}>Trở lại bài làm</Link></section>
+  const correctPercent = Number(result.data.correct_percent)
+  const formattedPercent = Number.isFinite(correctPercent)
+    ? correctPercent.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) : result.data.correct_percent
   return <section className="paper practice-panel">
     <p className="eyebrow">KẾT QUẢ / {result.data.mode === 'TIMED' ? 'BÀI THI' : 'LUYỆN TẬP'}</p>
     <h1>Kết quả bài làm</h1>
     <div className="result-score"><div><span className="eyebrow">ĐIỂM BÀI LÀM</span><strong>{result.data.total_score === null ? 'Chưa tính điểm' : `${result.data.total_score} / ${result.data.max_score}`}</strong></div>
-      <span className="result-percent"><strong>{result.data.correct_percent}%</strong> câu đúng</span></div>
+      <span className="result-percent"><strong>{formattedPercent}%</strong> câu đúng</span></div>
     <div className="result-distribution" role="img" aria-label="Phân bố kết quả từng câu">
       {(['CORRECT', 'PARTIAL', 'WRONG', 'SKIPPED', 'BLANK', 'MANUAL'] as const).map((status) => {
         const count = result.data.counts[status] || 0
@@ -322,7 +325,7 @@ export function ResultPage() {
       <p>Đã trả lời: {answerText(item.value)}</p>
       <p>Đáp án: {answerText(item.correct_answer)}</p>
       <p>Điểm: {item.earned} / {item.max_points}</p>
-      {item.explanation && <p>Giải thích: {item.explanation}</p>}
+      {item.explanation && <p className="result-explanation">Giải thích: {item.explanation}</p>}
     </article>)}
     <div className="practice-actions">
       <Link className="button primary" to={`/exams/${result.data.exam_id}`}
