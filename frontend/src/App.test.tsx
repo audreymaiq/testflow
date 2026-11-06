@@ -47,12 +47,20 @@ describe('S0 identity journey', () => {
   })
 
   it('keeps the user on the login page after a server error', async () => {
-    vi.stubGlobal('fetch', vi.fn(async (url: string) => {
+    const fetcher = vi.fn(async (url: string) => {
       if (url.endsWith('/auth/token/refresh/')) return new Response('{}', { status: 400 })
       return Response.json({ error: { details: 'Thông tin đăng nhập không đúng.' } }, { status: 401 })
-    }))
+    })
+    vi.stubGlobal('fetch', fetcher)
     renderApp('/login')
     fireEvent.change(screen.getByLabelText('Tên đăng nhập hoặc email'), { target: { value: 'student' } })
+    expect(screen.queryByLabelText('Mật khẩu')).toBeNull()
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục' }))
+    expect(screen.getByText('student')).toBeTruthy()
+    expect(fetcher).not.toHaveBeenCalledWith(expect.stringContaining('/auth/login/'), expect.anything())
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi tài khoản' }))
+    expect((screen.getByLabelText('Tên đăng nhập hoặc email') as HTMLInputElement).value).toBe('student')
+    fireEvent.click(screen.getByRole('button', { name: 'Tiếp tục' }))
     fireEvent.change(screen.getByLabelText('Mật khẩu'), { target: { value: 'wrongpass' } })
     fireEvent.click(screen.getByRole('button', { name: 'Đăng nhập' }))
     await waitFor(() => expect(screen.getByRole('alert').textContent).toContain('Thông tin đăng nhập không đúng.'))
