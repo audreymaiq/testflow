@@ -60,9 +60,15 @@ export function Home() {
         <h1 id="home-title">Chọn đề.<br />Bắt đầu học.</h1>
         <form className="home-search" role="search" onSubmit={submit}>
           <label htmlFor="home-query">Tìm bộ đề</label>
-          <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)}
-            placeholder="Tên đề, môn học…" />
-          <button className="button primary" type="submit">Tìm đề</button>
+          <div className="home-search-box">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" aria-hidden="true">
+              <circle cx="10.5" cy="10.5" r="6.5" stroke="currentColor" strokeWidth="1.8" />
+              <path d="m15.5 15.5 5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+            </svg>
+            <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)}
+              placeholder="Tên đề, môn học…" />
+            <button className="button primary" type="submit">Tìm đề</button>
+          </div>
         </form>
         <Link className="home-secondary-link" to={user ? '/history' : '/register'}>
           {user ? 'Xem tiến độ học tập' : 'Tạo tài khoản để lưu tiến độ'} <span aria-hidden="true">↗</span>
