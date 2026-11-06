@@ -77,6 +77,7 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
   const [username, setUsername] = useState('')
   const [email, setEmail] = useState('')
   const [identifier, setIdentifier] = useState('')
+  const [loginStep, setLoginStep] = useState<'identifier' | 'password'>('identifier')
   const [password, setPassword] = useState('')
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -84,6 +85,10 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
 
   async function submit(event: FormEvent) {
     event.preventDefault()
+    if (kind === 'login' && loginStep === 'identifier') {
+      if (identifier.trim()) setLoginStep('password')
+      return
+    }
     setError(''); setPending(true)
     try {
       if (kind === 'register') await register(username, email, password)
@@ -102,10 +107,13 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
       {kind === 'register' ? <>
         <label>Tên đăng nhập<input autoComplete="username" required maxLength={150} value={username} onChange={(event) => setUsername(event.target.value)} /></label>
         <label>Email<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
-      </> : <label>Tên đăng nhập hoặc email<input autoComplete="username" required value={identifier} onChange={(event) => setIdentifier(event.target.value)} /></label>}
-      <label>Mật khẩu<input type="password" autoComplete={kind === 'register' ? 'new-password' : 'current-password'} required minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+      </> : loginStep === 'identifier'
+        ? <label>Tên đăng nhập hoặc email<input autoComplete="username" required autoFocus value={identifier} onChange={(event) => setIdentifier(event.target.value)} /></label>
+        : <p className="login-identity">{identifier} <button type="button" className="text-button" onClick={() => { setLoginStep('identifier'); setPassword(''); setError('') }}>Đổi tài khoản</button></p>}
+      {(kind === 'register' || loginStep === 'password') &&
+        <label>Mật khẩu<input type="password" autoComplete={kind === 'register' ? 'new-password' : 'current-password'} required autoFocus={kind === 'login'} minLength={8} value={password} onChange={(event) => setPassword(event.target.value)} /></label>}
       {error && <p role="alert" className="form-error">{error}</p>}
-      <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang xử lý…' : kind === 'register' ? 'Tạo tài khoản' : 'Đăng nhập'}</button>
+      <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang xử lý…' : kind === 'register' ? 'Tạo tài khoản' : loginStep === 'identifier' ? 'Tiếp tục' : 'Đăng nhập'}</button>
     </form>
     <p className="switch">{kind === 'register' ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}{' '}
       <Link to={kind === 'register' ? '/login' : '/register'} state={{ from, practiceMode }}>
