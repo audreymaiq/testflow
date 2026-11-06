@@ -56,7 +56,7 @@ export function Home() {
     <section className="home-hero paper" aria-labelledby="home-title">
       <div className="home-hero-main">
         <p className="eyebrow">TESTFLOW / HỌC THEO ĐỀ</p>
-        <h1 id="home-title">Học có mục tiêu.<br />Tiến bộ từng câu.</h1>
+        <h1 id="home-title">Học có mục tiêu.<br /><span>Tiến bộ từng câu.</span></h1>
         <p className="lede">Chọn một bộ đề, tập trung vào phần cần luyện và nhìn rõ kết quả sau mỗi lượt.</p>
         <div className="home-hero-actions">
           <a className="button primary" href="#home-library">Khám phá bộ đề</a>
