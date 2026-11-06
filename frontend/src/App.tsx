@@ -37,7 +37,16 @@ function Shell({ children }: { children: ReactNode }) {
     <a className="skip-link" href="#main">Bỏ qua điều hướng</a>
     <header className="topbar bg-surface text-text">
       <div className="topbar-inner">
-      <Link to="/" className="brand" aria-label="TestFlow, trang chủ"><span className="brand-mark" aria-hidden="true" />TestFlow</Link>
+      <Link to="/" className="brand" aria-label="TestFlow, trang chủ">
+        <svg className="brand-symbol" viewBox="0 0 48 48" width="32" height="32" fill="none" aria-hidden="true">
+          <path d="M12 12c15 0 9 24 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
+          <circle cx="12" cy="12" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
+          <circle cx="35" cy="12" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
+          <circle cx="12" cy="36" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
+          <circle cx="36" cy="36" r="7" fill="currentColor" />
+        </svg>
+        <span>TestFlow</span>
+      </Link>
       <nav aria-label="Điều hướng chính">
         <NavLink to="/library">Thư viện</NavLink>
         <NavLink to="/imports/new">Nhập TXT</NavLink>
