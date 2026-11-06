@@ -63,6 +63,7 @@
     },
     "PageFigure": {
       "additionalProperties": false,
+      "description": "A page-local figure with a normalized bounding box.",
       "properties": {
         "anchor": {
           "default": "unanchored",
@@ -70,6 +71,7 @@
           "type": "string"
         },
         "bbox": {
+          "description": "[x0, y0, x1, y1] as fractions of normalized page image width and height",
           "maxItems": 4,
           "minItems": 4,
           "prefixItems": [
@@ -217,6 +219,7 @@
     },
     "QuestionBlock": {
       "additionalProperties": false,
+      "description": "References may span pages and are checked during deterministic assembly.",
       "properties": {
         "choices": {
           "items": {
@@ -321,6 +324,7 @@
     }
   },
   "additionalProperties": false,
+  "description": "Validated v1 content from one page; raw provider output is stored separately.",
   "properties": {
     "blocks": {
       "items": {
