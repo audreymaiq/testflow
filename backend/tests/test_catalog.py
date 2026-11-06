@@ -158,13 +158,17 @@ def test_catalog_list_query_count_does_not_grow_per_exam(users):
     client.force_authenticate(user=owner)
     create_exam(ExamDraft.model_validate(draft_data()), owner=owner)
     with CaptureQueriesContext(connection) as first:
-        assert client.get(reverse("exam-list")).data["count"] == 1
+        first_page = client.get(reverse("exam-list")).data
+        assert first_page["count"] == 1
+        assert first_page["results"][0]["chapter_count"] == 1
     for index in range(3):
         data = draft_data()
         data["metadata"]["title"] = f"Đề số {index}"
         create_exam(ExamDraft.model_validate(data), owner=owner)
     with CaptureQueriesContext(connection) as many:
-        assert client.get(reverse("exam-list")).data["count"] == 4
+        many_page = client.get(reverse("exam-list")).data
+        assert many_page["count"] == 4
+        assert all(item["chapter_count"] == 1 for item in many_page["results"])
     assert len(many) <= len(first) + 2
 
 
