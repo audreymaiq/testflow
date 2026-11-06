@@ -9,6 +9,7 @@ import { HistoryPage, PracticePage, ResultPage } from './practice'
 import { PublicationDetailPage, PublicationQueuePage } from './publication'
 import { ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
 import { OperationsPage } from './ops'
+import { Home } from './home'
 
 function Shell({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth()
@@ -56,15 +57,6 @@ function Shell({ children }: { children: ReactNode }) {
       <button type="button" className="button primary" disabled={leaving} onClick={leave}>{leaving ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
     </Modal>}
   </>
-}
-
-function Home() {
-  return <section className="intro paper">
-    <p className="eyebrow">KHÔNG GIAN HỌC TẬP</p>
-    <h1>Đề thi rõ ràng.<br />Tiến bộ thấy được.</h1>
-    <p>TestFlow giúp bạn lưu đề, luyện tập và xem lại kết quả trong một nơi.</p>
-    <Link className="button primary" to="/library">Xem thư viện đề</Link>
-  </section>
 }
 
 function AuthForm({ kind }: { kind: 'login' | 'register' }) {
