@@ -111,6 +111,9 @@ export function PracticePage() {
   const [tick, setTick] = useState(0)
   const [serverOffset, setServerOffset] = useState(0)
   const allowNavigation = useRef(false)
+  const saveQueue = useRef<Promise<void>>(Promise.resolve())
+  const pendingSaves = useRef(0)
+  const latestFlags = useRef<Record<string, boolean>>({})
   const session = useQuery({ queryKey: ['session', sessionId, user?.id], queryFn: () => api<Session>(`/practice/sessions/${sessionId}/`) })
   const blocker = useBlocker(({ currentLocation, nextLocation }) =>
     session.data?.status === 'IN_PROGRESS' && !allowNavigation.current
@@ -145,27 +148,36 @@ export function PracticePage() {
     }
   }, [remaining, session.data?.status, sessionId, navigate, tick])
 
-  async function save(nextValue = value, target = question, flagOverride?: boolean) {
-    if (!target || !session.data) return false
+  function save(nextValue = value, target = question, flagOverride?: boolean): Promise<boolean> {
+    if (!target || !session.data) return Promise.resolve(false)
+    pendingSaves.current += 1
     setBusy(true); setError('')
-    try {
-      await api(`/practice/sessions/${sessionId}/answers/${target.id}/`, {
-        method: 'PUT', body: JSON.stringify({
-          value: nextValue, flagged: flagOverride ?? flagDrafts[target.id] ?? saved?.flagged ?? false,
-        }),
-      })
-      await session.refetch()
-      setDrafts((current) => {
-        if (JSON.stringify(current[target.id]) !== JSON.stringify(nextValue)) return current
-        const next = { ...current }; delete next[target.id]; return next
-      })
-      setFlagDrafts((current) => {
-        if (current[target.id] !== (flagOverride ?? current[target.id])) return current
-        const next = { ...current }; delete next[target.id]; return next
-      })
-      return true
-    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không lưu được câu trả lời.'); return false }
-    finally { setBusy(false) }
+    const operation = saveQueue.current.then(async () => {
+      try {
+        const flagged = flagOverride ?? latestFlags.current[target.id] ?? flagDrafts[target.id] ?? saved?.flagged ?? false
+        await api(`/practice/sessions/${sessionId}/answers/${target.id}/`, {
+          method: 'PUT', body: JSON.stringify({
+            value: nextValue, flagged,
+          }),
+        })
+        await session.refetch()
+        setDrafts((current) => {
+          if (JSON.stringify(current[target.id]) !== JSON.stringify(nextValue)) return current
+          const next = { ...current }; delete next[target.id]; return next
+        })
+        setFlagDrafts((current) => {
+          if (current[target.id] !== flagged) return current
+          const next = { ...current }; delete next[target.id]; return next
+        })
+        return true
+      } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không lưu được câu trả lời.'); return false }
+      finally {
+        pendingSaves.current -= 1
+        if (pendingSaves.current === 0) setBusy(false)
+      }
+    })
+    saveQueue.current = operation.then(() => undefined, () => undefined)
+    return operation
   }
 
   useEffect(() => {
@@ -249,6 +261,7 @@ export function PracticePage() {
         <input type="checkbox" checked={flagDrafts[question.id] ?? saved?.flagged ?? false} disabled={busy}
           onChange={(event) => {
             const flagged = event.target.checked
+            latestFlags.current[question.id] = flagged
             setFlagDrafts((current) => ({ ...current, [question.id]: flagged }))
             void save(value, question, flagged)
           }} /> Đánh dấu để xem lại
