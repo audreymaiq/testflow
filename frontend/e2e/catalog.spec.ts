@@ -33,6 +33,8 @@ test('school and major facet chips filter a private exam together', async ({ pag
   await page.goto('/library')
   const schoolGroup = page.getByRole('group', { name: 'Trường' })
   const majorGroup = page.getByRole('group', { name: 'Ngành' })
+  await expect(schoolGroup.getByRole('button', { name: school })).toContainText('(1)')
+  await expect(majorGroup.getByRole('button', { name: major })).toContainText('(1)')
   await schoolGroup.getByRole('button', { name: school }).click()
   await majorGroup.getByRole('button', { name: major }).click()
   await expect(schoolGroup.getByRole('button', { name: school })).toHaveAttribute('aria-pressed', 'true')
