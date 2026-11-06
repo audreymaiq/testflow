@@ -161,6 +161,7 @@ function PasswordResetRequestPage() {
 function PasswordResetConfirmPage() {
   const { uid, token } = useParams()
   const navigate = useNavigate()
+  const { clearSession } = useAuth()
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [pending, setPending] = useState(false)
@@ -174,6 +175,7 @@ function PasswordResetConfirmPage() {
       await request('/auth/password/reset/confirm/', {
         method: 'POST', body: JSON.stringify({ uid, token, password }),
       })
+      clearSession()
       navigate('/login', { replace: true, state: { resetDone: true } })
     } catch (cause) {
       setError(cause instanceof Error ? cause.message : 'Không thể đổi mật khẩu. Vui lòng thử lại.')
