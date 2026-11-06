@@ -95,9 +95,9 @@ class RefreshView(GenericAPIView):
             raise ValidationError({"refresh": "Phiên đăng nhập không hợp lệ."})
         try:
             refresh = RefreshToken(raw)
-            user = get_user_model().objects.filter(
-                pk=refresh.get(api_settings.USER_ID_CLAIM)
-            ).first()
+            user = (
+                get_user_model().objects.filter(pk=refresh.get(api_settings.USER_ID_CLAIM)).first()
+            )
         except (TokenError, ValueError) as exc:
             raise AuthenticationFailed("Phiên đăng nhập không hợp lệ.") from exc
         if user is None or refresh.get(api_settings.REVOKE_TOKEN_CLAIM) != get_md5_hash_password(
