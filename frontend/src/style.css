@@ -58,6 +58,7 @@ html:has(.home-page) .topbar { scroll-snap-align: start; }
 .auth-panel form label { display: grid; gap: .45rem; font-size: .88rem; font-weight: 600; }
 .auth-panel input { width: 100%; border: 1px solid var(--border); border-radius: 6px; background: var(--surface-alt); color: var(--text); padding: .7rem .8rem; min-height: 44px; }
 .auth-panel form .button { margin-top: .4rem; }
+.login-identity { overflow-wrap: anywhere; }
 .form-error { color: var(--error); margin: 0; }
 .switch { margin-top: 1.8rem; font-size: .9rem; }
 .account-panel, .not-found { padding: 3rem; max-width: 650px; margin: auto; }
