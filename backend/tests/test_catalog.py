@@ -118,7 +118,10 @@ def test_private_exam_is_absent_from_other_user_and_visitor_reads(users):
         assert client.get(reverse("exam-preview", kwargs={"exam_id": exam.id})).status_code == 404
         assert client.get(reverse("exam-list")).data["count"] == 0
         assert client.get(reverse("exam-list"), {"q": "toan"}).data["count"] == 0
-        assert client.get(reverse("facets")).data["levels"] == []
+        hidden_facets = client.get(reverse("facets")).data
+        assert hidden_facets["levels"] == []
+        assert hidden_facets["subject_counts"] == {}
+        assert hidden_facets["school_counts"] == {}
     client.force_authenticate(user=owner)
     assert client.get(reverse("exam-detail", kwargs={"exam_id": exam.id})).status_code == 200
     with CaptureQueriesContext(connection) as detail_queries:
@@ -174,7 +177,7 @@ def test_catalog_list_query_count_does_not_grow_per_exam(users):
 
 @pytest.mark.django_db
 def test_school_and_major_filters_use_and_semantics(users):
-    owner, _ = users
+    owner, other = users
     School.objects.create(name="Trường Khác")
     Major.objects.create(name="Ngành A")
     Major.objects.create(name="Ngành B")
@@ -189,6 +192,16 @@ def test_school_and_major_filters_use_and_semantics(users):
     assert list_exams(owner, {"major": "Ngành B"}).count() == 1
     assert list_exams(owner, {"school": "Trường Mẫu", "major": "Ngành A"}).count() == 1
     assert list_exams(owner, {"school": "Trường Mẫu", "major": "Ngành B"}).count() == 0
+    client = APIClient()
+    client.force_authenticate(user=owner)
+    facets = client.get(reverse("facets")).data
+    assert facets["subject_counts"] == {"toan": 2}
+    assert facets["school_counts"] == {"Trường Mẫu": 1, "Trường Khác": 1}
+    assert facets["major_counts"] == {"Ngành A": 1, "Ngành B": 1}
+    assert facets["level_counts"] == {"THPT": 2}
+    assert facets["grade_counts"] == {12: 2}
+    client.force_authenticate(user=other)
+    assert client.get(reverse("facets")).data["subject_counts"] == {}
 
 
 @pytest.mark.django_db
