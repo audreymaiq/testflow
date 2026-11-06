@@ -23,20 +23,26 @@ type ExamDetail = ExamSummary & {
 }
 type Subject = { code: string; name: string; levels: string[]; has_formula: boolean }
 type Page<T> = { count: number; next: string | null; previous: string | null; results: T[] }
-type Facets = { subjects: [string, string][]; schools: string[]; majors: string[]; levels: string[] }
+type Facets = {
+  subjects: [string, string][]; schools: string[]; majors: string[]; levels: string[]
+  subject_counts: Record<string, number>; school_counts: Record<string, number>
+  major_counts: Record<string, number>; level_counts: Record<string, number>
+  grade_counts: Record<string, number>
+}
 
 const levelNames: Record<string, string> = {
   TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
 }
 
-function FilterChips({ label, values, selected, onChange }: {
-  label: string; values: string[]; selected: string; onChange: (value: string) => void
+function FilterChips({ label, values, counts, selected, onChange }: {
+  label: string; values: string[]; counts: Record<string, number>
+  selected: string; onChange: (value: string) => void
 }) {
   return <fieldset className="filter-chip-group"><legend>{label}</legend>
     <div className="filter-chip-list">
       <button type="button" aria-pressed={!selected} onClick={() => onChange('')}>Tất cả</button>
       {values.map((value) => <button type="button" key={value} aria-pressed={selected === value}
-        onClick={() => onChange(selected === value ? '' : value)}>{value}</button>)}
+        onClick={() => onChange(selected === value ? '' : value)}>{value} <span className="mono">({counts[value] || 0})</span></button>)}
     </div>
   </fieldset>
 }
@@ -84,17 +90,17 @@ export function LibraryPage() {
       <label>Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
       <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
         <option value="">Tất cả</option>
-        {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+        {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.level_counts[code] || 0})</option>)}
       </select></label>
       <label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}>
-        <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}</option>)}
+        <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item} ({facets.data?.grade_counts[item] || 0})</option>)}
       </select></label>
       <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}>
-        <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+        <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.subject_counts[code] || 0})</option>)}
       </select></label>
-      <FilterChips label="Trường" values={facets.data?.schools || []} selected={school}
+      <FilterChips label="Trường" values={facets.data?.schools || []} counts={facets.data?.school_counts || {}} selected={school}
         onChange={(value) => updateFilter('school', value)} />
-      <FilterChips label="Ngành" values={facets.data?.majors || []} selected={major}
+      <FilterChips label="Ngành" values={facets.data?.majors || []} counts={facets.data?.major_counts || {}} selected={major}
         onChange={(value) => updateFilter('major', value)} />
       <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label>
       <label>Loại đề<select value={examType} onChange={(event) => updateFilter('exam_type', event.target.value)}>
