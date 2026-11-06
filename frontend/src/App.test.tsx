@@ -87,4 +87,40 @@ describe('S0 identity journey', () => {
     await waitFor(() => expect(queryClient.getQueryData(['session', 'private', profile.id])).toBeUndefined())
     expect(fetcher).toHaveBeenCalledWith(expect.stringContaining('/auth/logout/'), expect.objectContaining({ method: 'POST' }))
   })
+
+  it('requests a reset with the same confirmation for any email', async () => {
+    const fetcher = vi.fn(async (url: string) => {
+      if (url.endsWith('/auth/token/refresh/')) return new Response('{}', { status: 400 })
+      if (url.endsWith('/auth/password/reset/')) return Response.json({ message: 'Đã gửi' }, { status: 202 })
+      return new Response('{}', { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetcher)
+    renderApp('/forgot-password')
+    fireEvent.change(screen.getByLabelText('Email'), { target: { value: 'student@example.com' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Gửi liên kết' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Nếu email có tài khoản'))
+    expect(fetcher).toHaveBeenCalledWith(
+      expect.stringContaining('/auth/password/reset/'), expect.objectContaining({ method: 'POST' }),
+    )
+  })
+
+  it('checks confirmation and clears the reset URL after success', async () => {
+    const fetcher = vi.fn(async (url: string) => {
+      if (url.endsWith('/auth/token/refresh/')) return new Response('{}', { status: 400 })
+      if (url.endsWith('/auth/password/reset/confirm/')) return new Response(null, { status: 204 })
+      return new Response('{}', { status: 404 })
+    })
+    vi.stubGlobal('fetch', fetcher)
+    renderApp('/reset-password/uid/token')
+    fireEvent.change(screen.getByLabelText('Mật khẩu mới'), { target: { value: 'NewHardToGuess#2026' } })
+    fireEvent.change(screen.getByLabelText('Xác nhận mật khẩu'), { target: { value: 'Different#2026' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi mật khẩu' }))
+    expect(screen.getByRole('alert').textContent).toContain('chưa khớp')
+    expect(fetcher).not.toHaveBeenCalledWith(
+      expect.stringContaining('/auth/password/reset/confirm/'), expect.anything(),
+    )
+    fireEvent.change(screen.getByLabelText('Xác nhận mật khẩu'), { target: { value: 'NewHardToGuess#2026' } })
+    fireEvent.click(screen.getByRole('button', { name: 'Đổi mật khẩu' }))
+    await waitFor(() => expect(screen.getByRole('status').textContent).toContain('Hãy đăng nhập lại'))
+  })
 })
