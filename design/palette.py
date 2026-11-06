@@ -11,7 +11,7 @@ PALETTES = {
 
 NEUTRALS = {
     "light": {
-        "bg": "#F4F3EE", "surface": "#FFFEFA", "surface_alt": "#F8F7F1",
+        "bg": "#F2F5F6", "surface": "#FFFFFF", "surface_alt": "#F7F9FA",
         "text": "#1B2C31", "muted": "#4C6064", "border": "#788B8B",
         "success": "#166534", "error": "#A02F2F", "skipped": "#52637C",
     },
