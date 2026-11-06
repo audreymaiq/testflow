@@ -228,12 +228,17 @@ export function PracticePage() {
       <h1>Bài làm của bạn</h1></div>
       {remaining !== null && <p className="timer" role="timer" aria-label="Thời gian còn lại">{Math.floor(remaining / 60).toString().padStart(2, '0')}:{(remaining % 60).toString().padStart(2, '0')}</p>}
     </div>
-    <p aria-label="Tiến độ bài làm">Đã trả lời {answeredIds.size}/{questions.length} · {session.data.mode === 'PRACTICE'
+    <p className="practice-progress-label" aria-label="Tiến độ bài làm">Đã trả lời <strong>{answeredIds.size}/{questions.length}</strong> · {session.data.mode === 'PRACTICE'
       ? `${correctCount} đúng · ${skippedCount} bỏ qua` : 'Đúng: xem sau khi nộp'}</p>
+    <div className="practice-progress-track" role="progressbar" aria-label="Số câu đã trả lời"
+      aria-valuenow={answeredIds.size} aria-valuemin={0} aria-valuemax={questions.length}>
+      <span style={{ width: `${questions.length ? answeredIds.size / questions.length * 100 : 0}%` }} />
+    </div>
     <nav className="question-nav" aria-label="Chọn câu hỏi">{questions.map((item, index) =>
       <button type="button" key={item.id} onClick={() => { void goTo(index) }} disabled={busy}
         aria-current={index === active ? 'step' : undefined}
-        className={session.data.answers.some((answer) => answer.question_id === item.id) ? 'answered' : ''}>{index + 1}</button>)}</nav>
+        aria-label={`Câu ${index + 1}${answeredIds.has(item.id) ? ', đã trả lời' : ''}${(flagDrafts[item.id] ?? session.data.answers.find((answer) => answer.question_id === item.id)?.flagged) ? ', đánh dấu xem lại' : ''}`}
+        className={[answeredIds.has(item.id) ? 'answered' : '', (flagDrafts[item.id] ?? session.data.answers.find((answer) => answer.question_id === item.id)?.flagged) ? 'flagged' : ''].filter(Boolean).join(' ')}>{index + 1}</button>)}</nav>
     {closed && <p role="status">Bài làm đã kết thúc. <Link to={`/practice/${sessionId}/result`}>Xem kết quả</Link></p>}
     <article className="active-question"><p className="eyebrow">CÂU {active + 1} / {questions.length}</p>
       <h2>{question.number_label}</h2>{question.passage && <blockquote>{question.passage}</blockquote>}
@@ -288,12 +293,22 @@ export function ResultPage() {
   return <section className="paper practice-panel">
     <p className="eyebrow">KẾT QUẢ / {result.data.mode === 'TIMED' ? 'BÀI THI' : 'LUYỆN TẬP'}</p>
     <h1>Kết quả bài làm</h1>
-    <div className="result-score"><strong>{result.data.total_score === null ? 'Chưa tính điểm' : `${result.data.total_score} / ${result.data.max_score}`}</strong>
-      <span>{result.data.correct_percent}% câu đúng</span></div>
-    <p>{result.data.counts.CORRECT || 0} đúng · {result.data.counts.PARTIAL || 0} đúng một phần · {result.data.counts.WRONG || 0} sai · {result.data.counts.SKIPPED || 0} bỏ qua · {result.data.counts.BLANK || 0} chưa trả lời</p>
+    <div className="result-score"><div><span className="eyebrow">ĐIỂM BÀI LÀM</span><strong>{result.data.total_score === null ? 'Chưa tính điểm' : `${result.data.total_score} / ${result.data.max_score}`}</strong></div>
+      <span className="result-percent"><strong>{result.data.correct_percent}%</strong> câu đúng</span></div>
+    <div className="result-distribution" role="img" aria-label="Phân bố kết quả từng câu">
+      {(['CORRECT', 'PARTIAL', 'WRONG', 'SKIPPED', 'BLANK', 'MANUAL'] as const).map((status) => {
+        const count = result.data.counts[status] || 0
+        return count > 0 ? <span key={status} className={`result-segment status-${status.toLowerCase()}`}
+          style={{ width: `${count / Math.max(1, result.data.questions.length) * 100}%` }} title={`${count} ${statusName[status].toLowerCase()}`} /> : null
+      })}
+    </div>
+    <ul className="result-legend">
+      {(['CORRECT', 'PARTIAL', 'WRONG', 'SKIPPED', 'BLANK', 'MANUAL'] as const).map((status) => <li key={status} className={`status-${status.toLowerCase()}`}>
+        <span aria-hidden="true" />{statusName[status]} <strong>{result.data.counts[status] || 0}</strong></li>)}
+    </ul>
     <h2>Chi tiết từng câu</h2>
     {result.data.questions.map((item, index) => <article className="result-question" key={item.question_id}>
-      <h3>Câu {index + 1}: {statusName[item.status] || item.status}</h3>
+      <h3>Câu {index + 1} <span className={`result-status status-${item.status.toLowerCase()}`}>{statusName[item.status] || item.status}</span></h3>
       <p>Đã trả lời: {answerText(item.value)}</p>
       <p>Đáp án: {answerText(item.correct_answer)}</p>
       <p>Điểm: {item.earned} / {item.max_points}</p>
