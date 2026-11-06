@@ -56,14 +56,17 @@ export function Home() {
     <section className="home-hero paper" aria-labelledby="home-title">
       <div className="home-hero-main">
         <p className="eyebrow">TESTFLOW / HỌC THEO ĐỀ</p>
-        <h1 id="home-title">Học có mục tiêu.<br /><span>Tiến bộ từng câu.</span></h1>
-        <p className="lede">Chọn một bộ đề, tập trung vào phần cần luyện và nhìn rõ kết quả sau mỗi lượt.</p>
-        <div className="home-hero-actions">
-          <a className="button primary" href="#home-library">Khám phá bộ đề</a>
-          <Link className="button secondary" to={user ? '/history' : '/register'}>
-            {user ? 'Xem tiến độ' : 'Tạo tài khoản'}
-          </Link>
-        </div>
+        <h1 id="home-title">Chọn đề.<br />Bắt đầu học.</h1>
+        <p className="lede">Tìm một bộ đề theo tên hoặc môn học, rồi chọn thi có giờ hoặc ôn tập theo từng câu.</p>
+        <form className="home-search" role="search" onSubmit={submit}>
+          <label htmlFor="home-query">Tìm bộ đề</label>
+          <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)}
+            placeholder="Tên đề, môn học…" />
+          <button className="button primary" type="submit">Tìm đề</button>
+        </form>
+        <Link className="home-secondary-link" to={user ? '/history' : '/register'}>
+          {user ? 'Xem tiến độ học tập' : 'Tạo tài khoản để lưu tiến độ'} <span aria-hidden="true">↗</span>
+        </Link>
       </div>
       <aside className="home-study-panel" aria-label={user ? 'Tiến độ học tập' : 'Cách bắt đầu'}>
         <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'CÁCH HỌC'}</p>
@@ -93,16 +96,10 @@ export function Home() {
     </section>
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="section-heading">
-        <div><p className="eyebrow">BẮT ĐẦU LUYỆN TẬP</p><h2 id="home-library-title">Bộ đề</h2>
-          <p className="section-lede">Tìm theo tên hoặc môn học. Đề có đáp án hỗ trợ thi có giờ và ôn tập.</p></div>
+        <div><p className="eyebrow">THƯ VIỆN HỌC TẬP</p><h2 id="home-library-title">Bộ đề</h2>
+          <p className="section-lede">Chọn một đề để xem cấu trúc, nội dung và cách luyện phù hợp.</p></div>
         <Link to="/library">Xem toàn bộ thư viện</Link>
       </div>
-      <form className="home-search" role="search" onSubmit={submit}>
-        <label htmlFor="home-query">Tìm bộ đề</label>
-        <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)}
-          placeholder="Tên đề, môn học…" />
-        <button className="button secondary" type="submit">Tìm kiếm</button>
-      </form>
       {exams.isPending && <div role="status" className="home-loading">Đang tải bộ đề…</div>}
       {exams.isError && <p role="alert">{exams.error.message} <button type="button" onClick={() => exams.refetch()}>Thử lại</button></p>}
       {exams.data?.count === 0 && <div className="home-empty paper"><p>{search ? 'Không tìm thấy bộ đề phù hợp.' : 'Chưa có bộ đề nào. Hãy tạo đề đầu tiên trong thư viện.'}</p>
