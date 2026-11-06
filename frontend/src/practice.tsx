@@ -302,10 +302,7 @@ export function ResultPage() {
           style={{ width: `${count / Math.max(1, result.data.questions.length) * 100}%` }} title={`${count} ${statusName[status].toLowerCase()}`} /> : null
       })}
     </div>
-    <ul className="result-legend">
-      {(['CORRECT', 'PARTIAL', 'WRONG', 'SKIPPED', 'BLANK', 'MANUAL'] as const).map((status) => <li key={status} className={`status-${status.toLowerCase()}`}>
-        <span aria-hidden="true" />{statusName[status]} <strong>{result.data.counts[status] || 0}</strong></li>)}
-    </ul>
+    <p className="result-summary">{result.data.counts.CORRECT || 0} đúng · {result.data.counts.PARTIAL || 0} đúng một phần · {result.data.counts.WRONG || 0} sai · {result.data.counts.SKIPPED || 0} bỏ qua · {result.data.counts.BLANK || 0} chưa trả lời{result.data.counts.MANUAL ? ` · ${result.data.counts.MANUAL} chờ chấm thủ công` : ''}</p>
     <h2>Chi tiết từng câu</h2>
     {result.data.questions.map((item, index) => <article className="result-question" key={item.question_id}>
       <h3>Câu {index + 1} <span className={`result-status status-${item.status.toLowerCase()}`}>{statusName[item.status] || item.status}</span></h3>
