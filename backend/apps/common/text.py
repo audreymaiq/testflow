@@ -5,7 +5,8 @@ import unicodedata
 
 def normalize_text(value: str) -> str:
     return "".join(
-        char for char in unicodedata.normalize("NFC", value.strip())
+        char
+        for char in unicodedata.normalize("NFC", value.strip())
         if unicodedata.category(char) not in {"Cc", "Cf"}
     )
 
