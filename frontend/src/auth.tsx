@@ -29,6 +29,7 @@ type AuthContextValue = {
   register: (username: string, email: string, password: string) => Promise<void>
   login: (identifier: string, password: string) => Promise<void>
   logout: () => Promise<void>
+  clearSession: () => void
   updateProfile: (profile: Pick<User, 'display_name' | 'school' | 'grade'>) => Promise<void>
   api: <T>(path: string, options?: RequestInit) => Promise<T>
 }
@@ -73,6 +74,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   async function logout() {
     await request<void>('/auth/logout/', { method: 'POST' })
+    clearSession()
+  }
+
+  function clearSession() {
     sessionVersion.current += 1
     queryClient.clear()
     setAccess(null); setUser(null)
@@ -105,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, access, loading, register, login, logout, updateProfile, api }}>
+  return <AuthContext.Provider value={{ user, access, loading, register, login, logout, clearSession, updateProfile, api }}>
     {children}
   </AuthContext.Provider>
 }
