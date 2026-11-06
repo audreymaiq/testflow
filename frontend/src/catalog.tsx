@@ -49,7 +49,8 @@ function FilterChips({ label, values, counts, selected, onChange }: {
 
 export function LibraryPage() {
   const { user, api } = useAuth()
-  const [filtersOpen, setFiltersOpen] = useState(false)
+  const [filtersOpen, setFiltersOpen] = useState(() =>
+    typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 901px)').matches)
   const [urlParams, setUrlParams] = useSearchParams()
   const query = urlParams.get('q') || ''
   const mine = urlParams.get('mine') === 'true'
