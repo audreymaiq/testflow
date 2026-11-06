@@ -18,6 +18,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
   const closeLogout = useCallback(() => { if (!leaving) setConfirmLogout(false) }, [leaving])
+  const closeMessage = useCallback(() => setMessage(''), [])
 
   async function leave() {
     if (leaving) return
@@ -51,7 +52,7 @@ function Shell({ children }: { children: ReactNode }) {
       <ThemeControls />
     </header>
     <main id="main">{children}</main>
-    {message && <Toast message={message} />}
+    {message && <Toast key={message} message={message} onClose={closeMessage} />}
     {confirmLogout && <Modal title="Đăng xuất?" onClose={closeLogout}>
       <p>Phiên đăng nhập trên thiết bị này sẽ kết thúc.</p>
       <button type="button" className="button primary" disabled={leaving} onClick={leave}>{leaving ? 'Đang đăng xuất…' : 'Đăng xuất'}</button>
