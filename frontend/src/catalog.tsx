@@ -83,10 +83,19 @@ export function LibraryPage() {
     queryKey: ['exams', user?.id, search],
     queryFn: () => api<Page<ExamSummary>>(`/exams/?${search}`),
   })
+  const activeFilters = [
+    ['q', query, `Tìm: ${query}`], ['level', level, levelNames[level] || level],
+    ['grade', grade, `Lớp ${grade}`],
+    ['subject', subject, facets.data?.subjects.find(([code]) => code === subject)?.[1] || subject],
+    ['school', school, school], ['major', major, major], ['year', year, `Năm ${year}`],
+    ['exam_type', examType, `Loại: ${examType}`],
+    ['has_answer_key', hasKey ? 'true' : '', 'Có đáp án'], ['mine', mine ? 'true' : '', 'Đề của tôi'],
+  ].filter(([, value]) => value)
 
   return <section className="library-layout">
     <aside className="library-filters paper">
-      <p className="eyebrow">LỌC ĐỀ</p>
+      <div className="filter-heading"><p className="eyebrow">LỌC ĐỀ</p>
+        {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}</div>
       <label>Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
       <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
         <option value="">Tất cả</option>
@@ -109,19 +118,28 @@ export function LibraryPage() {
       </select></label>
       <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>
       {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}
+      {facets.isError && <p role="alert">Không tải được các lựa chọn lọc. <button type="button" onClick={() => facets.refetch()}>Thử lại</button></p>}
     </aside>
     <div className="library-results paper">
       <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
         {user && <Link className="button primary" to="/exams/new">Tạo đề</Link>}
       </div>
+      <p className="section-lede">Tìm đề phù hợp, xem cấu trúc rồi chọn thi thử hoặc ôn tập.</p>
+      {activeFilters.length > 0 && <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
+        {activeFilters.map(([key, , label]) => <button type="button" key={key}
+          onClick={() => updateFilter(key, '', key === 'level')} aria-label={`Bỏ lọc ${label}`}>
+          {label} <span aria-hidden="true">×</span></button>)}
+      </div>}
       {exams.isPending && <p role="status">Đang tải danh sách…</p>}
       {exams.isError && <p role="alert">{exams.error.message} <button onClick={() => exams.refetch()}>Thử lại</button></p>}
       {exams.data && <>
         <p className="result-count">{exams.data.count} đề</p>
-        {exams.data.count === 0 ? <p>Chưa có đề phù hợp với bộ lọc.</p> : <section className="exam-table" aria-label="Danh sách đề">
+        {exams.data.count === 0 ? <div className="library-empty"><p>Chưa có đề phù hợp với bộ lọc.</p>
+          {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className="exam-table" aria-label="Danh sách đề">
           <div className="exam-row table-head" aria-hidden="true"><span>TÊN ĐỀ</span><span>MÔN</span><span>SỐ CÂU</span><span>HIỂN THỊ</span></div>
           {exams.data.results.map((exam) => <Link className="exam-row" key={exam.id} to={`/exams/${exam.id}`}>
-            <span className="exam-name"><strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong><small>{exam.subtitle || levelNames[exam.level]}</small></span>
+            <span className="exam-name"><strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
+              <small>{exam.subtitle || levelNames[exam.level]}<span className="exam-mobile-subject"> · {exam.subject}</span></small></span>
             <span>{exam.subject}</span><span className="mono">{exam.question_count}</span>
             <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
           </Link>)}
