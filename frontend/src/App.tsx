@@ -1,5 +1,6 @@
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, Navigate, Route, Routes, useLocation, useNavigate } from 'react-router-dom'
+import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { request } from './api'
 import { useAuth } from './auth'
 import { TaxonomyEntry } from './taxonomy'
 import { Modal, Toast } from './shared'
@@ -64,7 +65,7 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
   const { user, login, register } = useAuth()
   const navigate = useNavigate()
   const location = useLocation()
-  const intent = location.state as { from?: unknown; practiceMode?: unknown } | null
+  const intent = location.state as { from?: unknown; practiceMode?: unknown; resetDone?: boolean } | null
   const requestedFrom = intent?.from
   const from = typeof requestedFrom === 'string' && requestedFrom.startsWith('/')
     && !requestedFrom.startsWith('//') && !requestedFrom.includes('\\')
@@ -103,6 +104,7 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
     <p className="eyebrow">TESTFLOW / TÀI KHOẢN</p>
     <h1>{kind === 'register' ? 'Tạo tài khoản' : 'Đăng nhập'}</h1>
     <p className="lede">{kind === 'register' ? 'Lưu đề và kết quả luyện tập của bạn.' : 'Tiếp tục hành trình học tập của bạn.'}</p>
+    {kind === 'login' && intent?.resetDone && <p role="status">Mật khẩu đã được đổi. Hãy đăng nhập lại.</p>}
     <form onSubmit={submit}>
       {kind === 'register' ? <>
         <label>Tên đăng nhập<input autoComplete="username" required maxLength={150} value={username} onChange={(event) => setUsername(event.target.value)} /></label>
@@ -115,11 +117,79 @@ function AuthForm({ kind }: { kind: 'login' | 'register' }) {
       {error && <p role="alert" className="form-error">{error}</p>}
       <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang xử lý…' : kind === 'register' ? 'Tạo tài khoản' : loginStep === 'identifier' ? 'Tiếp tục' : 'Đăng nhập'}</button>
     </form>
+    {kind === 'login' && <p><Link to="/forgot-password">Quên mật khẩu?</Link></p>}
     <p className="switch">{kind === 'register' ? 'Đã có tài khoản?' : 'Chưa có tài khoản?'}{' '}
       <Link to={kind === 'register' ? '/login' : '/register'} state={{ from, practiceMode }}>
         {kind === 'register' ? 'Đăng nhập' : 'Tạo tài khoản'}
       </Link>
     </p>
+  </section>
+}
+
+function PasswordResetRequestPage() {
+  const [email, setEmail] = useState('')
+  const [pending, setPending] = useState(false)
+  const [sent, setSent] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    setPending(true); setError('')
+    try {
+      await request('/auth/password/reset/', {
+        method: 'POST', body: JSON.stringify({ email }),
+      })
+      setSent(true)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể gửi yêu cầu. Vui lòng thử lại.')
+    } finally { setPending(false) }
+  }
+
+  return <section className="auth-panel paper">
+    <p className="eyebrow">TESTFLOW / TÀI KHOẢN</p>
+    <h1>Đặt lại mật khẩu</h1>
+    {sent ? <p role="status">Nếu email có tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu.</p>
+      : <form onSubmit={submit}>
+        <label>Email<input type="email" autoComplete="email" required value={email} onChange={(event) => setEmail(event.target.value)} /></label>
+        {error && <p role="alert" className="form-error">{error}</p>}
+        <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang gửi…' : 'Gửi liên kết'}</button>
+      </form>}
+    <p><Link to="/login">Về đăng nhập</Link></p>
+  </section>
+}
+
+function PasswordResetConfirmPage() {
+  const { uid, token } = useParams()
+  const navigate = useNavigate()
+  const [password, setPassword] = useState('')
+  const [confirmation, setConfirmation] = useState('')
+  const [pending, setPending] = useState(false)
+  const [error, setError] = useState('')
+
+  async function submit(event: FormEvent) {
+    event.preventDefault()
+    if (password !== confirmation) { setError('Hai mật khẩu chưa khớp.'); return }
+    setPending(true); setError('')
+    try {
+      await request('/auth/password/reset/confirm/', {
+        method: 'POST', body: JSON.stringify({ uid, token, password }),
+      })
+      navigate('/login', { replace: true, state: { resetDone: true } })
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : 'Không thể đổi mật khẩu. Vui lòng thử lại.')
+    } finally { setPending(false) }
+  }
+
+  return <section className="auth-panel paper">
+    <p className="eyebrow">TESTFLOW / TÀI KHOẢN</p>
+    <h1>Mật khẩu mới</h1>
+    <form onSubmit={submit}>
+      <label>Mật khẩu mới<input type="password" autoComplete="new-password" minLength={8} required value={password} onChange={(event) => setPassword(event.target.value)} /></label>
+      <label>Xác nhận mật khẩu<input type="password" autoComplete="new-password" minLength={8} required value={confirmation} onChange={(event) => setConfirmation(event.target.value)} /></label>
+      {error && <p role="alert" className="form-error">{error}</p>}
+      <button type="submit" className="button primary" disabled={pending}>{pending ? 'Đang lưu…' : 'Đổi mật khẩu'}</button>
+    </form>
+    <p><Link to="/forgot-password">Yêu cầu liên kết mới</Link></p>
   </section>
 }
 
@@ -169,6 +239,8 @@ export default function App() {
     <Route path="/" element={<Home />} />
     <Route path="/login" element={<AuthForm kind="login" />} />
     <Route path="/register" element={<AuthForm kind="register" />} />
+    <Route path="/forgot-password" element={<PasswordResetRequestPage />} />
+    <Route path="/reset-password/:uid/:token" element={<PasswordResetConfirmPage />} />
     <Route path="/account" element={<Protected><Account /></Protected>} />
     <Route path="/library" element={<LibraryPage />} />
     <Route path="/exams/new" element={<Protected><ManualExamPage /></Protected>} />
