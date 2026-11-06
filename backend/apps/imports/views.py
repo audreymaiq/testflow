@@ -65,7 +65,5 @@ class DiscardView(GenericAPIView):
     def post(self, request, job_id):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job = discard(
-            job_id, user=request.user, reason=serializer.validated_data.get("reason", "")
-        )
+        job = discard(job_id, user=request.user, reason=serializer.validated_data.get("reason", ""))
         return Response(job_payload(job))
