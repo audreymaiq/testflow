@@ -241,7 +241,7 @@ export function ResultPage() {
     <h1>Kết quả bài làm</h1>
     <div className="result-score"><strong>{result.data.total_score === null ? 'Chưa tính điểm' : `${result.data.total_score} / ${result.data.max_score}`}</strong>
       <span>{result.data.correct_percent}% câu đúng</span></div>
-    <p>{result.data.counts.CORRECT || 0} đúng · {result.data.counts.PARTIAL || 0} đúng một phần · {result.data.counts.WRONG || 0} sai · {result.data.counts.BLANK || 0} chưa trả lời</p>
+    <p>{result.data.counts.CORRECT || 0} đúng · {result.data.counts.PARTIAL || 0} đúng một phần · {result.data.counts.WRONG || 0} sai · {result.data.counts.SKIPPED || 0} bỏ qua · {result.data.counts.BLANK || 0} chưa trả lời</p>
     <h2>Chi tiết từng câu</h2>
     {result.data.questions.map((item, index) => <article className="result-question" key={item.question_id}>
       <h3>Câu {index + 1}: {statusName[item.status] || item.status}</h3>
@@ -250,7 +250,12 @@ export function ResultPage() {
       <p>Điểm: {item.earned} / {item.max_points}</p>
       {item.explanation && <p>Giải thích: {item.explanation}</p>}
     </article>)}
-    <Link className="button secondary" to={`/exams/${result.data.exam_id}`}>Về đề thi</Link>
+    <div className="practice-actions">
+      <Link className="button primary" to={`/exams/${result.data.exam_id}`}
+        state={{ resumePractice: result.data.mode }}>Làm lại</Link>
+      <Link className="button secondary" to="/">Về trang chủ</Link>
+      <Link to={`/exams/${result.data.exam_id}`}>Xem đề thi</Link>
+    </div>
   </section>
 }
 
