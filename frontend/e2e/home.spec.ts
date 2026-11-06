@@ -32,6 +32,9 @@ test('home grid searches real exams and respects private ownership', async ({ pa
   await expect(card).toBeVisible()
   await expect(card).toContainText('0 chương · 1 câu')
   await expect(card).toContainText('Riêng tư')
+  await page.setViewportSize({ width: 360, height: 780 })
+  await expect(card).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
 
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog', { name: 'Đăng xuất?' }).getByRole('button', { name: 'Đăng xuất' }).click()
