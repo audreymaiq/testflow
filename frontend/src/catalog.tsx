@@ -128,7 +128,7 @@ export function ExamDetailPage() {
   const [ownerMessage, setOwnerMessage] = useState('')
   const [confirmation, setConfirmation] = useState<'DELETE' | 'HIDE' | 'WITHDRAW' | null>(null)
   const closeConfirmation = useCallback(() => { if (!ownerBusy) setConfirmation(null) }, [ownerBusy])
-  const [chapterIds, setChapterIds] = useState<string[]>([])
+  const [chapterIds, setChapterIds] = useState<string[] | null>(null)
   const [includeWrong, setIncludeWrong] = useState(false)
   const [onlyWrong, setOnlyWrong] = useState(false)
   const [shuffleQuestions, setShuffleQuestions] = useState(false)
@@ -148,14 +148,20 @@ export function ExamDetailPage() {
     queryFn: () => api<{ wrong_question_count: number; session_count: number }>(`/practice/exams/${id}/summary/`),
     enabled: !loading && !!user && !!exam.data,
   })
+  const selectedChapterIds = chapterIds ?? exam.data?.chapters.map((chapter) => String(chapter.id)) ?? []
+  const noChaptersSelected = !onlyWrong && !!exam.data?.chapters.length && selectedChapterIds.length === 0
   const start = useCallback(async (mode: 'TIMED' | 'PRACTICE') => {
+    if (mode === 'PRACTICE' && noChaptersSelected) {
+      setStartError('Chọn ít nhất một chương để luyện tập.')
+      return
+    }
     setStarting(true); setStartError('')
     try {
       const session = await api<{ id: string }>('/practice/sessions/', {
         method: 'POST', body: JSON.stringify({
           exam_id: id, mode,
           ...(mode === 'PRACTICE' ? {
-            chapter_ids: onlyWrong ? [] : chapterIds,
+            chapter_ids: onlyWrong ? [] : selectedChapterIds,
             include_wrong_bank: includeWrong,
             only_wrong_bank: onlyWrong,
             shuffle_questions: shuffleQuestions,
@@ -166,7 +172,7 @@ export function ExamDetailPage() {
       navigate(`/practice/${session.id}`)
     } catch (cause) { setStartError(cause instanceof Error ? cause.message : 'Không bắt đầu được bài làm.') }
     finally { setStarting(false) }
-  }, [api, id, onlyWrong, chapterIds, includeWrong, shuffleQuestions, shuffleOptions, navigate])
+  }, [api, id, onlyWrong, noChaptersSelected, selectedChapterIds, includeWrong, shuffleQuestions, shuffleOptions, navigate])
   const resumePractice = (location.state as { resumePractice?: unknown } | null)?.resumePractice
   useEffect(() => {
     if (!user || !id || !exam.data || resumedExamId.current === id) return
@@ -236,18 +242,22 @@ export function ExamDetailPage() {
     </button>}
     {user && <fieldset className="practice-config"><legend>Cấu hình ôn tập</legend>
       {exam.data.chapters.length > 0 && <div><strong>Chương</strong>{exam.data.chapters.map((chapter) => <label key={chapter.id}>
-        <input type="checkbox" checked={chapterIds.includes(String(chapter.id))} disabled={onlyWrong}
-          onChange={(event) => setChapterIds((current) => event.target.checked ? [...current, String(chapter.id)] : current.filter((item) => item !== String(chapter.id)))} /> {chapter.name}
+        <input type="checkbox" checked={selectedChapterIds.includes(String(chapter.id))} disabled={onlyWrong}
+          onChange={(event) => setChapterIds((current) => {
+            const selected = current ?? exam.data.chapters.map((item) => String(item.id))
+            return event.target.checked ? [...selected, String(chapter.id)] : selected.filter((item) => item !== String(chapter.id))
+          })} /> {chapter.name}
       </label>)}</div>}
       <label><input type="checkbox" checked={includeWrong} disabled={onlyWrong} onChange={(event) => setIncludeWrong(event.target.checked)} /> Bao gồm câu sai của tôi</label>
       <label><input type="checkbox" checked={onlyWrong} onChange={(event) => setOnlyWrong(event.target.checked)} /> Chỉ luyện câu sai</label>
       <label><input type="checkbox" checked={shuffleQuestions} onChange={(event) => setShuffleQuestions(event.target.checked)} /> Xáo thứ tự câu</label>
       <label><input type="checkbox" checked={shuffleOptions} onChange={(event) => setShuffleOptions(event.target.checked)} /> Xáo thứ tự đáp án</label>
+      {noChaptersSelected && <p role="status">Chọn ít nhất một chương để luyện tập.</p>}
     </fieldset>}
     <div className="start-actions">
       {user ? <>
         <button className="button primary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('TIMED')}>Làm bài có giờ</button>
-        <button className="button secondary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('PRACTICE')}>Luyện tập</button>
+        <button className="button secondary" type="button" disabled={starting || !exam.data.has_answer_key || noChaptersSelected} onClick={() => start('PRACTICE')}>Luyện tập</button>
       </> : exam.data.has_answer_key ? <>
         <Link className="button primary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'TIMED' }}>Đăng nhập để làm bài có giờ</Link>
         <Link className="button secondary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'PRACTICE' }}>Đăng nhập để luyện tập</Link>
