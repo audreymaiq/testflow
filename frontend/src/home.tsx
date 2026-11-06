@@ -8,6 +8,8 @@ type HomeExam = {
   chapter_count: number; question_count: number; visibility: string; is_system_sample: boolean
 }
 type Page<T> = { count: number; next: string | null; results: T[] }
+type StudyStats = { total_sessions: number; completed_sessions: number; timed_sessions: number; practice_sessions: number }
+type RecentSession = { id: string; exam_title: string; mode: 'TIMED' | 'PRACTICE'; status: string }
 
 export function DeckMark({ title, icon, color }: Pick<HomeExam, 'title' | 'icon' | 'color'>) {
   const legacyEye = icon.replace(/\uFE0F/g, '') === '👁'
@@ -29,6 +31,19 @@ export function Home() {
     queryFn: () => api<Page<HomeExam>>(`/exams/?${new URLSearchParams({ page: '1', ...(search ? { q: search } : {}) })}`),
     enabled: !loading,
   })
+  const stats = useQuery({
+    queryKey: ['home-study-stats', user?.id],
+    queryFn: () => api<StudyStats>('/practice/stats/'),
+    enabled: !loading && !!user,
+  })
+  const recent = useQuery({
+    queryKey: ['home-recent-session', user?.id],
+    queryFn: () => api<Page<RecentSession>>('/practice/sessions/history/'),
+    enabled: !loading && !!user,
+  })
+  const latest = recent.data?.results[0]
+  const latestPath = latest?.status === 'IN_PROGRESS'
+    ? `/practice/${latest.id}` : latest ? `/practice/${latest.id}/result` : '/history'
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -39,17 +54,48 @@ export function Home() {
 
   return <div className="home-page">
     <section className="home-hero paper" aria-labelledby="home-title">
-      <div>
-        <p className="eyebrow">KHÔNG GIAN HỌC TẬP</p>
-        <h1 id="home-title">Đề thi rõ ràng.<br />Tiến bộ thấy được.</h1>
-        <p className="lede">Lưu đề, luyện tập và xem lại kết quả trong một nơi.</p>
-        <a className="button primary" href="#home-library">Khám phá bộ đề</a>
+      <div className="home-hero-main">
+        <p className="eyebrow">TESTFLOW / HỌC THEO ĐỀ</p>
+        <h1 id="home-title">Học có mục tiêu.<br />Tiến bộ từng câu.</h1>
+        <p className="lede">Chọn một bộ đề, tập trung vào phần cần luyện và nhìn rõ kết quả sau mỗi lượt.</p>
+        <div className="home-hero-actions">
+          <a className="button primary" href="#home-library">Khám phá bộ đề</a>
+          <Link className="button secondary" to={user ? '/history' : '/register'}>
+            {user ? 'Xem tiến độ' : 'Tạo tài khoản'}
+          </Link>
+        </div>
       </div>
-      <p className="home-hero-aside">Tạo đề của riêng bạn hoặc chọn một bộ đề đã được công khai để bắt đầu.</p>
+      <aside className="home-study-panel" aria-label={user ? 'Tiến độ học tập' : 'Cách bắt đầu'}>
+        <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'BẮT ĐẦU TỪ ĐÂU'}</p>
+        {user ? <>
+          <p className="home-study-greeting">Chào {user.display_name || user.username},</p>
+          {stats.data ? <>
+            <p className="home-study-total"><strong>{stats.data.completed_sessions}</strong><span>lượt đã hoàn thành</span></p>
+            <dl className="home-study-breakdown">
+              <div><dt>Ôn tập</dt><dd>{stats.data.practice_sessions}</dd></div>
+              <div><dt>Thi thử</dt><dd>{stats.data.timed_sessions}</dd></div>
+            </dl>
+          </> : <p className="home-study-placeholder">{stats.isPending ? 'Đang tải tiến độ…' : 'Xem các lượt học trong lịch sử.'}</p>}
+          {latest && <Link className="home-continue" to={latestPath}>
+            <span className="eyebrow">{latest.status === 'IN_PROGRESS' ? 'TIẾP TỤC BÀI ĐANG LÀM' : 'LƯỢT HỌC GẦN NHẤT'}</span>
+            <strong>{latest.exam_title}</strong>
+            <span>{latest.status === 'IN_PROGRESS' ? 'Tiếp tục làm bài' : 'Xem kết quả'} <span aria-hidden="true">↗</span></span>
+          </Link>}
+        </> : <>
+          <p className="home-study-intro">Một lượt học rõ ràng, từ câu đầu tiên đến phần cần ôn lại.</p>
+          <ol className="home-study-steps">
+            <li><span>01</span>Chọn bộ đề phù hợp</li>
+            <li><span>02</span>Thi thử hoặc ôn tập</li>
+            <li><span>03</span>Xem lại câu cần luyện</li>
+          </ol>
+          <Link to="/library" className="home-study-link">Mở thư viện <span aria-hidden="true">↗</span></Link>
+        </>}
+      </aside>
     </section>
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="section-heading">
-        <div><p className="eyebrow">THƯ VIỆN</p><h2 id="home-library-title">Bộ đề</h2></div>
+        <div><p className="eyebrow">BẮT ĐẦU LUYỆN TẬP</p><h2 id="home-library-title">Bộ đề</h2>
+          <p className="section-lede">Tìm theo tên hoặc môn học. Mỗi bộ đề mở ra hai cách học: thi thử và ôn tập.</p></div>
         <Link to="/library">Xem toàn bộ thư viện</Link>
       </div>
       <form className="home-search" role="search" onSubmit={submit}>
@@ -58,20 +104,23 @@ export function Home() {
           placeholder="Tên đề, môn học…" />
         <button className="button secondary" type="submit">Tìm kiếm</button>
       </form>
-      {exams.isPending && <p role="status">Đang tải bộ đề…</p>}
+      {exams.isPending && <div role="status" className="home-loading">Đang tải bộ đề…</div>}
       {exams.isError && <p role="alert">{exams.error.message} <button type="button" onClick={() => exams.refetch()}>Thử lại</button></p>}
-      {exams.data?.count === 0 && <p>{search ? 'Không tìm thấy bộ đề phù hợp.' : 'Chưa có bộ đề nào. Hãy tạo đề đầu tiên trong thư viện.'}</p>}
+      {exams.data?.count === 0 && <div className="home-empty paper"><p>{search ? 'Không tìm thấy bộ đề phù hợp.' : 'Chưa có bộ đề nào. Hãy tạo đề đầu tiên trong thư viện.'}</p>
+        <Link to={search ? '/library' : '/imports/new'}>{search ? 'Dùng bộ lọc trong thư viện' : 'Nhập bộ câu hỏi TXT'} <span aria-hidden="true">↗</span></Link></div>}
       {exams.data && exams.data.count > 0 && <>
         <p className="result-count">{exams.data.count} bộ đề{search && ` cho “${search}”`}</p>
         <div className="home-deck-grid">
-          {exams.data.results.map((exam) => <Link className="home-deck paper" key={exam.id} to={`/exams/${exam.id}`}>
-            <DeckMark title={exam.title} icon={exam.icon} color={exam.color} />
+          {exams.data.results.map((exam, index) => <Link className="home-deck paper" key={exam.id} to={`/exams/${exam.id}`}>
+            <span className="home-deck-top"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} />
+              <span className="home-deck-number mono">{String(index + 1).padStart(2, '0')}</span></span>
             <span className="home-deck-copy">
               <strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
               {exam.subtitle && <small>{exam.subtitle}</small>}
-              <span className="home-deck-meta">{exam.subject} · {exam.chapter_count} chương · {exam.question_count} câu</span>
+              <span className="home-deck-meta"><span>{exam.subject}</span><span>{exam.chapter_count} chương · {exam.question_count} câu</span></span>
             </span>
-            <span className="home-deck-visibility">{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
+            <span className="home-deck-foot"><span className="home-deck-visibility">{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
+              <span className="home-deck-open">Xem bộ đề <span aria-hidden="true">↗</span></span></span>
           </Link>)}
         </div>
         {exams.data.next && <p><Link to="/library">Xem thêm trong thư viện</Link></p>}
