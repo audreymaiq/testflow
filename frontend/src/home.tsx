@@ -58,7 +58,6 @@ export function Home() {
       <div className="home-hero-main">
         <p className="eyebrow">TESTFLOW / HỌC THEO ĐỀ</p>
         <h1 id="home-title">Chọn đề.<br />Bắt đầu học.</h1>
-        <p className="lede">Tìm một bộ đề theo tên hoặc môn học, rồi chọn thi có giờ hoặc ôn tập theo từng câu.</p>
         <form className="home-search" role="search" onSubmit={submit}>
           <label htmlFor="home-query">Tìm bộ đề</label>
           <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)}
