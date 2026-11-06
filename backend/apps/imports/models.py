@@ -14,6 +14,10 @@ def private_upload_path(instance, _filename):
     return f"imports/{instance.id}/original.txt"
 
 
+def private_page_path(instance, _filename):
+    return f"imports/{instance.job_id}/pages/{instance.page_no}.png"
+
+
 class ImportJob(models.Model):
     class Status(models.TextChoices):
         UPLOADED = "UPLOADED"
@@ -95,6 +99,43 @@ class ImportJob(models.Model):
             self.error_code = locked.error_code
             self.error_detail = locked.error_detail
             return locked
+
+
+class PageResult(models.Model):
+    class Status(models.TextChoices):
+        PENDING = "PENDING"
+        DONE = "DONE"
+        FAILED = "FAILED"
+
+    class Source(models.TextChoices):
+        TEXT_LAYER = "TEXT_LAYER"
+        VLM = "VLM"
+        OCR = "OCR"
+
+    job = models.ForeignKey(ImportJob, on_delete=models.CASCADE, related_name="pages")
+    page_no = models.PositiveSmallIntegerField()
+    image = models.ImageField(upload_to=private_page_path, blank=True)
+    source = models.CharField(max_length=12, choices=Source.choices, blank=True)
+    raw_output = models.JSONField(default=dict)
+    page_json = models.JSONField(default=dict)
+    status = models.CharField(max_length=10, choices=Status.choices, default=Status.PENDING)
+    attempts = models.PositiveSmallIntegerField(default=0)
+    provider_name = models.CharField(max_length=80, blank=True)
+    model_name = models.CharField(max_length=80, blank=True)
+    model_version = models.CharField(max_length=80, blank=True)
+    artifact_digest = models.CharField(max_length=64, blank=True)
+    latency_ms = models.PositiveIntegerField(null=True)
+    error_code = models.CharField(max_length=50, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = (
+            models.UniqueConstraint(fields=["job", "page_no"], name="imports_unique_job_page"),
+            models.CheckConstraint(
+                condition=models.Q(page_no__gte=1), name="imports_page_no_gte_1"
+            ),
+        )
 
 
 class Draft(models.Model):
