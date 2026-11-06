@@ -11,7 +11,7 @@ from pydantic import ValidationError as ContractValidationError
 from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.models import Exam, School, Subject, Visibility
+from apps.catalog.models import Exam, Major, School, Subject, Visibility
 from apps.catalog.selectors import list_exams
 from apps.catalog.services import create_exam, export_exam
 from apps.common.errors import ValidationFailed
@@ -170,6 +170,25 @@ def test_catalog_list_query_count_does_not_grow_per_exam(users):
         assert many_page["count"] == 4
         assert all(item["chapter_count"] == 1 for item in many_page["results"])
     assert len(many) <= len(first) + 2
+
+
+@pytest.mark.django_db
+def test_school_and_major_filters_use_and_semantics(users):
+    owner, _ = users
+    School.objects.create(name="Trường Khác")
+    Major.objects.create(name="Ngành A")
+    Major.objects.create(name="Ngành B")
+    for title, school, major in (
+        ("Đề A", "Trường Mẫu", "Ngành A"),
+        ("Đề B", "Trường Khác", "Ngành B"),
+    ):
+        data = draft_data()
+        data["metadata"].update(title=title, schools=[school], majors=[major])
+        create_exam(ExamDraft.model_validate(data), owner=owner)
+    assert list_exams(owner, {"school": "Trường Mẫu"}).count() == 1
+    assert list_exams(owner, {"major": "Ngành B"}).count() == 1
+    assert list_exams(owner, {"school": "Trường Mẫu", "major": "Ngành A"}).count() == 1
+    assert list_exams(owner, {"school": "Trường Mẫu", "major": "Ngành B"}).count() == 0
 
 
 @pytest.mark.django_db
