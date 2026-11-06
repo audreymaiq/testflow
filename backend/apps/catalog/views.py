@@ -1,5 +1,6 @@
 """Read-only public catalog and authenticated manual creation."""
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -116,6 +117,14 @@ class FacetsView(GenericAPIView):
 
     def get(self, request):
         exams = visible_exams(request.user)
+
+        def counts(field):
+            return dict(
+                exams.exclude(**{f"{field}__isnull": True})
+                .values(field)
+                .annotate(total=Count("pk", distinct=True))
+                .values_list(field, "total")
+            )
         return Response(
             {
                 "subjects": list(
@@ -136,6 +145,11 @@ class FacetsView(GenericAPIView):
                     .order_by("majors__name")
                 ),
                 "levels": list(exams.values_list("level", flat=True).distinct().order_by("level")),
+                "subject_counts": counts("subject__code"),
+                "school_counts": counts("schools__name"),
+                "major_counts": counts("majors__name"),
+                "level_counts": counts("level"),
+                "grade_counts": counts("grade"),
             }
         )
 
