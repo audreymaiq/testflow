@@ -20,7 +20,9 @@ def visible_exams(user):
 
 def list_exams(user, filters):
     queryset = (
-        visible_exams(user).select_related("subject", "owner").prefetch_related("schools", "majors")
+        visible_exams(user)
+        .select_related("subject", "owner")
+        .prefetch_related("schools", "majors", "chapters")
     )
     for field in ("level", "grade", "exam_type", "year", "has_answer_key"):
         if filters.get(field) not in (None, ""):
