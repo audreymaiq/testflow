@@ -16,3 +16,15 @@ SECURE_SSL_REDIRECT = True
 SECURE_HSTS_SECONDS = env.int("DJANGO_HSTS_SECONDS", default=0)
 if not ALLOWED_HOSTS or not CORS_ALLOWED_ORIGINS:
     raise ImproperlyConfigured("Production host and origin allowlists are required")
+if not PUBLIC_WEB_ORIGIN.startswith("https://"):
+    raise ImproperlyConfigured("PUBLIC_WEB_ORIGIN must use HTTPS in production")
+if EMAIL_BACKEND in {
+    "django.core.mail.backends.console.EmailBackend",
+    "django.core.mail.backends.locmem.EmailBackend",
+    "django.core.mail.backends.dummy.EmailBackend",
+}:
+    raise ImproperlyConfigured("A production email backend is required")
+if DEFAULT_FROM_EMAIL == "TestFlow <noreply@localhost>":
+    raise ImproperlyConfigured("DEFAULT_FROM_EMAIL must be configured for production")
+if EMAIL_BACKEND == "django.core.mail.backends.smtp.EmailBackend" and not EMAIL_HOST:
+    raise ImproperlyConfigured("EMAIL_HOST is required for the SMTP backend")
