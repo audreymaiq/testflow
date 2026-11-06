@@ -263,7 +263,7 @@ export function PracticePage() {
       <button type="button" className="button submit-button" onClick={() => setConfirmSubmit(true)} disabled={busy}>Nộp bài</button>
       <button type="button" className="button secondary" onClick={() => navigate(`/exams/${session.data.exam_id}`)} disabled={busy}>Thoát bài làm</button>
     </div>}
-    {blocker.state === 'blocked' && <Modal title="Thoát bài làm?" onClose={() => { if (!leaving && !busy) blocker.reset() }}>
+    {blocker.state === 'blocked' && <Modal title="Thoát bài làm?" onClose={() => { if (!leaving) blocker.reset() }}>
       <p>Bài làm sẽ được giữ để bạn tiếp tục từ Lịch sử. Câu trả lời đang sửa sẽ được lưu trước khi thoát.</p>
       {error && <p role="alert" className="form-error">{error}</p>}
       <button type="button" className="button primary" disabled={leaving || busy} onClick={() => { void confirmLeave() }}>
