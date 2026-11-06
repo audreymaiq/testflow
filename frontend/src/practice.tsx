@@ -306,11 +306,16 @@ export function ResultPage() {
   const correctPercent = Number(result.data.correct_percent)
   const formattedPercent = Number.isFinite(correctPercent)
     ? correctPercent.toLocaleString('vi-VN', { maximumFractionDigits: 1 }) : result.data.correct_percent
+  const dialPercent = Number.isFinite(correctPercent) ? Math.max(0, Math.min(100, correctPercent)) : 0
   return <section className="paper practice-panel">
     <p className="eyebrow">KẾT QUẢ / {result.data.mode === 'TIMED' ? 'BÀI THI' : 'LUYỆN TẬP'}</p>
     <h1>Kết quả bài làm</h1>
     <div className="result-score"><div><span className="eyebrow">ĐIỂM BÀI LÀM</span><strong>{result.data.total_score === null ? 'Chưa tính điểm' : `${result.data.total_score} / ${result.data.max_score}`}</strong></div>
-      <span className="result-percent"><strong>{formattedPercent}%</strong> câu đúng</span></div>
+      <div className="result-dial">
+        <svg viewBox="0 0 120 120" aria-hidden="true"><circle className="result-dial-track" cx="60" cy="60" r="50" />
+          <circle className="result-dial-value" cx="60" cy="60" r="50" pathLength="100" strokeDasharray={`${dialPercent} 100`} /></svg>
+        <span className="result-percent"><strong>{formattedPercent}%</strong> câu đúng</span>
+      </div></div>
     <div className="result-distribution" role="img" aria-label="Phân bố kết quả từng câu">
       {(['CORRECT', 'PARTIAL', 'WRONG', 'SKIPPED', 'BLANK', 'MANUAL'] as const).map((status) => {
         const count = result.data.counts[status] || 0
