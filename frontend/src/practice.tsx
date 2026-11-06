@@ -1,6 +1,6 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { Link, useNavigate, useParams } from 'react-router-dom'
+import { Link, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
 
@@ -106,10 +106,21 @@ export function PracticePage() {
   const [flagDrafts, setFlagDrafts] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
   const [confirmSubmit, setConfirmSubmit] = useState(false)
+  const [leaving, setLeaving] = useState(false)
   const [error, setError] = useState('')
   const [tick, setTick] = useState(0)
   const [serverOffset, setServerOffset] = useState(0)
+  const allowNavigation = useRef(false)
   const session = useQuery({ queryKey: ['session', sessionId, user?.id], queryFn: () => api<Session>(`/practice/sessions/${sessionId}/`) })
+  const blocker = useBlocker(({ currentLocation, nextLocation }) =>
+    session.data?.status === 'IN_PROGRESS' && !allowNavigation.current
+    && currentLocation.pathname !== nextLocation.pathname)
+  useBeforeUnload((event) => {
+    if (session.data?.status === 'IN_PROGRESS') {
+      event.preventDefault()
+      event.returnValue = ''
+    }
+  })
   useEffect(() => { const id = window.setInterval(() => setTick(Date.now()), 1000); return () => window.clearInterval(id) }, [])
   useEffect(() => {
     if (session.data?.server_time) setServerOffset(new Date(session.data.server_time).getTime() - Date.now())
@@ -128,7 +139,10 @@ export function PracticePage() {
   const closed = session.data?.status !== 'IN_PROGRESS'
   const remaining = session.data?.deadline_at ? Math.max(0, Math.ceil((new Date(session.data.deadline_at).getTime() - Date.now() - serverOffset) / 1000)) : null
   useEffect(() => {
-    if (session.data?.status === 'IN_PROGRESS' && remaining === 0) navigate(`/practice/${sessionId}/result`, { replace: true })
+    if (session.data?.status === 'IN_PROGRESS' && remaining === 0) {
+      allowNavigation.current = true
+      navigate(`/practice/${sessionId}/result`, { replace: true })
+    }
   }, [remaining, session.data?.status, sessionId, navigate, tick])
 
   async function save(nextValue = value, target = question, flagOverride?: boolean) {
@@ -191,9 +205,19 @@ export function PracticePage() {
     setBusy(true); setError('')
     try {
       await api(`/practice/sessions/${sessionId}/submit/`, { method: 'POST' })
+      allowNavigation.current = true
       navigate(`/practice/${sessionId}/result`, { replace: true })
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không nộp được bài.') }
     finally { setBusy(false) }
+  }
+
+  async function confirmLeave() {
+    if (blocker.state !== 'blocked' || leaving || busy) return
+    setLeaving(true)
+    try {
+      if (question && drafts[question.id] && !await save(drafts[question.id], question)) return
+      blocker.proceed()
+    } finally { setLeaving(false) }
   }
 
   if (session.isPending) return <p role="status">Đang tải bài làm…</p>
@@ -235,7 +259,17 @@ export function PracticePage() {
         {active + 1 < questions.length && <button type="button" className="button secondary" onClick={() => { void goTo(active + 1) }} disabled={busy}>Câu tiếp</button>}
       </div>
     </article>
-    {!closed && <button type="button" className="button submit-button" onClick={() => setConfirmSubmit(true)} disabled={busy}>Nộp bài</button>}
+    {!closed && <div className="practice-actions">
+      <button type="button" className="button submit-button" onClick={() => setConfirmSubmit(true)} disabled={busy}>Nộp bài</button>
+      <button type="button" className="button secondary" onClick={() => navigate(`/exams/${session.data.exam_id}`)} disabled={busy}>Thoát bài làm</button>
+    </div>}
+    {blocker.state === 'blocked' && <Modal title="Thoát bài làm?" onClose={() => { if (!leaving && !busy) blocker.reset() }}>
+      <p>Bài làm sẽ được giữ để bạn tiếp tục từ Lịch sử. Câu trả lời đang sửa sẽ được lưu trước khi thoát.</p>
+      {error && <p role="alert" className="form-error">{error}</p>}
+      <button type="button" className="button primary" disabled={leaving || busy} onClick={() => { void confirmLeave() }}>
+        {leaving ? 'Đang lưu…' : 'Lưu và thoát'}
+      </button>
+    </Modal>}
     {confirmSubmit && <Modal title="Nộp bài?" onClose={() => { if (!busy) setConfirmSubmit(false) }}>
       <p>Nộp bài và xem kết quả? Bạn sẽ không thể sửa câu trả lời sau khi nộp.</p>
       <button type="button" className="button primary" disabled={busy} onClick={() => { void submit() }}>
