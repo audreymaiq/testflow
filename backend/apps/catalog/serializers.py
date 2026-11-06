@@ -48,6 +48,11 @@ class ExamListSerializer(serializers.ModelSerializer):
     subject = serializers.SlugRelatedField(read_only=True, slug_field="name")
     schools = serializers.SlugRelatedField(read_only=True, slug_field="name", many=True)
     majors = serializers.SlugRelatedField(read_only=True, slug_field="name", many=True)
+    chapter_count = serializers.SerializerMethodField()
+
+    @extend_schema_field(serializers.IntegerField())
+    def get_chapter_count(self, exam):
+        return len(exam.chapters.all())
 
     class Meta:
         model = Exam
@@ -70,6 +75,7 @@ class ExamListSerializer(serializers.ModelSerializer):
             "visibility",
             "has_answer_key",
             "question_count",
+            "chapter_count",
             "is_system_sample",
             "attempt_count",
             "created_at",
