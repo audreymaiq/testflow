@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
-import { Link, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
@@ -43,29 +43,34 @@ function FilterChips({ label, values, selected, onChange }: {
 
 export function LibraryPage() {
   const { user, api } = useAuth()
-  const [query, setQuery] = useState('')
-  const [mine, setMine] = useState(false)
-  const [level, setLevel] = useState('')
-  const [grade, setGrade] = useState('')
-  const [subject, setSubject] = useState('')
-  const [school, setSchool] = useState('')
-  const [major, setMajor] = useState('')
-  const [year, setYear] = useState('')
-  const [examType, setExamType] = useState('')
-  const [hasKey, setHasKey] = useState(false)
-  const [page, setPage] = useState(1)
+  const [urlParams, setUrlParams] = useSearchParams()
+  const query = urlParams.get('q') || ''
+  const mine = urlParams.get('mine') === 'true'
+  const level = urlParams.get('level') || ''
+  const grade = urlParams.get('grade') || ''
+  const subject = urlParams.get('subject') || ''
+  const school = urlParams.get('school') || ''
+  const major = urlParams.get('major') || ''
+  const year = urlParams.get('year') || ''
+  const examType = urlParams.get('exam_type') || ''
+  const hasKey = urlParams.get('has_answer_key') === 'true'
+  const page = Math.max(1, Number.parseInt(urlParams.get('page') || '1', 10) || 1)
+  function updateFilter(key: string, value: string, clearGrade = false) {
+    const next = new URLSearchParams(urlParams)
+    if (value.trim()) next.set(key, value.trim())
+    else next.delete(key)
+    if (clearGrade) next.delete('grade')
+    next.delete('page')
+    setUrlParams(next, { replace: true })
+  }
+  function updatePage(nextPage: number) {
+    const next = new URLSearchParams(urlParams)
+    if (nextPage > 1) next.set('page', String(nextPage))
+    else next.delete('page')
+    setUrlParams(next)
+  }
   const facets = useQuery({ queryKey: ['facets', user?.id], queryFn: () => api<Facets>('/facets/') })
-  const params = new URLSearchParams()
-  if (query.trim()) params.set('q', query.trim())
-  if (mine) params.set('mine', 'true')
-  if (level) params.set('level', level)
-  if (grade) params.set('grade', grade)
-  if (subject) params.set('subject', subject)
-  if (school) params.set('school', school)
-  if (major) params.set('major', major)
-  if (year) params.set('year', year)
-  if (examType) params.set('exam_type', examType)
-  if (hasKey) params.set('has_answer_key', 'true')
+  const params = new URLSearchParams(urlParams)
   params.set('page', String(page))
   const search = params.toString()
   const exams = useQuery({
@@ -76,28 +81,28 @@ export function LibraryPage() {
   return <section className="library-layout">
     <aside className="library-filters paper">
       <p className="eyebrow">LỌC ĐỀ</p>
-      <label>Tìm kiếm<input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(1) }} placeholder="Tên đề hoặc môn…" /></label>
-      <label>Cấp học<select value={level} onChange={(event) => { setLevel(event.target.value); setGrade(''); setPage(1) }}>
+      <label>Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
+      <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
         <option value="">Tất cả</option>
         {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select></label>
-      <label>Lớp<select value={grade} onChange={(event) => { setGrade(event.target.value); setPage(1) }}>
+      <label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}>
         <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}</option>)}
       </select></label>
-      <label>Môn học<select value={subject} onChange={(event) => { setSubject(event.target.value); setPage(1) }}>
+      <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}>
         <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select></label>
       <FilterChips label="Trường" values={facets.data?.schools || []} selected={school}
-        onChange={(value) => { setSchool(value); setPage(1) }} />
+        onChange={(value) => updateFilter('school', value)} />
       <FilterChips label="Ngành" values={facets.data?.majors || []} selected={major}
-        onChange={(value) => { setMajor(value); setPage(1) }} />
-      <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => { setYear(event.target.value); setPage(1) }} /></label>
-      <label>Loại đề<select value={examType} onChange={(event) => { setExamType(event.target.value); setPage(1) }}>
+        onChange={(value) => updateFilter('major', value)} />
+      <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label>
+      <label>Loại đề<select value={examType} onChange={(event) => updateFilter('exam_type', event.target.value)}>
         <option value="">Tất cả</option>
         {Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select></label>
-      <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => { setHasKey(event.target.checked); setPage(1) }} /> Có đáp án</label>
-      {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => { setMine(event.target.checked); setPage(1) }} /> Chỉ đề của tôi</label>}
+      <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>
+      {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}
     </aside>
     <div className="library-results paper">
       <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
@@ -116,9 +121,9 @@ export function LibraryPage() {
           </Link>)}
         </section>}
         <nav className="pagination" aria-label="Phân trang đề thi">
-          <button type="button" disabled={!exams.data.previous} onClick={() => setPage(page - 1)}>Trang trước</button>
+          <button type="button" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}>Trang trước</button>
           <span>Trang {page}</span>
-          <button type="button" disabled={!exams.data.next} onClick={() => setPage(page + 1)}>Trang sau</button>
+          <button type="button" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>Trang sau</button>
         </nav>
       </>}
     </div>
