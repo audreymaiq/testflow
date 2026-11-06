@@ -110,6 +110,7 @@ PUBLIC_WEB_ORIGIN = env("PUBLIC_WEB_ORIGIN", default="http://localhost:5173").rs
 EMAIL_BACKEND = env(
     "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
 )
+EMAIL_FILE_PATH = env("EMAIL_FILE_PATH", default="")
 DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TestFlow <noreply@localhost>")
 EMAIL_HOST = env("EMAIL_HOST", default="")
 EMAIL_PORT = env.int("EMAIL_PORT", default=587)
@@ -120,6 +121,7 @@ EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 REDIS_URL = env("REDIS_URL", default="")
 CELERY_BROKER_URL = REDIS_URL
 CELERY_RESULT_BACKEND = None
+CELERY_TASK_ALWAYS_EAGER = env.bool("CELERY_TASK_ALWAYS_EAGER", default=False)
 CELERY_TASK_SERIALIZER = "json"
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TIMEZONE = "Asia/Ho_Chi_Minh"
