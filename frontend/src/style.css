@@ -44,6 +44,7 @@ h1 { font-size: clamp(2rem, 5vw, 3.6rem); line-height: 1.15; font-weight: 600; l
 .home-deck { display: flex; align-items: start; gap: 1rem; min-width: 0; min-height: 144px; padding: 1.2rem; color: var(--text); text-decoration: none; }
 .home-deck:hover, .home-deck:focus-visible { border-color: var(--accent); }
 .home-deck-mark { width: 54px; height: 54px; flex: none; display: grid; place-items: center; border: 2px solid var(--border); border-radius: 4px; background: var(--surface-alt); font: 600 1.1rem 'IBM Plex Mono', monospace; }
+.home-deck-mark svg { width: 30px; height: 30px; }
 .home-deck-copy { display: grid; gap: .4rem; min-width: 0; }
 .home-deck-copy strong { overflow-wrap: anywhere; }
 .home-deck-copy small, .home-deck-meta, .home-deck-visibility { color: var(--muted); font-size: .82rem; }
