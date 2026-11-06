@@ -29,6 +29,18 @@ const levelNames: Record<string, string> = {
   TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
 }
 
+function FilterChips({ label, values, selected, onChange }: {
+  label: string; values: string[]; selected: string; onChange: (value: string) => void
+}) {
+  return <fieldset className="filter-chip-group"><legend>{label}</legend>
+    <div className="filter-chip-list">
+      <button type="button" aria-pressed={!selected} onClick={() => onChange('')}>Tất cả</button>
+      {values.map((value) => <button type="button" key={value} aria-pressed={selected === value}
+        onClick={() => onChange(selected === value ? '' : value)}>{value}</button>)}
+    </div>
+  </fieldset>
+}
+
 export function LibraryPage() {
   const { user, api } = useAuth()
   const [query, setQuery] = useState('')
@@ -75,12 +87,10 @@ export function LibraryPage() {
       <label>Môn học<select value={subject} onChange={(event) => { setSubject(event.target.value); setPage(1) }}>
         <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name}</option>)}
       </select></label>
-      <label>Trường<select value={school} onChange={(event) => { setSchool(event.target.value); setPage(1) }}>
-        <option value="">Tất cả</option>{facets.data?.schools.map((item) => <option key={item}>{item}</option>)}
-      </select></label>
-      <label>Ngành<select value={major} onChange={(event) => { setMajor(event.target.value); setPage(1) }}>
-        <option value="">Tất cả</option>{facets.data?.majors.map((item) => <option key={item}>{item}</option>)}
-      </select></label>
+      <FilterChips label="Trường" values={facets.data?.schools || []} selected={school}
+        onChange={(value) => { setSchool(value); setPage(1) }} />
+      <FilterChips label="Ngành" values={facets.data?.majors || []} selected={major}
+        onChange={(value) => { setMajor(value); setPage(1) }} />
       <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => { setYear(event.target.value); setPage(1) }} /></label>
       <label>Loại đề<select value={examType} onChange={(event) => { setExamType(event.target.value); setPage(1) }}>
         <option value="">Tất cả</option>
