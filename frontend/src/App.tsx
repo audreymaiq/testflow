@@ -1,5 +1,5 @@
 import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
-import { Link, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
+import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { request } from './api'
 import { useAuth } from './auth'
 import { TaxonomyEntry } from './taxonomy'
@@ -34,23 +34,26 @@ function Shell({ children }: { children: ReactNode }) {
   }
 
   return <>
+    <a className="skip-link" href="#main">Bỏ qua điều hướng</a>
     <header className="topbar bg-surface text-text">
-      <Link to="/" className="brand" aria-label="TestFlow, trang chủ"><span className="brand-mark" />TestFlow</Link>
+      <div className="topbar-inner">
+      <Link to="/" className="brand" aria-label="TestFlow, trang chủ"><span className="brand-mark" aria-hidden="true" />TestFlow</Link>
       <nav aria-label="Điều hướng chính">
-        <Link to="/library">Thư viện</Link>
-        <Link to="/imports/new">Nhập TXT</Link>
+        <NavLink to="/library">Thư viện</NavLink>
+        <NavLink to="/imports/new">Nhập TXT</NavLink>
         {user ? <>
-          <Link to="/account">Tài khoản</Link>
-          <Link to="/history">Lịch sử</Link>
-          {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <Link to="/publish-requests">Duyệt đề</Link>}
-          {user.roles.includes('Admin') && <Link to="/ops">Vận hành</Link>}
+          <NavLink to="/history">Lịch sử</NavLink>
+          <NavLink to="/account">Tài khoản</NavLink>
+          {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <NavLink to="/publish-requests">Duyệt đề</NavLink>}
+          {user.roles.includes('Admin') && <NavLink to="/ops">Vận hành</NavLink>}
           <button type="button" className="text-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
         </> : <>
-          <Link to="/login">Đăng nhập</Link>
+          <NavLink to="/login">Đăng nhập</NavLink>
           <Link to="/register" className="header-action">Tạo tài khoản</Link>
         </>}
       </nav>
       <ThemeControls />
+      </div>
     </header>
     <main id="main">{children}</main>
     {message && <Toast key={message} message={message} onClose={closeMessage} />}
