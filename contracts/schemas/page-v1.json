@@ -1,0 +1,374 @@
+{
+  "$defs": {
+    "AnswerKeyBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "entries": {
+          "items": {
+            "$ref": "#/$defs/AnswerKeyEntry"
+          },
+          "maxItems": 200,
+          "title": "Entries",
+          "type": "array"
+        },
+        "type": {
+          "const": "answer_key",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type"
+      ],
+      "title": "AnswerKeyBlock",
+      "type": "object"
+    },
+    "AnswerKeyEntry": {
+      "additionalProperties": false,
+      "properties": {
+        "answer": {
+          "title": "Answer",
+          "type": "string"
+        },
+        "number_label": {
+          "title": "Number Label",
+          "type": "string"
+        }
+      },
+      "required": [
+        "number_label",
+        "answer"
+      ],
+      "title": "AnswerKeyEntry",
+      "type": "object"
+    },
+    "PageChoice": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "text"
+      ],
+      "title": "PageChoice",
+      "type": "object"
+    },
+    "PageFigure": {
+      "additionalProperties": false,
+      "properties": {
+        "anchor": {
+          "default": "unanchored",
+          "title": "Anchor",
+          "type": "string"
+        },
+        "bbox": {
+          "maxItems": 4,
+          "minItems": 4,
+          "prefixItems": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Bbox",
+          "type": "array"
+        },
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        }
+      },
+      "required": [
+        "id",
+        "bbox"
+      ],
+      "title": "PageFigure",
+      "type": "object"
+    },
+    "PageHeader": {
+      "additionalProperties": false,
+      "properties": {
+        "duration_minutes": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Duration Minutes"
+        },
+        "school": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "School"
+        },
+        "subject": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Subject"
+        },
+        "title": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Title"
+        },
+        "year": {
+          "anyOf": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Year"
+        }
+      },
+      "title": "PageHeader",
+      "type": "object"
+    },
+    "PageStatement": {
+      "additionalProperties": false,
+      "properties": {
+        "label": {
+          "title": "Label",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "required": [
+        "label",
+        "text"
+      ],
+      "title": "PageStatement",
+      "type": "object"
+    },
+    "PassageBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "id": {
+          "minLength": 1,
+          "title": "Id",
+          "type": "string"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "passage",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "id",
+        "text"
+      ],
+      "title": "PassageBlock",
+      "type": "object"
+    },
+    "QuestionBlock": {
+      "additionalProperties": false,
+      "properties": {
+        "choices": {
+          "items": {
+            "$ref": "#/$defs/PageChoice"
+          },
+          "maxItems": 6,
+          "title": "Choices",
+          "type": "array"
+        },
+        "continues_from_previous": {
+          "default": false,
+          "title": "Continues From Previous",
+          "type": "boolean"
+        },
+        "continues_on_next": {
+          "default": false,
+          "title": "Continues On Next",
+          "type": "boolean"
+        },
+        "figure_refs": {
+          "items": {
+            "type": "string"
+          },
+          "maxItems": 20,
+          "title": "Figure Refs",
+          "type": "array"
+        },
+        "kind": {
+          "enum": [
+            "MCQ",
+            "MCQ_MULTI",
+            "TF_GROUP",
+            "TRUE_FALSE",
+            "SHORT",
+            "ESSAY"
+          ],
+          "title": "Kind",
+          "type": "string"
+        },
+        "number_label": {
+          "default": "",
+          "title": "Number Label",
+          "type": "string"
+        },
+        "passage_ref": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Passage Ref"
+        },
+        "statements": {
+          "items": {
+            "$ref": "#/$defs/PageStatement"
+          },
+          "maxItems": 4,
+          "title": "Statements",
+          "type": "array"
+        },
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "question",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "kind",
+        "text"
+      ],
+      "title": "QuestionBlock",
+      "type": "object"
+    },
+    "SectionHeading": {
+      "additionalProperties": false,
+      "properties": {
+        "text": {
+          "title": "Text",
+          "type": "string"
+        },
+        "type": {
+          "const": "section_heading",
+          "title": "Type",
+          "type": "string"
+        }
+      },
+      "required": [
+        "type",
+        "text"
+      ],
+      "title": "SectionHeading",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "blocks": {
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/SectionHeading"
+          },
+          {
+            "$ref": "#/$defs/PassageBlock"
+          },
+          {
+            "$ref": "#/$defs/QuestionBlock"
+          },
+          {
+            "$ref": "#/$defs/AnswerKeyBlock"
+          }
+        ]
+      },
+      "maxItems": 300,
+      "title": "Blocks",
+      "type": "array"
+    },
+    "figures": {
+      "items": {
+        "$ref": "#/$defs/PageFigure"
+      },
+      "maxItems": 100,
+      "title": "Figures",
+      "type": "array"
+    },
+    "header": {
+      "$ref": "#/$defs/PageHeader"
+    },
+    "page_no": {
+      "minimum": 1,
+      "title": "Page No",
+      "type": "integer"
+    },
+    "schema_version": {
+      "const": 1,
+      "title": "Schema Version",
+      "type": "integer"
+    }
+  },
+  "required": [
+    "schema_version",
+    "page_no"
+  ],
+  "title": "PageSchema",
+  "type": "object"
+}
