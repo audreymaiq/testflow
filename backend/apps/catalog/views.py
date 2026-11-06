@@ -125,6 +125,7 @@ class FacetsView(GenericAPIView):
                 .annotate(total=Count("pk", distinct=True))
                 .values_list(field, "total")
             )
+
         return Response(
             {
                 "subjects": list(
