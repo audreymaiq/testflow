@@ -3,6 +3,7 @@
 from urllib.parse import urlparse
 
 from django.conf import settings
+from django.contrib.auth import get_user_model
 from rest_framework import status
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied, ValidationError
 from rest_framework.generics import GenericAPIView, RetrieveUpdateAPIView
@@ -10,10 +11,19 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
+from rest_framework_simplejwt.settings import api_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
-from .serializers import LoginSerializer, LogoutSerializer, RegisterSerializer, UserSerializer
-from .services import login_user
+from .serializers import (
+    LoginSerializer,
+    LogoutSerializer,
+    PasswordResetConfirmSerializer,
+    PasswordResetRequestSerializer,
+    RegisterSerializer,
+    UserSerializer,
+)
+from .services import confirm_password_reset, login_user, request_password_reset
 
 
 def _check_cookie_origin(request):
@@ -83,6 +93,17 @@ class RefreshView(GenericAPIView):
         raw = request.COOKIES.get(settings.REFRESH_COOKIE_NAME)
         if not raw:
             raise ValidationError({"refresh": "Phiên đăng nhập không hợp lệ."})
+        try:
+            refresh = RefreshToken(raw)
+            user = get_user_model().objects.filter(
+                pk=refresh.get(api_settings.USER_ID_CLAIM)
+            ).first()
+        except (TokenError, ValueError) as exc:
+            raise AuthenticationFailed("Phiên đăng nhập không hợp lệ.") from exc
+        if user is None or refresh.get(api_settings.REVOKE_TOKEN_CLAIM) != get_md5_hash_password(
+            user.password
+        ):
+            raise AuthenticationFailed("Phiên đăng nhập không hợp lệ.")
         serializer = self.get_serializer(data={"refresh": raw})
         try:
             serializer.is_valid(raise_exception=True)
@@ -118,3 +139,34 @@ class MeView(RetrieveUpdateAPIView):
 
     def get_object(self):
         return self.request.user
+
+
+class PasswordResetRequestView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = PasswordResetRequestSerializer
+    throttle_scope = "password_reset"
+
+    def post(self, request):
+        _check_cookie_origin(request)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        request_password_reset(**serializer.validated_data)
+        return Response(
+            {"message": "Nếu email có tài khoản, chúng tôi đã gửi liên kết đặt lại mật khẩu."},
+            status=status.HTTP_202_ACCEPTED,
+        )
+
+
+class PasswordResetConfirmView(GenericAPIView):
+    permission_classes = (AllowAny,)
+    serializer_class = PasswordResetConfirmSerializer
+    throttle_scope = "password_reset_confirm"
+
+    def post(self, request):
+        _check_cookie_origin(request)
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        confirm_password_reset(**serializer.validated_data)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response.delete_cookie(settings.REFRESH_COOKIE_NAME, path=settings.REFRESH_COOKIE_PATH)
+        return response
