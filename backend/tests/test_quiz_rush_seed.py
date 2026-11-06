@@ -18,10 +18,14 @@ def test_quiz_rush_fixture_has_expected_structure():
     assert draft.metadata.icon == "👁️"
     assert draft.metadata.scoring_preset == "PRACTICE_NO_SCORE"
     assert len(draft.chapters) == 4
-    assert [len([q for q in draft.sections[0].questions if q.chapter == code]) for code in
-            ("C12", "C3", "C4", "C5")] == [80, 90, 70, 60]
-    assert all(sum(choice.is_correct for choice in question.choices) == 1
-               for question in draft.sections[0].questions)
+    assert [
+        len([q for q in draft.sections[0].questions if q.chapter == code])
+        for code in ("C12", "C3", "C4", "C5")
+    ] == [80, 90, 70, 60]
+    assert all(
+        sum(choice.is_correct for choice in question.choices) == 1
+        for question in draft.sections[0].questions
+    )
 
 
 @pytest.mark.django_db
