@@ -167,6 +167,11 @@ class FacetsResponseSerializer(serializers.Serializer):
     schools = serializers.ListField(child=serializers.CharField())
     majors = serializers.ListField(child=serializers.CharField())
     levels = serializers.ListField(child=serializers.CharField())
+    subject_counts = serializers.DictField(child=serializers.IntegerField())
+    school_counts = serializers.DictField(child=serializers.IntegerField())
+    major_counts = serializers.DictField(child=serializers.IntegerField())
+    level_counts = serializers.DictField(child=serializers.IntegerField())
+    grade_counts = serializers.DictField(child=serializers.IntegerField())
 
 
 class SubjectSerializer(serializers.ModelSerializer):
