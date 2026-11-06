@@ -42,6 +42,12 @@ function answerText(value: Record<string, unknown>) {
   return Object.entries(value).map(([key, item]) => `${key}: ${item === true ? 'Đúng' : item === false ? 'Sai' : item}`).join('; ') || '—'
 }
 
+function hasAnswer(value: Record<string, unknown>) {
+  return Object.values(value).some((item) =>
+    typeof item === 'boolean' || (typeof item === 'string' && item.trim().length > 0)
+    || (Array.isArray(item) && item.length > 0))
+}
+
 function QuestionInput({ question, value, onChange, disabled }: {
   question: Question; value: Record<string, unknown>
   onChange: (value: Record<string, unknown>) => void; disabled: boolean
@@ -109,6 +115,13 @@ export function PracticePage() {
     if (session.data?.server_time) setServerOffset(new Date(session.data.server_time).getTime() - Date.now())
   }, [session.data?.server_time])
   const questions = useMemo(() => session.data?.sections.flatMap((section) => section.questions) || [], [session.data])
+  const answeredIds = new Set(session.data?.answers.filter((answer) => hasAnswer(answer.value)).map((answer) => answer.question_id))
+  Object.entries(drafts).forEach(([id, draft]) => {
+    if (hasAnswer(draft)) answeredIds.add(id)
+    else answeredIds.delete(id)
+  })
+  const correctCount = questions.filter((item) => item.feedback?.status === 'CORRECT').length
+  const skippedCount = questions.filter((item) => item.feedback?.status === 'SKIPPED').length
   const question = questions[active]
   const saved = session.data?.answers.find((answer) => answer.question_id === question?.id)
   const value = question ? (drafts[question.id] || saved?.value || {}) : {}
@@ -191,6 +204,8 @@ export function PracticePage() {
       <h1>Bài làm của bạn</h1></div>
       {remaining !== null && <p className="timer" role="timer" aria-label="Thời gian còn lại">{Math.floor(remaining / 60).toString().padStart(2, '0')}:{(remaining % 60).toString().padStart(2, '0')}</p>}
     </div>
+    <p aria-label="Tiến độ bài làm">Đã trả lời {answeredIds.size}/{questions.length} · {session.data.mode === 'PRACTICE'
+      ? `${correctCount} đúng · ${skippedCount} bỏ qua` : 'Đúng: xem sau khi nộp'}</p>
     <nav className="question-nav" aria-label="Chọn câu hỏi">{questions.map((item, index) =>
       <button type="button" key={item.id} onClick={() => { void goTo(index) }} disabled={busy}
         aria-current={index === active ? 'step' : undefined}
