@@ -86,6 +86,8 @@ REST_FRAMEWORK = {
         "logout": env("THROTTLE_LOGOUT", default="60/min"),
         "taxonomy_lookup": env("THROTTLE_TAXONOMY_LOOKUP", default="60/min"),
         "taxonomy_create": env("THROTTLE_TAXONOMY_CREATE", default="20/day"),
+        "password_reset": env("THROTTLE_PASSWORD_RESET", default="5/hour"),
+        "password_reset_confirm": env("THROTTLE_PASSWORD_RESET_CONFIRM", default="10/min"),
     },
     "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "EXCEPTION_HANDLER": "apps.common.errors.api_exception_handler",
@@ -100,7 +102,20 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+    "CHECK_REVOKE_TOKEN": True,
 }
+
+PASSWORD_RESET_TIMEOUT = 60 * 60
+PUBLIC_WEB_ORIGIN = env("PUBLIC_WEB_ORIGIN", default="http://localhost:5173").rstrip("/")
+EMAIL_BACKEND = env(
+    "EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend"
+)
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="TestFlow <noreply@localhost>")
+EMAIL_HOST = env("EMAIL_HOST", default="")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+EMAIL_USE_TLS = env.bool("EMAIL_USE_TLS", default=True)
 
 REDIS_URL = env("REDIS_URL", default="")
 CELERY_BROKER_URL = REDIS_URL
