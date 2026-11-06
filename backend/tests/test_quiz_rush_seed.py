@@ -15,6 +15,7 @@ from apps.imports.management.commands.seed_quiz_rush import seed_draft
 def test_quiz_rush_fixture_has_expected_structure():
     draft = seed_draft()
     assert draft.metadata.level == "DAI_HOC"
+    assert draft.metadata.icon == "👁️"
     assert draft.metadata.scoring_preset == "PRACTICE_NO_SCORE"
     assert len(draft.chapters) == 4
     assert [len([q for q in draft.sections[0].questions if q.chapter == code]) for code in
@@ -42,6 +43,7 @@ def test_quiz_rush_seed_requires_distinct_reviewer_and_is_idempotent():
     assert exam.visibility == Visibility.PRIVATE
     assert PublishRequest.objects.count() == 0
     assert exam.is_system_sample
+    assert exam.icon == "👁️"
     assert exam.question_count == 300
     assert exam.chapters.count() == 4
     assert exam.sections.count() == 1
@@ -62,7 +64,7 @@ def test_quiz_rush_seed_requires_distinct_reviewer_and_is_idempotent():
     found = visitor.get("/api/v1/exams/?q=Thị Giác Máy Tính")
     assert found.status_code == 200
     assert any(
-        item["id"] == str(exam.id) and item["is_system_sample"]
+        item["id"] == str(exam.id) and item["is_system_sample"] and item["icon"] == "👁️"
         for item in found.data["results"]
     )
 
