@@ -15,9 +15,14 @@ from apps.accounts.permissions import IsAdmin, IsReviewer
 @pytest.mark.django_db
 def test_registration_and_identity_constraints():
     client = APIClient()
-    response = client.post(reverse("register"), {
-        "username": "HọcSinh", "email": "STUDENT@example.com", "password": "HardToGuess#2026",
-    })
+    response = client.post(
+        reverse("register"),
+        {
+            "username": "HọcSinh",
+            "email": "STUDENT@example.com",
+            "password": "HardToGuess#2026",
+        },
+    )
     assert response.status_code == 201
     assert "access" in response.data
     assert "refresh" not in response.data
@@ -26,9 +31,14 @@ def test_registration_and_identity_constraints():
     assert user.email == "student@example.com"
     assert user.groups.filter(name="Student").exists()
     assert user.check_password("HardToGuess#2026")
-    duplicate = client.post(reverse("register"), {
-        "username": "họcsinh", "email": "other@example.com", "password": "HardToGuess#2026",
-    })
+    duplicate = client.post(
+        reverse("register"),
+        {
+            "username": "họcsinh",
+            "email": "other@example.com",
+            "password": "HardToGuess#2026",
+        },
+    )
     assert duplicate.status_code == 400
     assert get_user_model().objects.count() == 1
     with pytest.raises(IntegrityError), transaction.atomic():
@@ -40,15 +50,24 @@ def test_registration_and_identity_constraints():
 @pytest.mark.django_db
 def test_token_rotation_logout_and_me():
     client = APIClient()
-    client.post(reverse("register"), {
-        "username": "student", "email": "student@example.com", "password": "HardToGuess#2026",
-    })
+    client.post(
+        reverse("register"),
+        {
+            "username": "student",
+            "email": "student@example.com",
+            "password": "HardToGuess#2026",
+        },
+    )
     assert client.get(reverse("me")).status_code == 401
     bad = client.post(reverse("login"), {"identifier": "student", "password": "wrong"})
     assert bad.status_code == 401
-    login = client.post(reverse("login"), {
-        "identifier": "STUDENT@EXAMPLE.COM", "password": "HardToGuess#2026",
-    })
+    login = client.post(
+        reverse("login"),
+        {
+            "identifier": "STUDENT@EXAMPLE.COM",
+            "password": "HardToGuess#2026",
+        },
+    )
     assert login.status_code == 200
     old_refresh = client.cookies["tf_refresh"].value
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {login.data['access']}")
@@ -66,9 +85,15 @@ def test_token_rotation_logout_and_me():
 @pytest.mark.django_db
 def test_cross_origin_cookie_operation_is_rejected():
     client = APIClient()
-    result = client.post(reverse("register"), {
-        "username": "student", "email": "student@example.com", "password": "HardToGuess#2026",
-    }, HTTP_ORIGIN="https://attacker.example")
+    result = client.post(
+        reverse("register"),
+        {
+            "username": "student",
+            "email": "student@example.com",
+            "password": "HardToGuess#2026",
+        },
+        HTTP_ORIGIN="https://attacker.example",
+    )
     assert result.status_code == 403
     assert get_user_model().objects.count() == 0
 
@@ -94,9 +119,14 @@ def test_student_cannot_use_reviewer_or_admin_permissions():
 )
 def test_password_reset_is_private_one_time_and_revokes_sessions():
     client = APIClient()
-    created = client.post(reverse("register"), {
-        "username": "student", "email": "student@example.com", "password": "HardToGuess#2026",
-    })
+    created = client.post(
+        reverse("register"),
+        {
+            "username": "student",
+            "email": "student@example.com",
+            "password": "HardToGuess#2026",
+        },
+    )
     old_access = created.data["access"]
     old_refresh = client.cookies["tf_refresh"].value
     unknown = client.post(reverse("password-reset-request"), {"email": "missing@example.com"})
@@ -110,27 +140,70 @@ def test_password_reset_is_private_one_time_and_revokes_sessions():
     )
     assert match is not None
     uid, token = match.groups()
-    assert client.post(reverse("password-reset-confirm"), {
-        "uid": uid, "token": token, "password": "short",
-    }).status_code == 400
-    assert client.post(reverse("password-reset-confirm"), {
-        "uid": "invalid", "token": token, "password": "NewHardToGuess#2026",
-    }).status_code == 400
-    reset = client.post(reverse("password-reset-confirm"), {
-        "uid": uid, "token": token, "password": "NewHardToGuess#2026",
-    })
+    assert (
+        client.post(
+            reverse("password-reset-confirm"),
+            {
+                "uid": uid,
+                "token": token,
+                "password": "short",
+            },
+        ).status_code
+        == 400
+    )
+    assert (
+        client.post(
+            reverse("password-reset-confirm"),
+            {
+                "uid": "invalid",
+                "token": token,
+                "password": "NewHardToGuess#2026",
+            },
+        ).status_code
+        == 400
+    )
+    reset = client.post(
+        reverse("password-reset-confirm"),
+        {
+            "uid": uid,
+            "token": token,
+            "password": "NewHardToGuess#2026",
+        },
+    )
     assert reset.status_code == 204
-    assert client.post(reverse("password-reset-confirm"), {
-        "uid": uid, "token": token, "password": "AnotherHard#2026",
-    }).status_code == 400
+    assert (
+        client.post(
+            reverse("password-reset-confirm"),
+            {
+                "uid": uid,
+                "token": token,
+                "password": "AnotherHard#2026",
+            },
+        ).status_code
+        == 400
+    )
     client.cookies["tf_refresh"] = old_refresh
     assert client.post(reverse("refresh")).status_code == 401
     client.credentials(HTTP_AUTHORIZATION=f"Bearer {old_access}")
     assert client.get(reverse("me")).status_code == 401
     client.credentials()
-    assert client.post(reverse("login"), {
-        "identifier": "student", "password": "HardToGuess#2026",
-    }).status_code == 401
-    assert client.post(reverse("login"), {
-        "identifier": "student", "password": "NewHardToGuess#2026",
-    }).status_code == 200
+    assert (
+        client.post(
+            reverse("login"),
+            {
+                "identifier": "student",
+                "password": "HardToGuess#2026",
+            },
+        ).status_code
+        == 401
+    )
+    assert (
+        client.post(
+            reverse("login"),
+            {
+                "identifier": "student",
+                "password": "NewHardToGuess#2026",
+            },
+        ).status_code
+        == 200
+    )
