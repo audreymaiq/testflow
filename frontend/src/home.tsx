@@ -66,7 +66,7 @@ export function Home() {
         </div>
       </div>
       <aside className="home-study-panel" aria-label={user ? 'Tiến độ học tập' : 'Cách bắt đầu'}>
-        <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'BẮT ĐẦU TỪ ĐÂU'}</p>
+        <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'CÁCH HỌC'}</p>
         {user ? <>
           <p className="home-study-greeting">Chào {user.display_name || user.username},</p>
           {stats.data ? <>
@@ -82,12 +82,11 @@ export function Home() {
             <span>{latest.status === 'IN_PROGRESS' ? 'Tiếp tục làm bài' : 'Xem kết quả'} <span aria-hidden="true">↗</span></span>
           </Link>}
         </> : <>
-          <p className="home-study-intro">Một lượt học rõ ràng, từ câu đầu tiên đến phần cần ôn lại.</p>
-          <ol className="home-study-steps">
-            <li><span>01</span>Chọn bộ đề phù hợp</li>
-            <li><span>02</span>Thi thử hoặc ôn tập</li>
-            <li><span>03</span>Xem lại câu cần luyện</li>
-          </ol>
+          <p className="home-study-intro">Hai cách học trên cùng một bộ đề có đáp án.</p>
+          <dl className="home-study-modes">
+            <div><dt>01 / THI CÓ GIỜ</dt><dd>Làm trọn bài; xem đáp án sau khi nộp.</dd></div>
+            <div><dt>02 / ÔN TẬP</dt><dd>Nhận phản hồi theo từng câu để hiểu phần chưa chắc.</dd></div>
+          </dl>
           <Link to="/library" className="home-study-link">Mở thư viện <span aria-hidden="true">↗</span></Link>
         </>}
       </aside>
@@ -95,7 +94,7 @@ export function Home() {
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="section-heading">
         <div><p className="eyebrow">BẮT ĐẦU LUYỆN TẬP</p><h2 id="home-library-title">Bộ đề</h2>
-          <p className="section-lede">Tìm theo tên hoặc môn học. Mỗi bộ đề mở ra hai cách học: thi thử và ôn tập.</p></div>
+          <p className="section-lede">Tìm theo tên hoặc môn học. Đề có đáp án hỗ trợ thi có giờ và ôn tập.</p></div>
         <Link to="/library">Xem toàn bộ thư viện</Link>
       </div>
       <form className="home-search" role="search" onSubmit={submit}>
@@ -111,9 +110,8 @@ export function Home() {
       {exams.data && exams.data.count > 0 && <>
         <p className="result-count">{exams.data.count} bộ đề{search && ` cho “${search}”`}</p>
         <div className="home-deck-grid">
-          {exams.data.results.map((exam, index) => <Link className="home-deck paper" key={exam.id} to={`/exams/${exam.id}`}>
-            <span className="home-deck-top"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} />
-              <span className="home-deck-number mono">{String(index + 1).padStart(2, '0')}</span></span>
+          {exams.data.results.map((exam) => <Link className="home-deck paper" key={exam.id} to={`/exams/${exam.id}`}>
+            <span className="home-deck-top"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} /></span>
             <span className="home-deck-copy">
               <strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
               {exam.subtitle && <small>{exam.subtitle}</small>}
