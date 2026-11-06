@@ -73,13 +73,15 @@ def test_gold_and_predictions_required_and_synthetic_is_labeled(tmp_path):
     with pytest.raises(FileNotFoundError, match="Missing prediction"):
         run(gold_root, pred_root, split="dev", allow_synthetic=True)
     (pred_root / "synthetic-01.json").write_text(
-        json.dumps({
-            "draft": draft().model_dump(mode="json"),
-            "review_edit_count": 0,
-            "page_latencies_seconds": [1.5],
-            "gpu_seconds": 1.5,
-            "api_cost": 0,
-        }),
+        json.dumps(
+            {
+                "draft": draft().model_dump(mode="json"),
+                "review_edit_count": 0,
+                "page_latencies_seconds": [1.5],
+                "gpu_seconds": 1.5,
+                "api_cost": 0,
+            }
+        ),
         encoding="utf-8",
     )
     result = run(gold_root, pred_root, split="dev", allow_synthetic=True)
