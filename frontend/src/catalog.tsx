@@ -49,6 +49,7 @@ function FilterChips({ label, values, counts, selected, onChange }: {
 
 export function LibraryPage() {
   const { user, api } = useAuth()
+  const [filtersOpen, setFiltersOpen] = useState(false)
   const [urlParams, setUrlParams] = useSearchParams()
   const query = urlParams.get('q') || ''
   const mine = urlParams.get('mine') === 'true'
@@ -93,9 +94,14 @@ export function LibraryPage() {
   ].filter(([, value]) => value)
 
   return <section className="library-layout">
-    <aside className="library-filters paper">
-      <div className="filter-heading"><p className="eyebrow">LỌC ĐỀ</p>
-        {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}</div>
+    <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
+      <div className="filter-heading"><p className="eyebrow">LỌC ĐỀ{activeFilters.length > 0 && ` · ${activeFilters.length} đang dùng`}</p>
+        <div className="filter-heading-actions">
+          {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}
+          <button type="button" className="filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+            {filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+          </button>
+        </div></div>
       <label>Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
       <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
         <option value="">Tất cả</option>
