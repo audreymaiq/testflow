@@ -97,6 +97,7 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
   await page.goto('/login')
   await page.getByLabel('Tên đăng nhập hoặc email').fill(owner)
+  await page.getByRole('button', { name: 'Tiếp tục' }).click()
   await page.getByLabel('Mật khẩu').fill(password)
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
   await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible({ timeout: 15000 })
