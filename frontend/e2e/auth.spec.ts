@@ -50,7 +50,9 @@ test('registration, logout and login use the running API and PostgreSQL', async 
 })
 
 test('light and dark mode choices persist across a reload', async ({ page }) => {
-  await page.addInitScript(() => localStorage.setItem('tf_mode', 'light'))
+  await page.addInitScript(() => {
+    if (!localStorage.getItem('tf_mode')) localStorage.setItem('tf_mode', 'light')
+  })
   await page.goto('/')
   await page.getByRole('button', { name: 'Chuyển sang chế độ tối' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
