@@ -63,7 +63,7 @@ export function Home() {
     enabled: !loading && !!user,
   })
   const inProgress = recent.data?.results || []
-  const featured = featuredSubjects.map((name) => subjects.data?.find((item) => item.name === name || (name === 'Vật lý' && item.name === 'Vật lí'))).filter((item): item is Subject => !!item)
+  const featured = featuredSubjects.map((name) => subjects.data?.find((item) => item.name === name || (name === 'Vật lý' && item.name === 'Vật lí') || (name === 'Địa lý' && item.name === 'Địa lí'))).filter((item): item is Subject => !!item)
 
   function submit(event: FormEvent) {
     event.preventDefault()
