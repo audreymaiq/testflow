@@ -30,7 +30,7 @@ export function ThemeControls() {
   return <div className="theme-controls">
     <label>Giao diện
       <select value={theme} onChange={(event) => setTheme(event.target.value as Theme)}>
-        <option value="ocean">Cobalt</option><option value="amber">Bronze</option>
+        <option value="ocean">Teal</option><option value="amber">Bronze</option>
         <option value="sakura">Rose</option><option value="holo">Violet</option>
       </select>
     </label>
