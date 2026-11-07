@@ -38,12 +38,11 @@ function Shell({ children }: { children: ReactNode }) {
     <header className="topbar bg-surface text-text">
       <div className="topbar-inner">
       <Link to="/" className="brand" aria-label="TestFlow, trang chủ">
-        <svg className="brand-symbol" viewBox="0 0 48 48" width="32" height="32" fill="none" aria-hidden="true">
-          <path d="M12 12c15 0 9 24 24 24" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
-          <circle cx="12" cy="12" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
-          <circle cx="35" cy="12" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
-          <circle cx="12" cy="36" r="5.5" fill="var(--surface)" stroke="currentColor" strokeWidth="3" />
-          <circle cx="36" cy="36" r="7" fill="currentColor" />
+        <svg className="brand-symbol" viewBox="0 0 48 48" width="34" height="34" fill="none" aria-hidden="true">
+          <rect x="2" y="2" width="44" height="44" rx="13" fill="currentColor" />
+          <path d="M11 14h25M24 14v11c0 6 4 10 11 10" stroke="var(--on-accent)" strokeWidth="4" strokeLinecap="round" strokeLinejoin="round" />
+          <circle cx="13" cy="34" r="5" stroke="var(--on-accent)" strokeWidth="3" />
+          <circle cx="35" cy="35" r="6" fill="var(--on-accent)" />
         </svg>
         <span>TestFlow</span>
       </Link>
