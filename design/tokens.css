@@ -9,12 +9,12 @@
   --success: #166534;
   --error: #A02F2F;
   --skipped: #52637C;
-  --accent: #2547C4;
+  --accent: #176273;
   --on-accent: #FFFFFF;
-  --focus: #2547C4;
-  --link: #2547C4;
+  --focus: #176273;
+  --link: #176273;
   --icon: #4C6064;
-  --progress: #2547C4;
+  --progress: #176273;
 }
 :root[data-theme="ocean"][data-mode="dark"] {
   --bg: #151B27;
@@ -26,12 +26,12 @@
   --success: #85D8A0;
   --error: #FF9E9E;
   --skipped: #C2CEDF;
-  --accent: #8FA6FF;
+  --accent: #8BCBD0;
   --on-accent: #111725;
-  --focus: #8FA6FF;
-  --link: #8FA6FF;
+  --focus: #8BCBD0;
+  --link: #8BCBD0;
   --icon: #B9C4D3;
-  --progress: #8FA6FF;
+  --progress: #8BCBD0;
 }
 :root[data-theme="amber"][data-mode="light"] {
   --bg: #F2F5F6;
