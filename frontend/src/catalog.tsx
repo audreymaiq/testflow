@@ -170,11 +170,11 @@ export function LibraryPage() {
             </span>
           </Link>)}
         </section>}
-        {(exams.data.previous || exams.data.next) && <nav className="pagination" aria-label="Phân trang đề thi">
+        <nav className="pagination" aria-label="Phân trang đề thi">
           <button type="button" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}><span aria-hidden="true">←</span> Trang trước</button>
           <span className="pagination-current" aria-current="page">Trang {page}</span>
           <button type="button" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>Trang sau <span aria-hidden="true">→</span></button>
-        </nav>}
+        </nav>
       </>}
     </div>
   </section>
@@ -390,6 +390,10 @@ export function ManualExamPage() {
       setError('Điền tên đề và môn học hợp lệ.')
       return
     }
+    if (schools.length === 0) {
+      setError('Chọn hoặc thêm ít nhất một trường.')
+      return
+    }
     setPending(true)
     const draft = {
       schema_version: 1,
@@ -436,7 +440,7 @@ export function ManualExamPage() {
         <label><span>Thời gian (phút)<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
       </div>
       <p>Chọn môn được gợi ý hoặc nhập tên môn mới. Nếu chưa có tên phù hợp, dùng Kiểm tra tên để tạo tên chuẩn.</p>
-      <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} />
+      <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} required />
       <TaxonomyNames kind="MAJOR" label="Ngành" values={majors} onChange={setMajors} />
       <h2>Câu hỏi</h2>
       {questions.map((question, index) => <fieldset className="question-editor" key={index}>
