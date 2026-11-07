@@ -21,7 +21,7 @@ test('admin sees live operations counts after a private TXT upload', async ({ pa
   await page.goto('/imports/new')
   const content = `#TITLE: Ops ${suffix}\n[C1] Math\nQuestion?\nA. One\nB. Two\n=>B\n`
   await page.getByLabel('Chọn tệp .txt').setInputFiles({ name: `ops-${suffix}.txt`, mimeType: 'text/plain', buffer: Buffer.from(content) })
-  await page.getByRole('button', { name: 'Phân tích tệp' }).click()
+  await page.getByRole('button', { name: 'Xác nhận' }).click()
   await expect(page.getByRole('heading', { name: `Ops ${suffix}` })).toBeVisible()
   await page.getByRole('link', { name: 'Vận hành' }).click()
   await expect(page.getByRole('heading', { name: 'Tình trạng hệ thống' })).toBeVisible()
