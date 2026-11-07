@@ -65,7 +65,10 @@ export function Home() {
           {user ? 'Xem tiến độ học tập' : 'Tạo tài khoản để lưu tiến độ'} <span aria-hidden="true">↗</span>
         </Link>
       </div>
-      <div className="home-visual" aria-hidden="true"><img src={heroStudyDesk} alt="" /></div>
+      <div className="home-visual" aria-hidden="true">
+        <img src={heroStudyDesk} alt="" />
+        <span className="home-page-leaf" style={{ backgroundImage: `url(${heroStudyDesk})` }} />
+      </div>
     </section>
     {user && <aside className="home-study-panel is-personal" aria-label="Tiến độ học tập">
         <p className="eyebrow">PHIẾU HỌC TẬP</p>
