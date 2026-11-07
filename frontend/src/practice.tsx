@@ -102,6 +102,7 @@ export function PracticePage() {
   const { api, user } = useAuth()
   const navigate = useNavigate()
   const [active, setActive] = useState(0)
+  const [mapOpen, setMapOpen] = useState(false)
   const [drafts, setDrafts] = useState<Record<string, Record<string, unknown>>>({})
   const [flagDrafts, setFlagDrafts] = useState<Record<string, boolean>>({})
   const [busy, setBusy] = useState(false)
@@ -111,6 +112,7 @@ export function PracticePage() {
   const [tick, setTick] = useState(0)
   const [serverOffset, setServerOffset] = useState(0)
   const allowNavigation = useRef(false)
+  const questionRef = useRef<HTMLElement>(null)
   const saveQueue = useRef<Promise<void>>(Promise.resolve())
   const pendingSaves = useRef(0)
   const latestFlags = useRef<Record<string, boolean>>({})
@@ -198,7 +200,8 @@ export function PracticePage() {
   async function goTo(index: number) {
     if (busy) return
     if (question && drafts[question.id] && !await save(drafts[question.id], question)) return
-    setActive(index); setError('')
+    setActive(index); setMapOpen(false); setError('')
+    window.requestAnimationFrame(() => questionRef.current?.scrollIntoView({ block: 'start', behavior: 'auto' }))
   }
 
   async function skip() {
@@ -246,13 +249,21 @@ export function PracticePage() {
       aria-valuenow={answeredIds.size} aria-valuemin={0} aria-valuemax={questions.length}>
       <span style={{ width: `${questions.length ? answeredIds.size / questions.length * 100 : 0}%` }} />
     </div>
-    <nav className="question-nav" aria-label="Chọn câu hỏi">{questions.map((item, index) =>
+    <div className="practice-workspace">
+    <aside className="question-map" aria-label="Bản đồ câu hỏi">
+      <div className="question-map-heading"><strong>Bản đồ câu hỏi</strong><span>{active + 1}/{questions.length}</span>
+        <button type="button" className="question-map-toggle" aria-expanded={mapOpen} aria-controls="question-map-grid" onClick={() => setMapOpen((open) => !open)}>{mapOpen ? 'Đóng' : 'Xem câu hỏi'} <span aria-hidden="true">{mapOpen ? '−' : '+'}</span></button>
+      </div>
+    <nav id="question-map-grid" className={`question-nav${mapOpen ? ' is-open' : ''}`} aria-label="Chọn câu hỏi">{questions.map((item, index) =>
       <button type="button" key={item.id} onClick={() => { void goTo(index) }} disabled={busy}
         aria-current={index === active ? 'step' : undefined}
         aria-label={`Câu ${index + 1}${answeredIds.has(item.id) ? ', đã trả lời' : ''}${(flagDrafts[item.id] ?? session.data.answers.find((answer) => answer.question_id === item.id)?.flagged) ? ', đánh dấu xem lại' : ''}`}
         className={[answeredIds.has(item.id) ? 'answered' : '', (flagDrafts[item.id] ?? session.data.answers.find((answer) => answer.question_id === item.id)?.flagged) ? 'flagged' : ''].filter(Boolean).join(' ')}>{index + 1}</button>)}</nav>
-    {closed && <p role="status">Bài làm đã kết thúc. <Link to={`/practice/${sessionId}/result`}>Xem kết quả</Link></p>}
-    <article className="active-question"><p className="eyebrow">CÂU {active + 1} / {questions.length}</p>
+      <p className="question-map-legend"><span className="question-map-dot" /> Đã trả lời <span className="question-map-flag" /> Đánh dấu</p>
+    </aside>
+    <article className="active-question" ref={questionRef}>
+      {closed && <p role="status">Bài làm đã kết thúc. <Link to={`/practice/${sessionId}/result`}>Xem kết quả</Link></p>}
+      <p className="eyebrow">CÂU {active + 1} / {questions.length}</p>
       <h2>{question.number_label}</h2>{question.passage && <blockquote>{question.passage}</blockquote>}
       <p className="question-text">{question.text}</p>
       <QuestionInput question={question} value={value} disabled={closed || !!question.feedback || busy}
@@ -271,12 +282,13 @@ export function PracticePage() {
         {question.feedback.explanation && <p>{question.feedback.explanation}</p>}</div>}
       {error && <p role="alert" className="form-error">{error}</p>}
       <div className="practice-actions">
-        {!closed && !question.feedback && <button type="button" className="button primary" onClick={() => { void save() }} disabled={busy || Object.keys(value).length === 0}>Lưu câu trả lời</button>}
+        {!closed && session.data.mode === 'PRACTICE' && !question.feedback && !['MCQ', 'TRUE_FALSE'].includes(question.kind) && <button type="button" className="button primary" onClick={() => { void save() }} disabled={busy || !hasAnswer(value)}>{question.kind === 'ESSAY' ? 'Gửi bài tự luận' : 'Kiểm tra câu trả lời'}</button>}
         {!closed && session.data.mode === 'PRACTICE' && !question.feedback && <button type="button" className="button secondary" onClick={skip} disabled={busy}>Bỏ qua</button>}
         {active > 0 && <button type="button" className="button secondary" onClick={() => { void goTo(active - 1) }} disabled={busy}>Câu trước</button>}
         {active + 1 < questions.length && <button type="button" className="button secondary" onClick={() => { void goTo(active + 1) }} disabled={busy}>Câu tiếp</button>}
       </div>
     </article>
+    </div>
     {!closed && <div className="practice-actions">
       <button type="button" className="button submit-button" onClick={() => setConfirmSubmit(true)} disabled={busy}>Nộp bài</button>
       <button type="button" className="button secondary" onClick={() => navigate(`/exams/${session.data.exam_id}`)} disabled={busy}>Thoát bài làm</button>
