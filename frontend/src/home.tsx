@@ -98,7 +98,7 @@ export function Home() {
           <span className="home-resume-play"><Icon kind="play" size={22} /></span>
         </Link>
       })}</div> : <div className="home-resume-empty">{user ? recent.isPending ? 'Đang tải…' : 'Chọn một đề trong thư viện để bắt đầu.' : 'Bài làm của bạn sẽ hiện ở đây sau khi đăng nhập.'}</div>}
-      <Link className="home-resume-all" to={user ? '/history' : '/login'}>{user ? 'Xem tất cả' : 'Đăng nhập'} <span aria-hidden="true">→</span></Link>
+      {user && <Link className="home-resume-all" to="/history">Xem tất cả <span aria-hidden="true">→</span></Link>}
     </section>
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="home-library-heading"><div><Icon kind="book" size={39} /><h2 id="home-library-title">Đề nổi bật</h2></div><Link to="/library">Xem thêm <span aria-hidden="true">→</span></Link></div>
