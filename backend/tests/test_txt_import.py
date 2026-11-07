@@ -39,6 +39,31 @@ def upload(client, text=GOOD, filename="questions.txt"):
 
 
 @pytest.mark.django_db
+def test_upload_duration_choice_preserves_or_overrides_file(clients):
+    client, _, _ = clients
+    for mode, minutes, expected in [("FILE", None, 45), ("TIMED", 25, 25), ("UNTIMED", None, None)]:
+        content = f"#DURATION: 45\n#SUBTITLE: {mode}\n" + GOOD
+        payload = {
+            "file": SimpleUploadedFile(f"{mode}.txt", content.encode("utf-8")),
+            "duration_mode": mode,
+        }
+        if minutes is not None:
+            payload["duration_minutes"] = minutes
+        response = client.post("/api/v1/imports/txt/", payload, format="multipart")
+        assert response.status_code == 201, response.data
+        draft = client.get(f"/api/v1/imports/{response.data['id']}/").data["draft"]
+        assert draft["metadata"]["duration_minutes"] == expected
+
+    invalid = client.post(
+        "/api/v1/imports/txt/",
+        {"file": SimpleUploadedFile("missing.txt", GOOD.encode("utf-8")), "duration_mode": "TIMED"},
+        format="multipart",
+    )
+    assert invalid.status_code == 400
+    assert ImportJob.objects.count() == 3
+
+
+@pytest.mark.django_db
 def test_txt_import_review_confirm_and_private_exam(clients):
     owner_client, other_client, owner = clients
     response = upload(owner_client)
