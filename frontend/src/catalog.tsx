@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties, type FormEvent } from 'react'
 import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth'
@@ -145,7 +145,8 @@ export function LibraryPage() {
         <p className="result-count">{exams.data.count} đề</p>
         {exams.data.count === 0 ? <div className="library-empty"><p>Chưa có đề phù hợp với bộ lọc.</p>
           {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className="exam-card-grid" aria-label="Danh sách đề">
-          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}>
+          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}
+            style={{ '--cover-accent': /^#[0-9a-fA-F]{6}$/.test(exam.color) ? exam.color : '#2547C4' } as CSSProperties}>
             <span className="exam-card-cover" aria-hidden="true">
               <svg viewBox="0 0 240 120" fill="none"><path d="M90 134c-17-68 25-121 93-128 33-3 65 8 84 30" stroke="currentColor" strokeWidth="1.5"/>
                 <path d="M113 132c-12-53 23-91 69-96 26-3 50 5 68 20" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 8"/>
