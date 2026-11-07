@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
-import { DeckMark } from './exam-art'
+import { AnswerSheetArt, DeckMark } from './exam-art'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type ExamSummary = {
@@ -148,10 +148,7 @@ export function LibraryPage() {
           {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}
             style={{ '--cover-accent': /^#[0-9a-fA-F]{6}$/.test(exam.color) ? exam.color : '#2547C4' } as CSSProperties}>
             <span className="exam-card-cover" aria-hidden="true">
-              <svg viewBox="0 0 240 120" fill="none"><path d="M90 134c-17-68 25-121 93-128 33-3 65 8 84 30" stroke="currentColor" strokeWidth="1.5"/>
-                <path d="M113 132c-12-53 23-91 69-96 26-3 50 5 68 20" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 8"/>
-                <circle cx="151" cy="80" r="8" stroke="currentColor" strokeWidth="2"/><circle cx="180" cy="76" r="8" fill="currentColor"/>
-                <circle cx="209" cy="72" r="8" stroke="currentColor" strokeWidth="2"/><path d="m78 53 39-7m-42 21 24-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              <AnswerSheetArt />
               <span>{exam.subject}</span>
             </span>
             <span className="exam-card-body">
@@ -280,10 +277,13 @@ export function ExamDetailPage() {
   if (exam.isPending) return <p role="status">Đang tải đề…</p>
   if (exam.isError) return <section className="paper detail-panel"><h1>Không thể mở đề</h1><p role="alert">{exam.error.message}</p><Link to="/library">Về thư viện</Link></section>
   return <section className="paper detail-panel">
-    <Link to="/library">← Thư viện</Link>
-    <p className="eyebrow">{levelNames[exam.data.level]} / {exam.data.subject}</p>
-    <h1>{exam.data.title} {exam.data.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</h1>
-    {exam.data.subtitle && <p className="lede">{exam.data.subtitle}</p>}
+    <header className="detail-cover" style={{ '--cover-accent': /^#[0-9a-fA-F]{6}$/.test(exam.data.color) ? exam.data.color : '#2547C4' } as CSSProperties}>
+      <AnswerSheetArt />
+      <Link to="/library">← Thư viện</Link>
+      <p className="eyebrow">{levelNames[exam.data.level]} / {exam.data.subject}</p>
+      <h1>{exam.data.title} {exam.data.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</h1>
+      {exam.data.subtitle && <p>{exam.data.subtitle}</p>}
+    </header>
     <dl className="exam-facts">
       <div><dt>Số câu</dt><dd>{exam.data.question_count}</dd></div>
       <div><dt>Thời gian</dt><dd>{exam.data.duration_minutes ? `${exam.data.duration_minutes} phút` : 'Không giới hạn'}</dd></div>
