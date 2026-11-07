@@ -251,7 +251,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .feedback p { margin-bottom: 0; }
 .flag-control { display: flex; align-items: center; gap: .4rem; margin-top: 1rem; }
 .flag-control input { width: 18px; height: 18px; accent-color: var(--accent); }
-.submit-button { color: var(--accent); background: var(--surface); margin-top: 1rem; }
+.submit-button { color: var(--accent); background: var(--surface); }
 .result-score { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 1rem; padding: 1.1rem 0; border-block: 1px solid var(--rule); }
 .result-score > div { display: grid; gap: .4rem; }
 .result-score .eyebrow { margin: 0; }
