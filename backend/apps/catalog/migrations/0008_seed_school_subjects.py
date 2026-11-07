@@ -4,8 +4,9 @@ Source: Ministry of Education and Training, consolidated general curriculum,
 section IV (primary, lower secondary and upper secondary study plans).
 """
 
-from django.db import migrations
+from typing import ClassVar
 
+from django.db import migrations
 
 SUBJECTS = (
     ("tieng-viet", "Tiếng Việt", ["TIEU_HOC"], False),
@@ -18,7 +19,12 @@ SUBJECTS = (
     ("am-nhac", "Âm nhạc", ["TIEU_HOC", "THCS", "THPT"], False),
     ("mi-thuat", "Mĩ thuật", ["TIEU_HOC", "THCS", "THPT"], False),
     ("hoat-dong-trai-nghiem", "Hoạt động trải nghiệm", ["TIEU_HOC"], False),
-    ("hoat-dong-trai-nghiem-huong-nghiep", "Hoạt động trải nghiệm, hướng nghiệp", ["THCS", "THPT"], False),
+    (
+        "hoat-dong-trai-nghiem-huong-nghiep",
+        "Hoạt động trải nghiệm, hướng nghiệp",
+        ["THCS", "THPT"],
+        False,
+    ),
     ("giao-duc-dia-phuong", "Nội dung giáo dục của địa phương", ["THCS", "THPT"], False),
     ("tieng-dan-toc-thieu-so", "Tiếng dân tộc thiểu số", ["TIEU_HOC", "THCS"], False),
     ("ngoai-ngu-1", "Ngoại ngữ 1", ["TIEU_HOC", "THCS", "THPT"], False),
@@ -52,5 +58,7 @@ def seed_school_subjects(apps, schema_editor):
 
 
 class Migration(migrations.Migration):
-    dependencies = [("catalog", "0007_self_service_taxonomy")]
-    operations = [migrations.RunPython(seed_school_subjects, migrations.RunPython.noop)]
+    dependencies: ClassVar[list[tuple[str, str]]] = [("catalog", "0007_self_service_taxonomy")]
+    operations: ClassVar[list[migrations.RunPython]] = [
+        migrations.RunPython(seed_school_subjects, migrations.RunPython.noop)
+    ]
