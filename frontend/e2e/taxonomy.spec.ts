@@ -18,7 +18,7 @@ test('users create new names themselves and reuse the same canonical records', a
 
   await register(`taxonomyA${suffix}`)
   await page.goto('/exams/new')
-  await page.getByLabel('Tên môn khác').fill(subject)
+  await page.getByLabel('Môn học').fill(subject)
   await page.getByRole('button', { name: 'Kiểm tra tên' }).first().click()
   await page.getByRole('button', { name: 'Tạo tên mới' }).click()
   await expect(page.getByText(`Tên chuẩn: ${subject}`)).toBeVisible()
@@ -45,7 +45,7 @@ test('users create new names themselves and reuse the same canonical records', a
 
   await page.goto('/exams/new')
   await page.getByLabel('Tên đề').fill(`Đề danh mục ${suffix}`)
-  await page.getByLabel('Tên môn khác').fill(subject.toUpperCase())
+  await page.getByLabel('Môn học').fill(subject.toUpperCase())
   await page.getByRole('button', { name: 'Kiểm tra tên' }).first().click()
   await expect(page.getByText(`Tên chuẩn: ${subject}`)).toBeVisible()
   for (const [group, label, name] of [['Trường', 'Thêm trường', school], ['Ngành', 'Thêm ngành', major]]) {
