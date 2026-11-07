@@ -38,6 +38,8 @@ export function TxtImportPage() {
   const { api } = useAuth()
   const navigate = useNavigate()
   const [file, setFile] = useState<File | null>(null)
+  const [durationMode, setDurationMode] = useState<'FILE' | 'TIMED' | 'UNTIMED'>('FILE')
+  const [durationMinutes, setDurationMinutes] = useState(30)
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
   const [showGuide, setShowGuide] = useState(false)
@@ -49,6 +51,8 @@ export function TxtImportPage() {
     try {
       const body = new FormData()
       body.append('file', file)
+      body.append('duration_mode', durationMode)
+      if (durationMode === 'TIMED') body.append('duration_minutes', String(durationMinutes))
       const job = await api<Job>('/imports/txt/', { method: 'POST', body })
       navigate(`/imports/${job.id}`)
     } catch (cause) {
@@ -61,8 +65,14 @@ export function TxtImportPage() {
     <h1>Thêm đề có sẵn</h1>
     <p className="lede">Chọn tệp TXT mã hóa UTF-8, tối đa 2 MB. Sau khi xác nhận tệp, bạn sẽ xem lại nội dung và thông tin đề trước khi lưu riêng tư.</p>
     <button className="text-button" type="button" onClick={() => setShowGuide(true)}>Xem hướng dẫn định dạng TXT</button>
-    <form onSubmit={submit}>
+    <form className="manual-form" onSubmit={submit}>
       <label>Chọn tệp .txt<input type="file" accept=".txt,text/plain" required onChange={(event) => setFile(event.target.files?.[0] || null)} /></label>
+      <div className="form-grid">
+        <label>Thời gian làm bài<select value={durationMode} onChange={(event) => setDurationMode(event.target.value as 'FILE' | 'TIMED' | 'UNTIMED')}>
+          <option value="FILE">Theo tệp (nếu có)</option><option value="TIMED">Có giờ</option><option value="UNTIMED">Không giới hạn</option>
+        </select></label>
+        {durationMode === 'TIMED' && <label>Số phút<input type="number" min={1} max={300} required value={durationMinutes} onChange={(event) => setDurationMinutes(Number(event.target.value))} /></label>}
+      </div>
       <ErrorText message={error} />
       <button className="button primary" type="submit" disabled={!file || pending}>{pending ? 'Đang phân tích…' : 'Xác nhận'}</button>
     </form>
