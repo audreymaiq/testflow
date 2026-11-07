@@ -10,7 +10,6 @@ test('TXT import is reviewed, confirmed once, and private to the owner', async (
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
   await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible({ timeout: 15000 })
-  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('link', { name: 'Thêm đề', exact: true }).click()
   await expect(page.getByRole('link', { name: /Tạo đề mới/ })).toBeVisible()
   await page.getByRole('link', { name: /Thêm đề có sẵn/ }).click()
