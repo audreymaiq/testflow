@@ -83,6 +83,7 @@ test('manual exam stays private across catalog and detail routes', async ({ page
 
   await page.goto('/library')
   await expect(page.getByText(`Đề riêng tư ${suffix}`)).toBeVisible()
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
@@ -103,6 +104,7 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await page.goto('/library')
   await expect(page.getByText(`Đề riêng tư ${suffix}`)).toHaveCount(0)
 
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
