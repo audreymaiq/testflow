@@ -68,6 +68,9 @@ test('manual exam stays private across catalog and detail routes', async ({ page
 
   await page.goto('/exams/new')
   await page.getByLabel('Tên đề').fill(`Đề riêng tư ${suffix}`)
+  await page.getByLabel('Thêm trường').fill(`Trường Mẫu ${suffix}`)
+  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Kiểm tra tên' }).click()
+  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Tạo tên mới' }).click()
   await page.getByLabel('Nội dung').fill('Hai cộng hai bằng bao nhiêu?')
   await page.getByLabel('Đáp án A', { exact: true }).fill('Ba')
   await page.getByLabel('Đáp án B', { exact: true }).fill('Bốn')
@@ -122,7 +125,7 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await expect(page.getByText(`Đề riêng tư ${suffix}`)).toHaveCount(0)
 })
 
-test('pagination appears only for another page and keeps page navigation usable', async ({ page }) => {
+test('pagination remains visible and keeps page navigation usable', async ({ page }) => {
   let hasNext = false
   const exam = {
     id: '00000000-0000-4000-8000-000000000001', title: 'Đề minh họa', subtitle: '',
@@ -142,11 +145,13 @@ test('pagination appears only for another page and keeps page navigation usable'
 
   await page.goto('/library')
   await expect(page.locator('.result-count')).toHaveText('1 đề')
-  await expect(page.getByRole('navigation', { name: 'Phân trang đề thi' })).toHaveCount(0)
+  const pagination = page.getByRole('navigation', { name: 'Phân trang đề thi' })
+  await expect(pagination).toBeVisible()
+  await expect(pagination.getByRole('button', { name: 'Trang trước' })).toBeDisabled()
+  await expect(pagination.getByRole('button', { name: 'Trang sau' })).toBeDisabled()
 
   hasNext = true
   await page.reload()
-  const pagination = page.getByRole('navigation', { name: 'Phân trang đề thi' })
   await expect(pagination).toBeVisible()
   await pagination.getByRole('button', { name: 'Trang sau' }).click()
   await expect(page).toHaveURL(/page=2/)
