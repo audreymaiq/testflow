@@ -154,6 +154,10 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 :root[data-mode="dark"] .filter-fields input[type=checkbox] { color-scheme: dark; }
 .manual-form label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 600; }
 .manual-form input, .manual-form select, .manual-form textarea { width: 100%; min-height: 44px; padding: .65rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-alt); color: var(--text); }
+.manual-form .check-label, .manual-form .multi-answer-key label { display: inline-flex; align-items: center; gap: .5rem; font-weight: 500; }
+.manual-form .check-label input, .manual-form .multi-answer-key input { width: 18px; min-height: 18px; height: 18px; padding: 0; accent-color: var(--accent); }
+.multi-answer-key { display: flex; flex-wrap: wrap; gap: .75rem 1.25rem; border: 1px solid var(--border); border-radius: 5px; padding: .8rem 1rem 1rem; }
+.multi-answer-key legend { padding: 0 .35rem; font-size: .9rem; font-weight: 600; }
 .required-mark { color: var(--error); font-weight: 700; }
 .check-label input { accent-color: var(--accent); width: 18px; height: 18px; }
 .library-results { min-width: 0; padding: 0; background: transparent; border: 0; }
