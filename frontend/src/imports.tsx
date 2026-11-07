@@ -168,6 +168,10 @@ export function ImportReviewPage() {
   async function saveMetadata(event: FormEvent) {
     event.preventDefault()
     if (!job?.draft) return
+    if (!String(metadata.title || '').trim() || !String(metadata.subject || '').trim()) {
+      setError('Điền tên đề và môn học hợp lệ.')
+      return
+    }
     await replace({ ...job.draft, metadata })
   }
 
@@ -253,7 +257,7 @@ export function ImportReviewPage() {
           <button type="button" className="button secondary" onClick={() => { setEditor(JSON.stringify(job.draft, null, 2)); setEditing(!editing) }}>{editing ? 'Đóng trình sửa' : 'Sửa bản nháp JSON'}</button>
           {editing && <div><label>Bản nháp JSON<textarea className="draft-editor" value={editor} onChange={(event) => setEditor(event.target.value)} /></label><button type="button" className="button secondary" disabled={pending} onClick={save}>Lưu bản nháp</button></div>}
           <label>Lý do bỏ bản nháp (không bắt buộc)<input maxLength={500} value={discardReason} onChange={(event) => setDiscardReason(event.target.value)} /></label>
-          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !metadata.title || !metadata.subject || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
+          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !String(metadata.title || '').trim() || !String(metadata.subject || '').trim() || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
         </div>
       </>}
       {job.status === 'REJECTED' && job.discard_reason && <p>Lý do bỏ: {job.discard_reason}</p>}
