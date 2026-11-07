@@ -5,13 +5,13 @@ from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Exam, Subject
+from apps.catalog.models import Exam, School, Subject
 from apps.common.errors import Conflict
 from apps.imports.models import ImportJob, ReviewEdit
 
 GOOD = (
     "#TITLE: Bộ câu hỏi mẫu\n#SUBJECT: toan\n#LEVEL: THPT\n#GRADE: 12\n"
-    "#TYPE: ON_TAP\n[CH1] Đại số\n2 + 2 = ?\nA. 3\nB. 4\n=>B\n"
+    "#TYPE: ON_TAP\n#TRUONG: Trường Mẫu\n[CH1] Đại số\n2 + 2 = ?\nA. 3\nB. 4\n=>B\n"
 )
 
 
@@ -19,6 +19,7 @@ GOOD = (
 def clients(db, settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
     Subject.objects.update_or_create(code="toan", defaults={"name": "Toán", "levels": ["THPT"]})
+    School.objects.get_or_create(name="Trường Mẫu")
     owner = get_user_model().objects.create_user(
         "txt_owner", email="txt_owner@example.com", password="HardToGuess#2026"
     )
@@ -76,7 +77,7 @@ def test_errors_need_review_and_edit_is_audited(clients):
     assert response.status_code == 201
     job_id = response.data["id"]
     assert response.data["report"]["skipped"] == 1
-    assert response.data["report"]["issues"][0]["line"] == 7
+    assert response.data["report"]["issues"][0]["line"] == 8
     assert client.post(f"/api/v1/imports/{job_id}/confirm/").status_code == 400
     assert Exam.objects.count() == 0
     original = client.get(f"/api/v1/imports/{job_id}/").data["draft"]
