@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from './auth'
-import answerOrbit from './assets/answer-orbit.svg'
+import answerStage from './assets/answer-stage.svg'
 
 type HomeExam = {
   id: string; title: string; subtitle: string; icon: string; color: string; subject: string
@@ -74,7 +74,7 @@ export function Home() {
           {user ? 'Xem tiến độ học tập' : 'Tạo tài khoản để lưu tiến độ'} <span aria-hidden="true">↗</span>
         </Link>
       </div>
-      <div className="home-visual" aria-hidden="true"><img src={answerOrbit} alt="" /></div>
+      <div className="home-visual" aria-hidden="true"><img src={answerStage} alt="" /></div>
     </section>
     <aside className={`home-study-panel ${user ? 'is-personal' : 'is-intro'}`} aria-label={user ? 'Tiến độ học tập' : 'Cách bắt đầu'}>
         <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'CÁCH HỌC'}</p>
