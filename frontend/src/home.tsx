@@ -85,8 +85,7 @@ export function Home() {
     </aside>}
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="section-heading">
-        <div><p className="eyebrow">THƯ VIỆN HỌC TẬP</p><h2 id="home-library-title">Bộ đề</h2>
-          <p className="section-lede">Chọn một đề để xem cấu trúc, nội dung và cách luyện phù hợp.</p></div>
+        <div><p className="eyebrow">THƯ VIỆN HỌC TẬP</p><h2 id="home-library-title">Bộ đề</h2></div>
         <Link to="/library">Xem toàn bộ thư viện</Link>
       </div>
       {exams.isPending && <div role="status" className="home-loading">Đang tải bộ đề…</div>}
