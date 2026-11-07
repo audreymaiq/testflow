@@ -12,6 +12,7 @@ def visible_history(user):
     return (
         Session.objects.filter(user_id=user.pk, exam_id__in=visible_exams(user).values("id"))
         .select_related("exam")
+        .prefetch_related("answers")
         .order_by("-started_at", "-id")
     )
 
