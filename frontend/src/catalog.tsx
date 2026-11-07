@@ -5,6 +5,7 @@ import { useAuth } from './auth'
 import { Modal } from './shared'
 import { AnswerSheetArt, DeckMark } from './exam-art'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
+import heroDashboard from './assets/hero-dashboard.webp'
 
 type ExamSummary = {
   id: string; title: string; subtitle: string; level: string; grade: number | null
