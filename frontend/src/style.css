@@ -431,7 +431,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5rem; }
 .home-page { display: grid; grid-template-columns: minmax(0, 1fr); gap: 29px; min-width: 0; color: #091a3d; }
 .home-page > * { min-width: 0; }
-.home-hero { position: relative; display: flex; align-items: center; min-height: 340px; padding: 45px 5%; overflow: hidden; isolation: isolate; border-radius: 21px; background: #102f5a; box-shadow: 0 7px 17px #0a294018; }
+.home-hero { position: relative; display: flex; align-items: center; min-height: 340px; margin-inline: -14px; padding: 45px 5%; overflow: hidden; isolation: isolate; border-radius: 21px; background: #102f5a; box-shadow: 0 7px 17px #0a294018; }
 .home-hero-image { position: absolute; z-index: -2; inset: 0; display: block; width: 100%; height: 100%; object-fit: cover; object-position: center; }
 .home-hero::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #05245252, #05245215 57%, transparent 76%); pointer-events: none; }
 .home-hero-content { width: min(740px, 65%); color: white; }
@@ -442,7 +442,7 @@ main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5
 .home-search-box svg { width: 26px; height: 26px; margin-left: 17px; color: #0b1d43; }
 .home-search input { flex: 1; min-height: 47px; padding: 0 .35rem; color: #0a1e44; font-size: 1.05rem; }
 .home-search input::placeholder { color: #1b3154; opacity: 1; }
-.home-search-box button { flex: none; min-width: 120px; min-height: 48px; padding: 0 1.25rem; border: 0; border-radius: 13px; background: #0752c4; color: #fff; font-size: 1.12rem; font-weight: 700; box-shadow: 0 3px 8px #003a99aa; }
+.home-search-box button { flex: none; min-width: 120px; min-height: 48px; padding: 0 1.25rem; border: 0; border-radius: 13px; background: #0752c4; color: #fff; font-size: 1.12rem; font-weight: 700; box-shadow: none; }
 .home-search-box button:hover { background: #003f9e; }
 .home-resume { display: grid; grid-template-columns: 315px minmax(0, 1fr) auto; align-items: center; gap: 0; min-height: 112px; padding: 21px 24px; border-radius: 20px; background: #f1f3f7; }
 .home-resume-intro { display: flex; align-items: center; gap: 22px; min-width: 0; padding-right: 20px; }
