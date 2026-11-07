@@ -67,9 +67,8 @@ export function Home() {
       </div>
       <div className="home-visual" aria-hidden="true"><img src={answerStage} alt="" /></div>
     </section>
-    <aside className={`home-study-panel ${user ? 'is-personal' : 'is-intro'}`} aria-label={user ? 'Tiến độ học tập' : 'Cách bắt đầu'}>
-        <p className="eyebrow">{user ? 'PHIẾU HỌC TẬP' : 'CÁCH HỌC'}</p>
-        {user ? <>
+    {user && <aside className="home-study-panel is-personal" aria-label="Tiến độ học tập">
+        <p className="eyebrow">PHIẾU HỌC TẬP</p>
           <p className="home-study-greeting">Chào {user.display_name || user.username},</p>
           {stats.data ? <>
             <p className="home-study-total"><strong>{stats.data.completed_sessions}</strong><span>lượt đã hoàn thành</span></p>
@@ -83,15 +82,7 @@ export function Home() {
             <strong>{latest.exam_title}</strong>
             <span>{latest.status === 'IN_PROGRESS' ? 'Tiếp tục làm bài' : 'Xem kết quả'} <span aria-hidden="true">↗</span></span>
           </Link>}
-        </> : <>
-          <p className="home-study-intro">Hai cách học trên cùng một bộ đề có đáp án.</p>
-          <dl className="home-study-modes">
-            <div><dt>01 / THI CÓ GIỜ</dt><dd>Làm trọn bài; xem đáp án sau khi nộp.</dd></div>
-            <div><dt>02 / ÔN TẬP</dt><dd>Nhận phản hồi theo từng câu để hiểu phần chưa chắc.</dd></div>
-          </dl>
-          <Link to="/library" className="home-study-link">Mở thư viện <span aria-hidden="true">↗</span></Link>
-        </>}
-    </aside>
+    </aside>}
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
       <div className="section-heading">
         <div><p className="eyebrow">THƯ VIỆN HỌC TẬP</p><h2 id="home-library-title">Bộ đề</h2>
