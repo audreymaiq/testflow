@@ -15,7 +15,7 @@ The user interface is in Vietnamese.
 - Scores, per-question feedback, and a history of past attempts
 - Publishing: owners request to make an exam public, and reviewers approve or reject the request
 - An admin page with import activity and pending publish requests
-- Light, dark, and system display modes with several color themes
+- Light and dark display modes with one consistent TestFlow color identity
 
 ## Tech stack
 
