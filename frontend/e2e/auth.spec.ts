@@ -49,15 +49,15 @@ test('registration, logout and login use the running API and PostgreSQL', async 
   await expect(page.getByRole('heading', { name: 'Xin chào, Người học thử nghiệm' })).toBeVisible()
 })
 
-test('theme choices persist across a reload', async ({ page }) => {
+test('light and dark mode choices persist across a reload', async ({ page }) => {
+  await page.addInitScript(() => localStorage.setItem('tf_mode', 'light'))
   await page.goto('/')
-  await page.getByLabel('Giao diện').selectOption('sakura')
-  await page.getByLabel('Chế độ').selectOption('dark')
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sakura')
+  await page.getByRole('button', { name: 'Chuyển sang chế độ tối' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
   await page.reload()
-  await expect(page.locator('html')).toHaveAttribute('data-theme', 'sakura')
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
+  await page.getByRole('button', { name: 'Chuyển sang chế độ sáng' }).click()
+  await expect(page.locator('html')).toHaveAttribute('data-mode', 'light')
 })
 
 test('password reset email link changes credentials in the running app', async ({ page }) => {
