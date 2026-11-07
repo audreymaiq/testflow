@@ -113,7 +113,9 @@ class PageSchema(PageContractModel):
     @model_validator(mode="after")
     def validate_local_ids(self):
         figure_ids = [figure.id for figure in self.figures]
-        passage_ids = [block.id for block in self.blocks if isinstance(block, PassageBlock)]
+        passage_ids = [
+            block.id for block in self.blocks if isinstance(block, PassageBlock)
+        ]
         if len(figure_ids) != len(set(figure_ids)):
             raise ValueError("figure ids must be unique within a page")
         if len(passage_ids) != len(set(passage_ids)):
