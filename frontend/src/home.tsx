@@ -59,10 +59,10 @@ export function Home() {
   })
   const recent = useQuery({
     queryKey: ['home-recent-session', user?.id],
-    queryFn: () => api<Page<RecentSession>>('/practice/sessions/history/'),
+    queryFn: () => api<Page<RecentSession>>('/practice/sessions/history/?status=IN_PROGRESS'),
     enabled: !loading && !!user,
   })
-  const inProgress = recent.data?.results.filter((session) => session.status === 'IN_PROGRESS') || []
+  const inProgress = recent.data?.results || []
   const featured = featuredSubjects.map((name) => subjects.data?.find((item) => item.name === name || (name === 'Vật lý' && item.name === 'Vật lí'))).filter((item): item is Subject => !!item)
 
   function submit(event: FormEvent) {
@@ -89,7 +89,7 @@ export function Home() {
       </div>
     </section>
     <section className="home-resume" aria-labelledby="home-resume-title">
-      <div className="home-resume-intro"><Icon kind="clock" size={38} /><div><h2 id="home-resume-title">Tiếp tục học tập</h2><p>{user ? recent.isPending ? 'Đang tải bài học…' : `${inProgress.length} bài đang làm dở` : 'Đăng nhập để lưu tiến độ'}</p></div></div>
+      <div className="home-resume-intro"><Icon kind="clock" size={38} /><div><h2 id="home-resume-title">Tiếp tục học tập</h2><p>{user ? recent.isPending ? 'Đang tải bài học…' : `${recent.data?.count || 0} bài đang làm dở` : 'Đăng nhập để lưu tiến độ'}</p></div></div>
       {user && inProgress.length > 0 ? <div className="home-resume-list">{inProgress.slice(0, 2).map((session) => {
         const progress = session.total_questions ? Math.min(100, Math.round(session.answered_questions / session.total_questions * 100)) : 0
         return <Link className="home-resume-item" key={session.id} to={`/practice/${session.id}`} aria-label={`Tiếp tục ${session.exam_title}, ${progress}% hoàn thành`}>
