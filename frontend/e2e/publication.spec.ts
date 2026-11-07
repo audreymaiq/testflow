@@ -37,7 +37,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   await page.getByLabel('Đáp án B', { exact: true }).fill('Hai')
   await page.getByLabel('Đáp án C', { exact: true }).fill('Ba')
   await page.getByLabel('Đáp án D', { exact: true }).fill('Bốn')
-  await page.getByLabel('Đáp án đúng').selectOption('B')
+  await page.getByLabel('Đáp án đúng', { exact: true }).selectOption('B')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
   await expect(page.getByRole('heading', { name: `Đề duyệt ${suffix}` })).toBeVisible()
   const examUrl = page.url()
