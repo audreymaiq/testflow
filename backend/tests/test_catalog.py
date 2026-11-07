@@ -55,6 +55,7 @@ def draft_data():
             "level": "THPT",
             "grade": 12,
             "subject": "toan",
+            "schools": ["Trường Mẫu"],
             "exam_type": "KIEM_TRA",
             "scoring_preset": "UNIFORM_10",
             "max_score": "10.00",
@@ -130,6 +131,17 @@ def test_invalid_draft_never_creates_partial_exam(users):
     invalid["sections"][0]["questions"][0]["text"] = "<script>alert(1)</script>"
     with pytest.raises(ContractValidationError):
         ExamDraft.model_validate(invalid)
+    assert Exam.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_school_is_required_for_new_exam(users):
+    owner, _ = users
+    draft = draft_data()
+    draft["metadata"]["schools"] = []
+    with pytest.raises(ValidationFailed) as error:
+        create_exam(ExamDraft.model_validate(draft), owner=owner)
+    assert error.value.code == "SCHOOL_REQUIRED"
     assert Exam.objects.count() == 0
 
 
