@@ -223,6 +223,11 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .review-answer-row > label:first-child { min-width: 0; }
 .manual-form .review-answer-key { display: flex; align-items: center; gap: .45rem; min-height: 44px; white-space: nowrap; cursor: pointer; }
 .manual-form .review-answer-key input { flex: none; width: 19px; height: 19px; min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); }
+.review-final-actions { display: grid; gap: 1.1rem; margin-top: 1.5rem; }
+.review-final-actions > .button, .review-final-actions > div > .button { justify-self: start; }
+.review-final-actions label { display: grid; gap: .4rem; font-size: .9rem; }
+.review-final-actions input, .review-final-actions textarea { width: 100%; min-width: 0; min-height: 44px; padding: .65rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-alt); color: var(--text); }
+.review-final-actions .form-actions { display: flex; flex-wrap: wrap; gap: .7rem; padding-top: .4rem; }
 .question-editor { display: grid; gap: .9rem; border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; }
 .question-editor legend { font-family: 'IBM Plex Mono', monospace; padding: 0 .4rem; }
 .question-editor textarea { min-height: 100px; resize: vertical; }
