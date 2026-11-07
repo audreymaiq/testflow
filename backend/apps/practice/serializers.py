@@ -71,10 +71,10 @@ class HistorySerializer(serializers.Serializer):
     total_questions = serializers.SerializerMethodField()
     answered_questions = serializers.SerializerMethodField()
 
-    def get_total_questions(self, session):
+    def get_total_questions(self, session) -> int:
         return sum(len(question_ids) for question_ids in session.question_order.values())
 
-    def get_answered_questions(self, session):
+    def get_answered_questions(self, session) -> int:
         return sum(
             any(
                 isinstance(value, bool)
