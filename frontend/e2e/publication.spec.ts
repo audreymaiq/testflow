@@ -76,7 +76,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Đăng nhập', exact: true }).click()
-  await expect(page.getByRole('heading', { name: 'Nhập bộ câu hỏi TXT' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thêm đề', exact: true })).toBeVisible()
   await logout(page)
 
   await page.goto(examUrl)
