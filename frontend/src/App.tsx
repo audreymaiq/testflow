@@ -8,7 +8,7 @@ import { ModeControl } from './theme'
 import { ExamDetailPage, LibraryPage, ManualExamPage } from './catalog'
 import { HistoryPage, PracticePage, ResultPage } from './practice'
 import { PublicationDetailPage, PublicationQueuePage } from './publication'
-import { ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
+import { AddExamPage, ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
 import { OperationsPage } from './ops'
 import { Home } from './home'
 
@@ -45,7 +45,7 @@ function Shell({ children }: { children: ReactNode }) {
       </Link>
       <nav aria-label="Điều hướng chính">
         <NavLink to="/library">Thư viện</NavLink>
-        <NavLink to="/imports/new">Nhập TXT</NavLink>
+        <NavLink to="/add-exam">Thêm đề</NavLink>
         {user ? <>
           <NavLink to="/history">Lịch sử</NavLink>
           <NavLink to="/account">Tài khoản</NavLink>
@@ -253,6 +253,7 @@ export default function App() {
     <Route path="/reset-password/:uid/:token" element={<PasswordResetConfirmPage />} />
     <Route path="/account" element={<Protected><Account /></Protected>} />
     <Route path="/library" element={<LibraryPage />} />
+    <Route path="/add-exam" element={<Protected><AddExamPage /></Protected>} />
     <Route path="/exams/new" element={<Protected><ManualExamPage /></Protected>} />
     <Route path="/imports" element={<Protected><ImportsPage /></Protected>} />
     <Route path="/imports/new" element={<Protected><TxtImportPage /></Protected>} />
