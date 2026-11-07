@@ -100,11 +100,9 @@ export function LibraryPage() {
     <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
       <div className="filter-heading">
         <div className="filter-heading-copy">
-          <p className="eyebrow">THƯ VIỆN / TÌM ĐỀ</p>
           <h2>Bộ lọc</h2>
-          <p className="filter-heading-count">{activeFilters.length ? `${activeFilters.length} tiêu chí đang chọn` : 'Tìm đề phù hợp với bạn'}</p>
+          {activeFilters.length > 0 && <p className="filter-heading-count">{activeFilters.length} tiêu chí đang chọn</p>}
         </div>
-        <AnswerSheetArt />
         <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
           {filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
         </button>
