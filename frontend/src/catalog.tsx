@@ -98,7 +98,7 @@ export function LibraryPage() {
       <img src={heroDashboard} alt="" />
       <div className="library-hero-content">
         <h1 id="library-hero-title">Khám phá kho đề phong phú</h1>
-        <p>Hàng ngàn đề thi, đề kiểm tra, đề ôn tập từ cấp 1 đến đại học, có cộng đồng chia sẻ.</p>
+        <p>Đề thi, đề kiểm tra và đề ôn tập từ cấp 1 đến đại học do cộng đồng chia sẻ.</p>
         <form className="library-hero-search" role="search" onSubmit={(event: FormEvent) => { event.preventDefault(); updateFilter('q', heroQuery) }}>
           <label className="visually-hidden" htmlFor="library-hero-query">Tìm đề thi</label>
           <div className="home-search-box"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" strokeWidth="2" /><path d="m16 16 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg><input id="library-hero-query" type="search" value={heroQuery} onChange={(event) => setHeroQuery(event.target.value)} placeholder="Tìm đề thi, mã đề, chủ đề, trường, ngành..." /><button type="submit">Tìm đề</button></div>
