@@ -39,7 +39,7 @@ function Shell({ children }: { children: ReactNode }) {
       <div className="topbar-inner">
       <Link to="/" className="brand" aria-label="TestFlow, trang chủ">
         <svg className="brand-symbol" viewBox="0 0 48 48" width="34" height="34" fill="none" aria-hidden="true">
-          <path d="M4 6h40v8H28v8h13v7H28v13h-8V14H4V6Z" fill="currentColor" />
+          <path d="M4 7h40v8H29v9h12v7H29v11h-8V15H4V7Z" stroke="currentColor" strokeWidth="2.8" strokeLinejoin="miter" />
         </svg>
         <span className="brand-wordmark"><span>Test</span><span>Flow</span></span>
       </Link>
