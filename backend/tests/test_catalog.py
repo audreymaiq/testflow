@@ -17,6 +17,23 @@ from apps.catalog.services import create_exam, export_exam
 from apps.common.errors import ValidationFailed
 
 
+@pytest.mark.django_db
+def test_general_curriculum_subjects_are_available_for_entry():
+    expected = {
+        "tieng-viet", "dao-duc", "tu-nhien-va-xa-hoi", "khoa-hoc",
+        "lich-su-va-dia-li", "tin-hoc-va-cong-nghe", "giao-duc-the-chat",
+        "am-nhac", "mi-thuat", "hoat-dong-trai-nghiem",
+        "giao-duc-cong-dan", "khoa-hoc-tu-nhien", "cong-nghe",
+        "lich-su", "dia-li", "giao-duc-kinh-te-va-phap-luat",
+        "sinh-hoc", "giao-duc-quoc-phong-va-an-ninh",
+    }
+    response = APIClient().get(reverse("subjects"))
+    assert response.status_code == 200
+    assert expected <= {item["code"] for item in response.data}
+    assert Subject.objects.get(code="khoa-hoc-tu-nhien").levels == ["THCS"]
+    assert Subject.objects.get(code="giao-duc-kinh-te-va-phap-luat").levels == ["THPT"]
+
+
 def draft_data():
     return {
         "schema_version": 1,
