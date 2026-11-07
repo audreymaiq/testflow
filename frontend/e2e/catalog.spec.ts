@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-test('school and major facet chips filter a private exam together', async ({ page }) => {
+test('school and major selectors filter a private exam together', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const owner = `facets${suffix}`
   const title = `Đề lọc ${suffix}`
@@ -31,25 +31,25 @@ test('school and major facet chips filter a private exam together', async ({ pag
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
   await page.goto('/library')
-  const schoolGroup = page.getByRole('group', { name: 'Trường' })
-  const majorGroup = page.getByRole('group', { name: 'Ngành' })
-  await expect(schoolGroup.getByRole('button', { name: school })).toContainText('(1)')
-  await expect(majorGroup.getByRole('button', { name: major })).toContainText('(1)')
-  await schoolGroup.getByRole('button', { name: school }).click()
-  await majorGroup.getByRole('button', { name: major }).click()
-  await expect(schoolGroup.getByRole('button', { name: school })).toHaveAttribute('aria-pressed', 'true')
-  await expect(majorGroup.getByRole('button', { name: major })).toHaveAttribute('aria-pressed', 'true')
+  const schoolSelect = page.locator('.library-filters').getByLabel('Trường')
+  const majorSelect = page.locator('.library-filters').getByLabel('Ngành')
+  await expect(schoolSelect.locator('option', { hasText: school })).toContainText('(1)')
+  await expect(majorSelect.locator('option', { hasText: major })).toContainText('(1)')
+  await schoolSelect.selectOption(school)
+  await majorSelect.selectOption(major)
+  await expect(schoolSelect).toHaveValue(school)
+  await expect(majorSelect).toHaveValue(major)
   await expect(page.getByText(title)).toBeVisible()
   expect(new URL(page.url()).searchParams.get('school')).toBe(school)
   expect(new URL(page.url()).searchParams.get('major')).toBe(major)
   await page.reload()
-  await expect(schoolGroup.getByRole('button', { name: school })).toHaveAttribute('aria-pressed', 'true')
-  await expect(majorGroup.getByRole('button', { name: major })).toHaveAttribute('aria-pressed', 'true')
+  await expect(schoolSelect).toHaveValue(school)
+  await expect(majorSelect).toHaveValue(major)
   await expect(page.getByText(title)).toBeVisible()
   await page.setViewportSize({ width: 360, height: 800 })
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(360)
-  await schoolGroup.getByRole('button', { name: 'Tất cả' }).click()
-  await expect(majorGroup.getByRole('button', { name: major })).toHaveAttribute('aria-pressed', 'true')
+  await schoolSelect.selectOption('')
+  await expect(majorSelect).toHaveValue(major)
   await expect(page.getByText(title)).toBeVisible()
 })
 
@@ -136,7 +136,7 @@ test('pagination remains visible and keeps page navigation usable', async ({ pag
   await page.route('**/api/v1/exams/?*', async (route) => {
     const current = new URL(route.request().url()).searchParams.get('page') === '2'
     await route.fulfill({ json: {
-      count: hasNext ? 2 : 1,
+      count: hasNext ? 12 : 1,
       next: hasNext && !current ? '?page=2' : null,
       previous: current ? '?page=1' : null,
       results: [exam],
@@ -144,7 +144,7 @@ test('pagination remains visible and keeps page navigation usable', async ({ pag
   })
 
   await page.goto('/library')
-  await expect(page.locator('.result-count')).toHaveText('1 đề')
+  await expect(page.locator('.result-count')).toHaveText('Tìm thấy 1 đề')
   const pagination = page.getByRole('navigation', { name: 'Phân trang đề thi' })
   await expect(pagination).toBeVisible()
   await expect(pagination.getByRole('button', { name: 'Trang trước' })).toBeDisabled()
@@ -155,7 +155,7 @@ test('pagination remains visible and keeps page navigation usable', async ({ pag
   await expect(pagination).toBeVisible()
   await pagination.getByRole('button', { name: 'Trang sau' }).click()
   await expect(page).toHaveURL(/page=2/)
-  await expect(pagination.locator('[aria-current="page"]')).toHaveText('Trang 2')
+  await expect(pagination.locator('[aria-current="page"]')).toHaveText('2')
   await pagination.getByRole('button', { name: 'Trang trước' }).click()
   await expect(page).not.toHaveURL(/page=2/)
   await page.setViewportSize({ width: 320, height: 700 })
