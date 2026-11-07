@@ -9,12 +9,10 @@
     <script>
       (() => {
         const root = document.documentElement;
-        const theme = localStorage.getItem('tf_theme') || 'ocean';
-        const preference = localStorage.getItem('tf_mode') || 'system';
-        root.dataset.theme = ['ocean', 'amber', 'sakura', 'holo'].includes(theme) ? theme : 'ocean';
-        root.dataset.mode = preference === 'system'
-          ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light')
-          : preference;
+        const preference = localStorage.getItem('tf_mode');
+        root.dataset.mode = preference === 'light' || preference === 'dark'
+          ? preference
+          : (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
       })();
     </script>
   </head>
