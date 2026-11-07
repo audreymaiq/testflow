@@ -98,36 +98,49 @@ export function LibraryPage() {
 
   return <section className="library-layout">
     <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
-      <div className="filter-heading"><p className="eyebrow">LỌC ĐỀ{activeFilters.length > 0 && ` · ${activeFilters.length} đang dùng`}</p>
-        <div className="filter-heading-actions">
-          {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}
-          <button type="button" className="filter-toggle" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
-            {filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
-          </button>
-        </div></div>
-      <label>Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
-      <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
-        <option value="">Tất cả</option>
-        {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.level_counts[code] || 0})</option>)}
-      </select></label>
-      <label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}>
-        <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item} ({facets.data?.grade_counts[item] || 0})</option>)}
-      </select></label>
-      <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}>
-        <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.subject_counts[code] || 0})</option>)}
-      </select></label>
-      <FilterChips label="Trường" values={facets.data?.schools || []} counts={facets.data?.school_counts || {}} selected={school}
-        onChange={(value) => updateFilter('school', value)} />
-      <FilterChips label="Ngành" values={facets.data?.majors || []} counts={facets.data?.major_counts || {}} selected={major}
-        onChange={(value) => updateFilter('major', value)} />
-      <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label>
-      <label>Loại đề<select value={examType} onChange={(event) => updateFilter('exam_type', event.target.value)}>
-        <option value="">Tất cả</option>
-        {Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-      </select></label>
-      <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>
-      {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}
-      {facets.isError && <p role="alert">Không tải được các lựa chọn lọc. <button type="button" onClick={() => facets.refetch()}>Thử lại</button></p>}
+      <div className="filter-heading">
+        <div className="filter-heading-copy">
+          <p className="eyebrow">THƯ VIỆN / TÌM ĐỀ</p>
+          <h2>Bộ lọc</h2>
+          <p className="filter-heading-count">{activeFilters.length ? `${activeFilters.length} tiêu chí đang chọn` : 'Tìm đề phù hợp với bạn'}</p>
+        </div>
+        <AnswerSheetArt />
+        <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
+          {filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
+        </button>
+      </div>
+      <div className="filter-fields" id="library-filter-fields">
+        <label className="filter-search">Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
+        {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}
+        <div className="filter-section">
+          <p className="filter-section-title">CẤP HỌC & MÔN</p>
+          <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
+            <option value="">Tất cả</option>
+            {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.level_counts[code] || 0})</option>)}
+          </select></label>
+          <label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}>
+            <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item} ({facets.data?.grade_counts[item] || 0})</option>)}
+          </select></label>
+          <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}>
+            <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.subject_counts[code] || 0})</option>)}
+          </select></label>
+        </div>
+        <div className="filter-section">
+          <p className="filter-section-title">CHI TIẾT ĐỀ</p>
+          <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label>
+          <label>Loại đề<select value={examType} onChange={(event) => updateFilter('exam_type', event.target.value)}>
+            <option value="">Tất cả</option>
+            {Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
+          </select></label>
+          <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>
+          {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}
+        </div>
+        {((facets.data?.schools.length || 0) > 0 || school) && <FilterChips label="Trường" values={facets.data?.schools || []} counts={facets.data?.school_counts || {}} selected={school}
+          onChange={(value) => updateFilter('school', value)} />}
+        {((facets.data?.majors.length || 0) > 0 || major) && <FilterChips label="Ngành" values={facets.data?.majors || []} counts={facets.data?.major_counts || {}} selected={major}
+          onChange={(value) => updateFilter('major', value)} />}
+        {facets.isError && <p role="alert">Không tải được các lựa chọn lọc. <button type="button" onClick={() => facets.refetch()}>Thử lại</button></p>}
+      </div>
     </aside>
     <div className="library-results paper">
       <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
