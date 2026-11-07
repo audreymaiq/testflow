@@ -23,6 +23,17 @@ function ErrorText({ message }: { message: string }) {
   return message ? <p role="alert" className="form-error">{message}</p> : null
 }
 
+export function AddExamPage() {
+  return <section className="paper manual-panel add-exam-panel">
+    <p className="eyebrow">THƯ VIỆN / THÊM ĐỀ</p>
+    <h1>Thêm đề</h1>
+    <div className="add-exam-options">
+      <Link to="/exams/new"><span className="add-exam-option-index">01</span><strong>Tạo đề mới</strong><span>Viết câu hỏi và đáp án trực tiếp.</span><span aria-hidden="true">↗</span></Link>
+      <Link to="/imports/new"><span className="add-exam-option-index">02</span><strong>Thêm đề có sẵn</strong><span>Nhập tệp TXT, xem lại câu hỏi rồi lưu đề.</span><span aria-hidden="true">↗</span></Link>
+    </div>
+  </section>
+}
+
 export function TxtImportPage() {
   const { api } = useAuth()
   const navigate = useNavigate()
@@ -46,14 +57,14 @@ export function TxtImportPage() {
   }
 
   return <section className="paper manual-panel">
-    <p className="eyebrow">THƯ VIỆN / NHẬP TXT</p>
-    <h1>Nhập bộ câu hỏi TXT</h1>
-    <p className="lede">Hỗ trợ định dạng Quiz Rush v1 và TXT v2. Tệp tối đa 2 MB, mã hóa UTF-8. Đề chỉ hiển thị cho bạn sau khi xác nhận.</p>
+    <p className="eyebrow">THƯ VIỆN / THÊM ĐỀ CÓ SẴN</p>
+    <h1>Thêm đề có sẵn</h1>
+    <p className="lede">Chọn tệp TXT mã hóa UTF-8, tối đa 2 MB. Sau khi xác nhận tệp, bạn sẽ xem lại nội dung và thông tin đề trước khi lưu riêng tư.</p>
     <button className="text-button" type="button" onClick={() => setShowGuide(true)}>Xem hướng dẫn định dạng TXT</button>
     <form onSubmit={submit}>
       <label>Chọn tệp .txt<input type="file" accept=".txt,text/plain" required onChange={(event) => setFile(event.target.files?.[0] || null)} /></label>
       <ErrorText message={error} />
-      <button className="button primary" type="submit" disabled={!file || pending}>{pending ? 'Đang phân tích…' : 'Phân tích tệp'}</button>
+      <button className="button primary" type="submit" disabled={!file || pending}>{pending ? 'Đang phân tích…' : 'Xác nhận'}</button>
     </form>
     <p><Link to="/imports">Xem các tệp đã nhập</Link></p>
     {showGuide && <Modal title="Định dạng tệp TXT" onClose={() => setShowGuide(false)}>
@@ -85,7 +96,7 @@ export function ImportsPage() {
   }, [api])
   return <section className="paper library-panel">
     <p className="eyebrow">THƯ VIỆN / TỆP ĐÃ NHẬP</p><h1>Các lần nhập đề</h1>
-    <Link className="button primary" to="/imports/new">Nhập TXT</Link>
+    <Link className="button primary" to="/add-exam">Thêm đề</Link>
     <ErrorText message={error} />
     {jobs.length === 0 && !error && <p>Chưa có tệp nào.</p>}
     <ul>{jobs.map((job) => <li key={job.id}><Link to={`/imports/${job.id}`}>{job.original_filename}</Link> — {job.status} — {job.draft_summary?.questions || 0} câu</li>)}</ul>
@@ -212,14 +223,13 @@ export function ImportReviewPage() {
         <p>Kiểm tra nội dung và thông tin đề trước khi lưu. Nếu có lỗi, sửa bản nháp rồi lưu lại.</p>
         <form className="manual-form" onSubmit={saveMetadata}>
           <h2>Thông tin đề</h2>
-          <label>Tên đề<input required maxLength={300} value={String(metadata.title || '')} onChange={(event) => field('title', event.target.value)} /></label>
+          <label><span>Tên đề<span className="required-mark" aria-hidden="true"> *</span></span><input required maxLength={300} value={String(metadata.title || '')} onChange={(event) => field('title', event.target.value)} /></label>
           <div className="form-grid">
-            <label>Môn học<select required={!metadata.subject} value={subjects.some((item) => item.code === metadata.subject) ? String(metadata.subject) : ''} onChange={(event) => field('subject', event.target.value)}><option value="">Chọn môn</option>{subjects.map((subject) => <option key={subject.code} value={subject.code}>{subject.name}</option>)}</select></label>
-            <label>Cấp học<select required value={String(metadata.level || '')} onChange={(event) => { field('level', event.target.value); field('grade', null) }}><option value="">Chọn cấp</option><option value="TIEU_HOC">Tiểu học</option><option value="THCS">THCS</option><option value="THPT">THPT</option><option value="DAI_HOC">Đại học</option><option value="KHAC">Khác</option></select></label>
-            {['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level || '')) && <label>Lớp<input required type="number" min={metadata.level === 'THPT' ? 10 : metadata.level === 'THCS' ? 6 : 1} max={metadata.level === 'THPT' ? 12 : metadata.level === 'THCS' ? 9 : 5} value={metadata.grade == null ? '' : String(metadata.grade)} onChange={(event) => field('grade', event.target.value ? Number(event.target.value) : null)} /></label>}
-            <label>Loại đề<select required value={String(metadata.exam_type || '')} onChange={(event) => field('exam_type', event.target.value)}><option value="">Chọn loại</option><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
+            <TaxonomyEntry kind="SUBJECT" label="Môn học" required suggestions={subjects.map((item) => item.name)} value={subjects.find((item) => item.code === metadata.subject)?.name || String(metadata.subject || '')} onChange={(value) => field('subject', value)} />
+            <label><span>Cấp học<span className="required-mark" aria-hidden="true"> *</span></span><select required value={String(metadata.level || '')} onChange={(event) => { field('level', event.target.value); field('grade', null) }}><option value="">Chọn cấp</option><option value="TIEU_HOC">Tiểu học</option><option value="THCS">THCS</option><option value="THPT">THPT</option><option value="DAI_HOC">Đại học</option><option value="KHAC">Khác</option></select></label>
+            {['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level || '')) && <label><span>Lớp<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={metadata.level === 'THPT' ? 10 : metadata.level === 'THCS' ? 6 : 1} max={metadata.level === 'THPT' ? 12 : metadata.level === 'THCS' ? 9 : 5} value={metadata.grade == null ? '' : String(metadata.grade)} onChange={(event) => field('grade', event.target.value ? Number(event.target.value) : null)} /></label>}
+            <label><span>Loại đề<span className="required-mark" aria-hidden="true"> *</span></span><select required value={String(metadata.exam_type || '')} onChange={(event) => field('exam_type', event.target.value)}><option value="">Chọn loại</option><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
           </div>
-          <TaxonomyEntry kind="SUBJECT" label="Tên môn khác" value={subjects.some((item) => item.code === metadata.subject) ? '' : String(metadata.subject || '')} onChange={(value) => field('subject', value)} />
           <TaxonomyNames kind="SCHOOL" label="Trường" values={Array.isArray(metadata.schools) ? metadata.schools as string[] : []} onChange={(values) => fieldList('schools', values)} />
           <TaxonomyNames kind="MAJOR" label="Ngành" values={Array.isArray(metadata.majors) ? metadata.majors as string[] : []} onChange={(values) => fieldList('majors', values)} />
           <label>Nguồn đề<input maxLength={300} value={String(metadata.source || '')} onChange={(event) => field('source', event.target.value)} /></label>
@@ -231,11 +241,11 @@ export function ImportReviewPage() {
           {currentQuestion && <>
             <p>Loại: {currentQuestion.kind}</p>
             <label>Nội dung câu hỏi<textarea value={currentQuestion.text} onChange={(event) => changeQuestion((question) => { question.text = event.target.value })} /></label>
-            {['MCQ', 'MCQ_MULTI'].includes(currentQuestion.kind) && <fieldset><legend>Đáp án</legend>{currentQuestion.choices.map((choice, index) => <div className="form-grid" key={choice.label}>
+            {['MCQ', 'MCQ_MULTI'].includes(currentQuestion.kind) && <fieldset className="review-answers"><legend>Đáp án</legend>{currentQuestion.choices.map((choice, index) => <div className="review-answer-row" key={choice.label}>
               <label>{choice.label}<input value={choice.text} onChange={(event) => changeQuestion((question) => { question.choices[index].text = event.target.value })} /></label>
-              <label><input type={currentQuestion.kind === 'MCQ' ? 'radio' : 'checkbox'} name={`answer-${currentQuestion.tmp_id}`} checked={choice.is_correct} onChange={() => changeQuestion((question) => { question.choices.forEach((item, answerIndex) => { item.is_correct = currentQuestion.kind === 'MCQ' ? answerIndex === index : answerIndex === index ? !item.is_correct : item.is_correct }) })} /> Đúng</label>
+              <label className="review-answer-key"><input type={currentQuestion.kind === 'MCQ' ? 'radio' : 'checkbox'} name={`answer-${currentQuestion.tmp_id}`} checked={choice.is_correct} onChange={() => changeQuestion((question) => { question.choices.forEach((item, answerIndex) => { item.is_correct = currentQuestion.kind === 'MCQ' ? answerIndex === index : answerIndex === index ? !item.is_correct : item.is_correct }) })} /> Đúng</label>
             </div>)}</fieldset>}
-            <label>Giải thích<textarea value={currentQuestion.explanation || ''} onChange={(event) => changeQuestion((question) => { question.explanation = event.target.value })} /></label>
+            <label>Giải thích (không bắt buộc)<textarea value={currentQuestion.explanation || ''} onChange={(event) => changeQuestion((question) => { question.explanation = event.target.value })} /></label>
             <button type="button" className="button secondary" disabled={pending || !questionsDirty || metadataDirty} onClick={() => replace(job.draft)}>Lưu câu hỏi</button>
           </>}
         </div>}
