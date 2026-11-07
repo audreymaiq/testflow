@@ -172,11 +172,11 @@ export function LibraryPage() {
             </span>
           </Link>)}
         </section>}
-        <nav className="pagination" aria-label="Phân trang đề thi">
-          <button type="button" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}>Trang trước</button>
-          <span>Trang {page}</span>
-          <button type="button" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>Trang sau</button>
-        </nav>
+        {(exams.data.previous || exams.data.next) && <nav className="pagination" aria-label="Phân trang đề thi">
+          <button type="button" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}><span aria-hidden="true">←</span> Trang trước</button>
+          <span className="pagination-current" aria-current="page">Trang {page}</span>
+          <button type="button" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>Trang sau <span aria-hidden="true">→</span></button>
+        </nav>}
       </>}
     </div>
   </section>
