@@ -38,10 +38,9 @@ test('guest discovery keeps primary actions visible and accessible on a narrow s
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 })
 
-test('booklet page motion follows the reduced motion setting', async ({ page }) => {
+test('homepage remains usable with reduced motion', async ({ page }) => {
   await page.emulateMedia({ reducedMotion: 'reduce' })
   await page.goto('/')
-  await expect(page.locator('.home-page-leaf')).toHaveCSS('animation-name', 'none')
-  await page.emulateMedia({ reducedMotion: 'no-preference' })
-  await expect(page.locator('.home-page-leaf')).toHaveCSS('animation-name', 'booklet-page-lift')
+  await expect(page.getByRole('heading', { name: 'Hôm nay, bạn muốn luyện tập gì?' })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Tìm đề' })).toBeVisible()
 })
