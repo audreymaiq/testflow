@@ -138,6 +138,42 @@ test('manual multi-answer exam supports untimed review and a compact mobile ques
   await expect(page.locator('.feedback strong')).toHaveText('Đúng')
 })
 
+test('ninety-question exam keeps the question map bounded and reachable', async ({ page }) => {
+  test.setTimeout(90000)
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const owner = `map${suffix}`
+  await page.goto('/register')
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(owner)
+  await page.getByLabel('Email').fill(`${owner}@example.test`)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${owner}` })).toBeVisible()
+  const code = `
+from django.contrib.auth import get_user_model
+from apps.catalog.services import create_exam
+from testflow_contracts.exam import ExamDraft
+owner = get_user_model().objects.get(username='${owner}')
+questions = [{'tmp_id': f'q{n}', 'order': n, 'number_label': f'Câu {n}', 'kind': 'MCQ', 'text': f'Câu hỏi số {n}?', 'choices': [{'label': 'A', 'text': 'Đúng', 'is_correct': True}, {'label': 'B', 'text': 'Sai', 'is_correct': False}], 'provenance': {'kind': 'manual'}} for n in range(1, 91)]
+draft = ExamDraft.model_validate({'schema_version': 1, 'metadata': {'title': 'Đề dài ${suffix}', 'subject': 'Toán', 'level': 'THPT', 'grade': 12, 'exam_type': 'ON_TAP', 'duration_minutes': 60}, 'sections': [{'order': 1, 'title': 'Trắc nghiệm', 'kind': 'MCQ', 'scoring': {'type': 'per_question', 'points': 1}, 'questions': questions}]})
+print(create_exam(draft, owner=owner, allow_schoolless_demo=True).id)
+`
+  const examId = execFileSync(python, ['backend/manage.py', 'shell', '-c', code], { cwd: root }).toString().trim().split(/\r?\n/).at(-1)
+  await page.goto(`/exams/${examId}`)
+  await page.getByRole('button', { name: 'Làm bài có giờ' }).click()
+  const map = page.getByRole('complementary', { name: 'Bản đồ câu hỏi' })
+  const nav = map.getByRole('navigation', { name: 'Chọn câu hỏi' })
+  await expect(nav.getByRole('button')).toHaveCount(90)
+  expect(await nav.evaluate((element) => element.scrollHeight > element.clientHeight)).toBeTruthy()
+  await nav.getByRole('button', { name: '90' }).click()
+  await expect(page.locator('.active-question .eyebrow')).toHaveText('CÂU 90 / 90')
+  await page.setViewportSize({ width: 320, height: 700 })
+  await expect(nav).toBeHidden()
+  await map.getByRole('button', { name: /Xem câu hỏi/ }).click()
+  await expect(nav).toBeVisible()
+  expect(await nav.evaluate((element) => element.scrollHeight > element.clientHeight)).toBeTruthy()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+})
+
 test('synthetic three-section THPT exam completes through the browser', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const owner = `thpt${suffix}`
