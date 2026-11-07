@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from './auth'
-import heroObservatory from './assets/hero-observatory.webp'
+import heroStudyDesk from './assets/hero-study-desk.webp'
 import { DeckMark } from './exam-art'
 export { DeckMark } from './exam-art'
 
@@ -65,7 +65,7 @@ export function Home() {
           {user ? 'Xem tiến độ học tập' : 'Tạo tài khoản để lưu tiến độ'} <span aria-hidden="true">↗</span>
         </Link>
       </div>
-      <div className="home-visual" aria-hidden="true"><img src={heroObservatory} alt="" /></div>
+      <div className="home-visual" aria-hidden="true"><img src={heroStudyDesk} alt="" /></div>
     </section>
     {user && <aside className="home-study-panel is-personal" aria-label="Tiến độ học tập">
         <p className="eyebrow">PHIẾU HỌC TẬP</p>
