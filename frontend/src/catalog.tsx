@@ -460,7 +460,7 @@ export function ManualExamPage() {
             updateQuestion(index, { choices })
           }} />
         </label>)}
-        {question.kind === 'MCQ' ? <label>Đáp án đúng<select value={question.correct[0]} onChange={(event) => updateQuestion(index, { correct: [event.target.value] })}>
+        {question.kind === 'MCQ' ? <label>Đáp án đúng<select aria-label="Đáp án đúng" value={question.correct[0]} onChange={(event) => updateQuestion(index, { correct: [event.target.value] })}>
           {'ABCD'.split('').map((label) => <option key={label} value={label}>{label}</option>)}
         </select></label> : <fieldset className="multi-answer-key"><legend>Đáp án đúng (chọn ít nhất một)</legend>{'ABCD'.split('').map((label) => <label key={label}><input type="checkbox" checked={question.correct.includes(label)} onChange={(event) => updateQuestion(index, { correct: event.target.checked ? [...question.correct, label] : question.correct.filter((item) => item !== label) })} /> {label}</label>)}</fieldset>}
         {questions.length > 1 && <button type="button" onClick={() => setQuestions((current) => current.filter((_, position) => position !== index))}>Xóa câu</button>}
