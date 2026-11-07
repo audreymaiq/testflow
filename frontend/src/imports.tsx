@@ -75,7 +75,7 @@ export function TxtImportPage() {
 A. 3
 B. 4
 =>B`}</code></pre>
-      <p>TXT v2 có thể thêm <code>#SUBJECT</code>, <code>#LEVEL</code>, <code>#GRADE</code>, <code>#TYPE</code> và các trường khác ở đầu tệp. Các dạng đáp án thêm:</p>
+      <p>TXT v2 có thể thêm <code>#SUBJECT</code>, <code>#LEVEL</code>, <code>#GRADE</code>, <code>#TYPE</code>, <code>#DURATION</code> (số phút) và các trường khác ở đầu tệp. Các dạng đáp án thêm:</p>
       <ul>
         <li><code>=&gt;A,C</code>: chọn nhiều đáp án.</li>
         <li><code>=&gt;T</code> hoặc <code>=&gt;F</code>: đúng/sai, không có lựa chọn.</li>
@@ -237,7 +237,9 @@ export function ImportReviewPage() {
             <label><span>Cấp học<span className="required-mark" aria-hidden="true"> *</span></span><select required value={String(metadata.level || '')} onChange={(event) => { field('level', event.target.value); field('grade', null) }}><option value="">Chọn cấp</option><option value="TIEU_HOC">Tiểu học</option><option value="THCS">THCS</option><option value="THPT">THPT</option><option value="DAI_HOC">Đại học</option><option value="KHAC">Khác</option></select></label>
             {['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level || '')) && <label><span>Lớp<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={metadata.level === 'THPT' ? 10 : metadata.level === 'THCS' ? 6 : 1} max={metadata.level === 'THPT' ? 12 : metadata.level === 'THCS' ? 9 : 5} value={metadata.grade == null ? '' : String(metadata.grade)} onChange={(event) => field('grade', event.target.value ? Number(event.target.value) : null)} /></label>}
             <label><span>Loại đề<span className="required-mark" aria-hidden="true"> *</span></span><select required value={String(metadata.exam_type || '')} onChange={(event) => field('exam_type', event.target.value)}><option value="">Chọn loại</option><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
+            <label><span>Thời gian (phút){metadata.duration_minutes != null && <span className="required-mark" aria-hidden="true"> *</span>}</span><input type="number" min={1} max={300} required={metadata.duration_minutes != null} disabled={metadata.duration_minutes == null} value={metadata.duration_minutes == null ? '' : String(metadata.duration_minutes)} onChange={(event) => field('duration_minutes', event.target.value ? Number(event.target.value) : null)} /></label>
           </div>
+          <label className="check-label"><input type="checkbox" checked={metadata.duration_minutes == null} onChange={(event) => field('duration_minutes', event.target.checked ? null : 30)} /> Không giới hạn thời gian (chỉ luyện tập)</label>
           <TaxonomyNames kind="SCHOOL" label="Trường" values={Array.isArray(metadata.schools) ? metadata.schools as string[] : []} onChange={(values) => fieldList('schools', values)} required />
           <TaxonomyNames kind="MAJOR" label="Ngành" values={Array.isArray(metadata.majors) ? metadata.majors as string[] : []} onChange={(values) => fieldList('majors', values)} />
           <label>Nguồn đề<input maxLength={300} value={String(metadata.source || '')} onChange={(event) => field('source', event.target.value)} /></label>
