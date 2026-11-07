@@ -68,6 +68,22 @@ class HistorySerializer(serializers.Serializer):
     submitted_at = serializers.DateTimeField(allow_null=True)
     total_score = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
     max_score = serializers.DecimalField(max_digits=7, decimal_places=2, allow_null=True)
+    total_questions = serializers.SerializerMethodField()
+    answered_questions = serializers.SerializerMethodField()
+
+    def get_total_questions(self, session):
+        return sum(len(question_ids) for question_ids in session.question_order.values())
+
+    def get_answered_questions(self, session):
+        return sum(
+            any(
+                isinstance(value, bool)
+                or (isinstance(value, str) and bool(value.strip()))
+                or (isinstance(value, list) and bool(value))
+                for value in answer.value.values()
+            )
+            for answer in session.answers.all()
+        )
 
 
 class StatsSerializer(serializers.Serializer):
