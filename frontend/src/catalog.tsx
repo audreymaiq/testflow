@@ -141,9 +141,7 @@ export function LibraryPage() {
       </div>
     </aside>
     <div className="library-results paper">
-      <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
-        {user && <Link className="button primary" to="/exams/new">Tạo đề</Link>}
-      </div>
+      <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div></div>
       {activeFilters.length > 0 && <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
         {activeFilters.map(([key, , label]) => <button type="button" key={key}
           onClick={() => updateFilter(key, '', key === 'level')} aria-label={`Bỏ lọc ${label}`}>
@@ -371,12 +369,12 @@ export function ManualExamPage() {
   const queryClient = useQueryClient()
   const subjects = useQuery({ queryKey: ['subjects'], queryFn: () => api<Subject[]>('/subjects/') })
   const [title, setTitle] = useState('')
-  const [subject, setSubject] = useState('toan')
-  const [subjectName, setSubjectName] = useState('')
+  const [subjectName, setSubjectName] = useState('Toán')
   const [schools, setSchools] = useState<string[]>([])
   const [majors, setMajors] = useState<string[]>([])
   const [level, setLevel] = useState('THPT')
   const [grade, setGrade] = useState(12)
+  const [examType, setExamType] = useState('ON_TAP')
   const [duration, setDuration] = useState(30)
   const [questions, setQuestions] = useState<EditableQuestion[]>([blankQuestion()])
   const [pending, setPending] = useState(false)
@@ -392,7 +390,7 @@ export function ManualExamPage() {
       schema_version: 1,
       metadata: {
         title, level, grade: ['THPT', 'THCS', 'TIEU_HOC'].includes(level) ? grade : null,
-        subject: subjectName.trim() || subject, schools, majors, exam_type: 'ON_TAP', scoring_preset: 'UNIFORM_10',
+        subject: subjectName.trim(), schools, majors, exam_type: examType, scoring_preset: 'UNIFORM_10',
         max_score: 10, duration_minutes: duration, source: 'Tự biên soạn',
       },
       chapters: [],
@@ -422,19 +420,17 @@ export function ManualExamPage() {
     <p className="eyebrow">THƯ VIỆN / ĐỀ MỚI</p><h1>Tạo đề thủ công</h1>
     <p className="lede">Đề mới chỉ hiển thị cho bạn. Nội dung được lưu khi bạn chọn Tạo đề.</p>
     <form onSubmit={submit} className="manual-form">
-      <label>Tên đề<input required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} /></label>
+      <label><span>Tên đề<span className="required-mark" aria-hidden="true"> *</span></span><input required maxLength={300} value={title} onChange={(event) => setTitle(event.target.value)} /></label>
       <div className="form-grid">
-        <label>Môn học<select value={subject} onChange={(event) => { setSubject(event.target.value); setSubjectName('') }}>
-          {subjects.data?.map((item) => <option key={item.code} value={item.code}>{item.name}</option>)}
-        </select></label>
-        <label>Cấp học<select value={level} onChange={(event) => { setLevel(event.target.value); setGrade(event.target.value === 'THPT' ? 12 : event.target.value === 'THCS' ? 9 : 5) }}>
+        <TaxonomyEntry kind="SUBJECT" label="Môn học" required suggestions={subjects.data?.map((item) => item.name) || []} value={subjectName} onChange={setSubjectName} />
+        <label><span>Cấp học<span className="required-mark" aria-hidden="true"> *</span></span><select required value={level} onChange={(event) => { setLevel(event.target.value); setGrade(event.target.value === 'THPT' ? 12 : event.target.value === 'THCS' ? 9 : 5) }}>
           {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
         </select></label>
-        {['THPT', 'THCS', 'TIEU_HOC'].includes(level) && <label>Lớp<input type="number" min={level === 'THPT' ? 10 : level === 'THCS' ? 6 : 1} max={level === 'THPT' ? 12 : level === 'THCS' ? 9 : 5} value={grade} onChange={(event) => setGrade(Number(event.target.value))} /></label>}
-        <label>Thời gian (phút)<input type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
+        {['THPT', 'THCS', 'TIEU_HOC'].includes(level) && <label><span>Lớp<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={level === 'THPT' ? 10 : level === 'THCS' ? 6 : 1} max={level === 'THPT' ? 12 : level === 'THCS' ? 9 : 5} value={grade} onChange={(event) => setGrade(Number(event.target.value))} /></label>}
+        <label><span>Loại đề<span className="required-mark" aria-hidden="true"> *</span></span><select required value={examType} onChange={(event) => setExamType(event.target.value)}><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
+        <label><span>Thời gian (phút)<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
       </div>
-      <TaxonomyEntry kind="SUBJECT" label="Tên môn khác" value={subjectName} onChange={setSubjectName} />
-      <p>Chọn tên đã có hoặc tự tạo tên mới để đề xuất hiện đúng trong bộ lọc thư viện.</p>
+      <p>Chọn môn được gợi ý hoặc nhập tên môn mới. Nếu chưa có tên phù hợp, dùng Kiểm tra tên để tạo tên chuẩn.</p>
       <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} />
       <TaxonomyNames kind="MAJOR" label="Ngành" values={majors} onChange={setMajors} />
       <h2>Câu hỏi</h2>
