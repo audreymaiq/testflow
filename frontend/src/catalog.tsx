@@ -324,10 +324,11 @@ export function ExamDetailPage() {
     </fieldset>}
     <div className="start-actions">
       {user ? <>
-        <button className="button primary" type="button" disabled={starting || !exam.data.has_answer_key} onClick={() => start('TIMED')}>Làm bài có giờ</button>
+        <button className="button primary" type="button" disabled={starting || !exam.data.has_answer_key || !exam.data.duration_minutes} onClick={() => start('TIMED')}>Làm bài có giờ</button>
+        {!exam.data.duration_minutes && <p className="field-hint">Đề không giới hạn thời gian chỉ dùng để luyện tập.</p>}
         <button className="button secondary" type="button" disabled={starting || !exam.data.has_answer_key || noChaptersSelected} onClick={() => start('PRACTICE')}>Luyện tập</button>
       </> : exam.data.has_answer_key ? <>
-        <Link className="button primary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'TIMED' }}>Đăng nhập để làm bài có giờ</Link>
+        {exam.data.duration_minutes && <Link className="button primary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'TIMED' }}>Đăng nhập để làm bài có giờ</Link>}
         <Link className="button secondary" to="/login" state={{ from: `/exams/${id}`, practiceMode: 'PRACTICE' }}>Đăng nhập để luyện tập</Link>
       </> : <p>Đề chưa đủ đáp án để bắt đầu làm bài.</p>}
       {startError && <p role="alert" className="form-error">{startError}</p>}
@@ -360,8 +361,8 @@ export function ExamDetailPage() {
   </section>
 }
 
-type EditableQuestion = { text: string; choices: string[]; correct: string }
-const blankQuestion = (): EditableQuestion => ({ text: '', choices: ['', '', '', ''], correct: 'A' })
+type EditableQuestion = { kind: 'MCQ' | 'MCQ_MULTI'; text: string; choices: string[]; correct: string[] }
+const blankQuestion = (): EditableQuestion => ({ kind: 'MCQ', text: '', choices: ['', '', '', ''], correct: ['A'] })
 
 export function ManualExamPage() {
   const { api } = useAuth()
@@ -376,6 +377,7 @@ export function ManualExamPage() {
   const [grade, setGrade] = useState(12)
   const [examType, setExamType] = useState('ON_TAP')
   const [duration, setDuration] = useState(30)
+  const [unlimited, setUnlimited] = useState(false)
   const [questions, setQuestions] = useState<EditableQuestion[]>([blankQuestion()])
   const [pending, setPending] = useState(false)
   const [error, setError] = useState('')
@@ -394,22 +396,26 @@ export function ManualExamPage() {
       setError('Chọn hoặc thêm ít nhất một trường.')
       return
     }
+    if (questions.some((question) => question.correct.length === 0)) {
+      setError('Mỗi câu hỏi cần ít nhất một đáp án đúng.')
+      return
+    }
     setPending(true)
     const draft = {
       schema_version: 1,
       metadata: {
         title: title.trim(), level, grade: ['THPT', 'THCS', 'TIEU_HOC'].includes(level) ? grade : null,
         subject: subjectName.trim(), schools, majors, exam_type: examType, scoring_preset: 'UNIFORM_10',
-        max_score: 10, duration_minutes: duration, source: 'Tự biên soạn',
+        max_score: 10, duration_minutes: unlimited ? null : duration, source: 'Tự biên soạn',
       },
       chapters: [],
-      sections: [{ order: 1, title: 'Câu hỏi trắc nghiệm', kind: 'MCQ',
+      sections: [{ order: 1, title: 'Câu hỏi trắc nghiệm', kind: questions.some((question) => question.kind === 'MCQ_MULTI') ? 'MIXED' : 'MCQ',
         scoring: { type: 'per_question', points: 1 }, passages: [],
         questions: questions.map((question, index) => ({
           tmp_id: `q${index + 1}`, order: index + 1, number_label: `Câu ${index + 1}`,
-          kind: 'MCQ', text: question.text, provenance: { kind: 'manual' },
+          kind: question.kind, text: question.text, provenance: { kind: 'manual' },
           choices: question.choices.map((text, choiceIndex) => ({
-            label: 'ABCD'[choiceIndex], text, is_correct: question.correct === 'ABCD'[choiceIndex],
+            label: 'ABCD'[choiceIndex], text, is_correct: question.correct.includes('ABCD'[choiceIndex]),
           })),
         })),
       }],
@@ -437,14 +443,16 @@ export function ManualExamPage() {
         </select></label>
         {['THPT', 'THCS', 'TIEU_HOC'].includes(level) && <label><span>Lớp<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={level === 'THPT' ? 10 : level === 'THCS' ? 6 : 1} max={level === 'THPT' ? 12 : level === 'THCS' ? 9 : 5} value={grade} onChange={(event) => setGrade(Number(event.target.value))} /></label>}
         <label><span>Loại đề<span className="required-mark" aria-hidden="true"> *</span></span><select required value={examType} onChange={(event) => setExamType(event.target.value)}><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
-        <label><span>Thời gian (phút)<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
+        <label><span>Thời gian (phút){!unlimited && <span className="required-mark" aria-hidden="true"> *</span>}</span><input required={!unlimited} disabled={unlimited} type="number" min={1} max={300} value={duration} onChange={(event) => setDuration(Number(event.target.value))} /></label>
       </div>
+      <label className="check-label"><input type="checkbox" checked={unlimited} onChange={(event) => setUnlimited(event.target.checked)} /> Không giới hạn thời gian (chỉ luyện tập)</label>
       <p>Chọn môn được gợi ý hoặc nhập tên môn mới. Nếu chưa có tên phù hợp, dùng Kiểm tra tên để tạo tên chuẩn.</p>
       <TaxonomyNames kind="SCHOOL" label="Trường" values={schools} onChange={setSchools} required />
       <TaxonomyNames kind="MAJOR" label="Ngành" values={majors} onChange={setMajors} />
       <h2>Câu hỏi</h2>
       {questions.map((question, index) => <fieldset className="question-editor" key={index}>
         <legend>Câu {index + 1}</legend>
+        <label>Kiểu câu hỏi<select value={question.kind} onChange={(event) => updateQuestion(index, { kind: event.target.value as EditableQuestion['kind'], correct: question.correct.slice(0, 1) })}><option value="MCQ">Một đáp án đúng</option><option value="MCQ_MULTI">Nhiều đáp án đúng</option></select></label>
         <label>Nội dung<textarea required value={question.text} onChange={(event) => updateQuestion(index, { text: event.target.value })} /></label>
         {question.choices.map((choice, choiceIndex) => <label key={choiceIndex}>Đáp án {'ABCD'[choiceIndex]}
           <input required value={choice} onChange={(event) => {
@@ -452,9 +460,9 @@ export function ManualExamPage() {
             updateQuestion(index, { choices })
           }} />
         </label>)}
-        <label>Đáp án đúng<select value={question.correct} onChange={(event) => updateQuestion(index, { correct: event.target.value })}>
+        {question.kind === 'MCQ' ? <label>Đáp án đúng<select value={question.correct[0]} onChange={(event) => updateQuestion(index, { correct: [event.target.value] })}>
           {'ABCD'.split('').map((label) => <option key={label} value={label}>{label}</option>)}
-        </select></label>
+        </select></label> : <fieldset className="multi-answer-key"><legend>Đáp án đúng (chọn ít nhất một)</legend>{'ABCD'.split('').map((label) => <label key={label}><input type="checkbox" checked={question.correct.includes(label)} onChange={(event) => updateQuestion(index, { correct: event.target.checked ? [...question.correct, label] : question.correct.filter((item) => item !== label) })} /> {label}</label>)}</fieldset>}
         {questions.length > 1 && <button type="button" onClick={() => setQuestions((current) => current.filter((_, position) => position !== index))}>Xóa câu</button>}
       </fieldset>)}
       <button type="button" className="button secondary" onClick={() => setQuestions((current) => [...current, blankQuestion()])}>Thêm câu hỏi</button>
