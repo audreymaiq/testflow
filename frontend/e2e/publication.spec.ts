@@ -70,7 +70,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   await page.goto(examUrl)
   await expect(page.getByText(/1 lượt làm · 0 câu trong ngân hàng câu sai/)).toBeVisible()
   await logout(page)
-  await page.getByRole('link', { name: 'Nhập TXT' }).click()
+  await page.getByRole('link', { name: 'Thêm đề', exact: true }).click()
   await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
   await page.getByLabel('Tên đăng nhập hoặc email').fill(learner)
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
