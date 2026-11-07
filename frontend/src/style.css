@@ -154,6 +154,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 :root[data-mode="dark"] .filter-fields input[type=checkbox] { color-scheme: dark; }
 .manual-form label { display: grid; gap: .4rem; font-size: .9rem; font-weight: 600; }
 .manual-form input, .manual-form select, .manual-form textarea { width: 100%; min-height: 44px; padding: .65rem; border: 1px solid var(--border); border-radius: 4px; background: var(--surface-alt); color: var(--text); }
+.required-mark { color: var(--error); font-weight: 700; }
 .check-label input { accent-color: var(--accent); width: 18px; height: 18px; }
 .library-results { min-width: 0; padding: 0; background: transparent; border: 0; }
 .section-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
@@ -206,8 +207,22 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .manual-panel { max-width: 860px; margin: auto; padding: clamp(1.5rem, 5vw, 3rem); border-radius: 12px; }
 .manual-panel h1 { font-size: 2.5rem; }
 .manual-panel input[type="file"] { display: block; width: 100%; min-width: 0; }
+.add-exam-options { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; margin-top: 2rem; }
+.add-exam-options a { display: grid; grid-template-columns: 1fr auto; align-content: start; gap: .7rem; min-height: 190px; padding: 1.4rem; border: 1px solid var(--rule); border-radius: 8px; background: var(--surface-alt); color: var(--text); text-decoration: none; transition: border-color .15s ease, transform .15s ease; }
+.add-exam-options a:hover, .add-exam-options a:focus-visible { border-color: var(--accent); transform: translateY(-2px); }
+.add-exam-options a > :not(:last-child) { grid-column: 1 / -1; }
+.add-exam-options a > strong { font: 400 1.5rem/1.2 Literata, serif; }
+.add-exam-options a > span:nth-last-child(2) { color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.add-exam-option-index { color: var(--accent); font: .76rem 'IBM Plex Mono', monospace; }
+.add-exam-options a > span:last-child { grid-column: 2; grid-row: 1; color: var(--accent); }
 .manual-form { display: grid; gap: 1.2rem; margin-top: 2rem; }
 .form-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.review-answers { display: grid; gap: .85rem; min-width: 0; margin: 0; padding: 1rem; border: 1px solid var(--rule); border-radius: 6px; }
+.review-answers legend { padding: 0 .35rem; font-size: .9rem; }
+.review-answer-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: 1rem; min-width: 0; }
+.review-answer-row > label:first-child { min-width: 0; }
+.manual-form .review-answer-key { display: flex; align-items: center; gap: .45rem; min-height: 44px; white-space: nowrap; cursor: pointer; }
+.manual-form .review-answer-key input { flex: none; width: 19px; height: 19px; min-height: 0; margin: 0; padding: 0; accent-color: var(--accent); }
 .question-editor { display: grid; gap: .9rem; border: 1px solid var(--border); border-radius: 6px; padding: 1.2rem; }
 .question-editor legend { font-family: 'IBM Plex Mono', monospace; padding: 0 .4rem; }
 .question-editor textarea { min-height: 100px; resize: vertical; }
@@ -349,6 +364,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
   .filter-chip-group { grid-column: 1 / -1; }
   .library-results { padding: 0; }
   .form-grid { grid-template-columns: 1fr; }
+  .add-exam-options { grid-template-columns: 1fr; }
   .section-heading { align-items: start; }
   .home-library .section-heading { display: grid; gap: .65rem; }
   .home-library .section-heading > a { justify-self: start; text-align: left; }
