@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 PALETTES = {
-    "ocean": {"light": "#2547C4", "dark": "#8FA6FF"},
+    "ocean": {"light": "#176273", "dark": "#8BCBD0"},
     "amber": {"light": "#8F5400", "dark": "#E0A24A"},
     "sakura": {"light": "#A62456", "dark": "#E37AA0"},
     "holo": {"light": "#5B34C7", "dark": "#A58BF5"},
