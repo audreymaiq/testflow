@@ -11,13 +11,13 @@ PALETTES = {
 
 NEUTRALS = {
     "light": {
-        "bg": "#F2F5F6", "surface": "#FFFFFF", "surface_alt": "#F7F9FA",
-        "text": "#1B2C31", "muted": "#4C6064", "border": "#788B8B",
+        "bg": "#F5F3EE", "surface": "#FFFEFB", "surface_alt": "#F8F6F1",
+        "text": "#203338", "muted": "#526266", "border": "#788A8B",
         "success": "#166534", "error": "#A02F2F", "skipped": "#52637C",
     },
     "dark": {
-        "bg": "#151B27", "surface": "#1E2735", "surface_alt": "#263242",
-        "text": "#E8EDF5", "muted": "#B9C4D3", "border": "#9BAABE",
+        "bg": "#142026", "surface": "#1C2D34", "surface_alt": "#23363E",
+        "text": "#EAF1EE", "muted": "#B8CAC8", "border": "#9DB2B3",
         "success": "#85D8A0", "error": "#FF9E9E", "skipped": "#C2CEDF",
     },
 }
