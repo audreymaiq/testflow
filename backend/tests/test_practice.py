@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
 from apps.catalog.management.commands.seed_thpt_demo import TITLE
-from apps.catalog.models import Exam, Subject
+from apps.catalog.models import Exam, School, Subject
 from apps.catalog.services import create_exam
 from apps.practice.models import Answer, Session, SessionStatus, WrongQuestion
 from apps.practice.schemas import SessionConfig
@@ -24,6 +24,7 @@ from tests.test_catalog import draft_data
 @pytest.fixture
 def exam_users(db):
     Subject.objects.update_or_create(code="toan", defaults={"name": "Toán", "levels": ["THPT"]})
+    School.objects.get_or_create(name="Trường Mẫu")
     owner = get_user_model().objects.create_user(
         username="owner", email="owner@example.com", password="HardToGuess#2026"
     )
