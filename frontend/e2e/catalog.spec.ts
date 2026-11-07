@@ -26,7 +26,7 @@ test('school and major facet chips filter a private exam together', async ({ pag
   await page.getByLabel('Đáp án B', { exact: true }).fill('Hai')
   await page.getByLabel('Đáp án C', { exact: true }).fill('Ba')
   await page.getByLabel('Đáp án D', { exact: true }).fill('Bốn')
-  await page.getByLabel('Đáp án đúng').selectOption('B')
+  await page.getByLabel('Đáp án đúng', { exact: true }).selectOption('B')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
@@ -76,7 +76,7 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await page.getByLabel('Đáp án B', { exact: true }).fill('Bốn')
   await page.getByLabel('Đáp án C', { exact: true }).fill('Năm')
   await page.getByLabel('Đáp án D', { exact: true }).fill('Sáu')
-  await page.getByLabel('Đáp án đúng').selectOption('B')
+  await page.getByLabel('Đáp án đúng', { exact: true }).selectOption('B')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
   await expect(page.getByRole('heading', { name: `Đề riêng tư ${suffix}` })).toBeVisible()
   const detailUrl = page.url()
