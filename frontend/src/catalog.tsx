@@ -385,11 +385,16 @@ export function ManualExamPage() {
   }
 
   async function submit(event: FormEvent) {
-    event.preventDefault(); setError(''); setPending(true)
+    event.preventDefault(); setError('')
+    if (!title.trim() || !subjectName.trim()) {
+      setError('Điền tên đề và môn học hợp lệ.')
+      return
+    }
+    setPending(true)
     const draft = {
       schema_version: 1,
       metadata: {
-        title, level, grade: ['THPT', 'THCS', 'TIEU_HOC'].includes(level) ? grade : null,
+        title: title.trim(), level, grade: ['THPT', 'THCS', 'TIEU_HOC'].includes(level) ? grade : null,
         subject: subjectName.trim(), schools, majors, exam_type: examType, scoring_preset: 'UNIFORM_10',
         max_score: 10, duration_minutes: duration, source: 'Tự biên soạn',
       },
