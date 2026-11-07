@@ -40,13 +40,22 @@ def _has_key(question) -> bool:
 
 
 @transaction.atomic
-def create_exam(draft: ExamDraft, *, owner, source_kind: str = "MANUAL", source_job=None) -> Exam:
+def create_exam(
+    draft: ExamDraft,
+    *,
+    owner,
+    source_kind: str = "MANUAL",
+    source_job=None,
+    allow_schoolless_demo: bool = False,
+) -> Exam:
     """Validate and persist a confirmed PRIVATE exam atomically."""
     metadata = draft.metadata
     if not owner or not owner.is_authenticated:
         raise ValidationFailed("OWNER_REQUIRED", "Cần đăng nhập để tạo đề.")
     if not metadata.title or not metadata.level or not metadata.subject or not metadata.exam_type:
         raise ValidationFailed("METADATA_REQUIRED", "Thiếu tên đề, cấp học, môn hoặc loại đề.")
+    if not metadata.schools and not allow_schoolless_demo:
+        raise ValidationFailed("SCHOOL_REQUIRED", "Cần chọn hoặc thêm ít nhất một trường.")
     if metadata.level in {"TIEU_HOC", "THCS", "THPT"} and metadata.grade is None:
         raise ValidationFailed("GRADE_REQUIRED", "Cấp học này cần lớp cụ thể.")
     if not draft.sections or not any(section.questions for section in draft.sections):
