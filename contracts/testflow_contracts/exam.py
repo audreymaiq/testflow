@@ -12,8 +12,12 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator, model_valida
 
 Level = Literal["TIEU_HOC", "THCS", "THPT", "DAI_HOC", "KHAC"]
 QuestionKind = Literal["MCQ", "MCQ_MULTI", "TF_GROUP", "TRUE_FALSE", "SHORT", "ESSAY"]
-ExamType = Literal["THI_CHINH_THUC", "GIUA_KY", "CUOI_KY", "KIEM_TRA", "ON_TAP", "OLYMPIC", "KHAC"]
-ScoringPreset = Literal["THPT_2025", "UNIFORM_10", "UNIFORM_100", "PRACTICE_NO_SCORE", "CUSTOM"]
+ExamType = Literal[
+    "THI_CHINH_THUC", "GIUA_KY", "CUOI_KY", "KIEM_TRA", "ON_TAP", "OLYMPIC", "KHAC"
+]
+ScoringPreset = Literal[
+    "THPT_2025", "UNIFORM_10", "UNIFORM_100", "PRACTICE_NO_SCORE", "CUSTOM"
+]
 _TAG = re.compile(r"<\s*/?\s*[A-Za-z][^>]*>")
 
 
@@ -28,7 +32,8 @@ class ContractModel(BaseModel):
             return "".join(
                 char
                 for char in unicodedata.normalize("NFC", value.strip())
-                if char in {"\n", "\t"} or unicodedata.category(char) not in {"Cc", "Cf"}
+                if char in {"\n", "\t"}
+                or unicodedata.category(char) not in {"Cc", "Cf"}
             )
         return value
 
@@ -55,7 +60,11 @@ class Metadata(ContractModel):
     @model_validator(mode="after")
     def grade_matches_level(self):
         ranges = {"TIEU_HOC": range(1, 6), "THCS": range(6, 10), "THPT": range(10, 13)}
-        if self.level in ranges and self.grade is not None and self.grade not in ranges[self.level]:
+        if (
+            self.level in ranges
+            and self.grade is not None
+            and self.grade not in ranges[self.level]
+        ):
             raise ValueError("grade does not match level")
         if self.level in {"DAI_HOC", "KHAC"} and self.grade is not None:
             raise ValueError("grade must be null for this level")
@@ -134,7 +143,9 @@ class QuestionDraft(ContractModel):
             raise ValueError("question order must be positive")
         if self.kind in {"MCQ", "MCQ_MULTI"}:
             labels = [choice.label for choice in self.choices]
-            if len(labels) not in range(2, 7) or labels != list("ABCDEF"[: len(labels)]):
+            if len(labels) not in range(2, 7) or labels != list(
+                "ABCDEF"[: len(labels)]
+            ):
                 raise ValueError("MCQ choices must be labeled consecutively A-F")
             correct = sum(choice.is_correct for choice in self.choices)
             if (self.kind == "MCQ" and correct > 1) or (
@@ -179,7 +190,9 @@ class Scoring(ContractModel):
 class SectionDraft(ContractModel):
     order: int
     title: str
-    kind: Literal["MCQ", "MCQ_MULTI", "TF_GROUP", "TRUE_FALSE", "SHORT", "ESSAY", "MIXED"]
+    kind: Literal[
+        "MCQ", "MCQ_MULTI", "TF_GROUP", "TRUE_FALSE", "SHORT", "ESSAY", "MIXED"
+    ]
     scoring: Scoring
     passages: list[PassageDraft] = Field(default_factory=list)
     questions: list[QuestionDraft] = Field(default_factory=list)
