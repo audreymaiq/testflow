@@ -7,7 +7,14 @@ from django.urls import reverse
 from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.models import Exam, PublishRequest, PublishRequestStatus, Subject, Visibility
+from apps.catalog.models import (
+    Exam,
+    PublishRequest,
+    PublishRequestStatus,
+    School,
+    Subject,
+    Visibility,
+)
 from apps.catalog.services import create_exam
 from tests.test_catalog import draft_data
 
@@ -15,6 +22,7 @@ from tests.test_catalog import draft_data
 @pytest.fixture
 def publication_users(db):
     Subject.objects.update_or_create(code="toan", defaults={"name": "Toán", "levels": ["THPT"]})
+    School.objects.get_or_create(name="Trường Mẫu")
     model = get_user_model()
     owner = model.objects.create_user("owner", "owner@example.test", "HardToGuess#2026")
     other = model.objects.create_user("other", "other@example.test", "HardToGuess#2026")
