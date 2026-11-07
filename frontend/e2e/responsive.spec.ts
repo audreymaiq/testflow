@@ -37,3 +37,11 @@ test('guest discovery keeps primary actions visible and accessible on a narrow s
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 })
+
+test('booklet page motion follows the reduced motion setting', async ({ page }) => {
+  await page.emulateMedia({ reducedMotion: 'reduce' })
+  await page.goto('/')
+  await expect(page.locator('.home-page-leaf')).toHaveCSS('animation-name', 'none')
+  await page.emulateMedia({ reducedMotion: 'no-preference' })
+  await expect(page.locator('.home-page-leaf')).toHaveCSS('animation-name', 'booklet-page-lift')
+})
