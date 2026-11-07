@@ -4,7 +4,7 @@ import { request } from './api'
 import { useAuth } from './auth'
 import { TaxonomyEntry } from './taxonomy'
 import { Modal, Toast } from './shared'
-import { ThemeControls } from './theme'
+import { ModeControl } from './theme'
 import { ExamDetailPage, LibraryPage, ManualExamPage } from './catalog'
 import { HistoryPage, PracticePage, ResultPage } from './practice'
 import { PublicationDetailPage, PublicationQueuePage } from './publication'
@@ -60,7 +60,7 @@ function Shell({ children }: { children: ReactNode }) {
           <Link to="/register" className="header-action">Tạo tài khoản</Link>
         </>}
       </nav>
-      <ThemeControls />
+      <ModeControl />
       </div>
     </header>
     <main id="main">{children}</main>
