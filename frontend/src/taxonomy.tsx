@@ -66,12 +66,14 @@ export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed, requi
   </div>
 }
 
-export function TaxonomyNames({ kind, label, values, onChange }: {
+export function TaxonomyNames({ kind, label, values, onChange, required = false }: {
   kind: 'SCHOOL' | 'MAJOR'; label: string; values: string[]; onChange: (values: string[]) => void
+  required?: boolean
 }) {
   const [input, setInput] = useState('')
-  return <fieldset className="taxonomy-names"><legend>{label}</legend>
+  return <fieldset className="taxonomy-names" aria-required={required}><legend>{label}{required && <span className="required-mark" aria-hidden="true"> *</span>}</legend>
     {values.map((name) => <span key={name} className="taxonomy-chip">{name} <button type="button" aria-label={`Bỏ ${name}`} onClick={() => onChange(values.filter((item) => item !== name))}>×</button></span>)}
+    {required && values.length === 0 && <p className="field-hint">Chọn hoặc thêm ít nhất một trường.</p>}
     <TaxonomyEntry kind={kind} label={`Thêm ${label.toLowerCase()}`} value={input} onChange={setInput}
       onConfirmed={(name) => { if (!values.includes(name)) onChange([...values, name]); setInput('') }} />
   </fieldset>
