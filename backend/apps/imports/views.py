@@ -19,7 +19,12 @@ class TxtImportView(GenericAPIView):
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job = create_txt_job(serializer.validated_data["file"], uploader=request.user)
+        job = create_txt_job(
+            serializer.validated_data["file"],
+            uploader=request.user,
+            duration_mode=serializer.validated_data["duration_mode"],
+            duration_minutes=serializer.validated_data.get("duration_minutes"),
+        )
         return Response(job_payload(job), status=status.HTTP_201_CREATED)
 
 
