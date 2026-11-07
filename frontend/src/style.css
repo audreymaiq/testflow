@@ -47,15 +47,8 @@ h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.18; font-weight: 600; 
 .home-secondary-link { margin-top: 1rem; color: #E5F3F1; font-size: .88rem; font-weight: 600; }
 .home-secondary-link:hover { color: #FFFFFF; }
 .home-study-panel { min-width: 0; padding: 1.2rem 0; border-block: 1px solid var(--rule); }
-.home-study-panel.is-intro { display: grid; grid-template-columns: 115px minmax(160px, .85fr) minmax(300px, 1.45fr) auto; gap: 1.5rem; align-items: start; }
 .home-study-panel.is-personal { display: flex; flex-wrap: wrap; align-items: center; gap: 1rem 2rem; }
 .home-study-panel .eyebrow { margin: .25rem 0 0; }
-.home-study-intro { font-size: 1.02rem; font-weight: 600; line-height: 1.5; margin: 0; max-width: 31ch; }
-.home-study-modes { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1.1rem; margin: 0; }
-.home-study-modes div { padding: 0 0 0 .9rem; border-left: 2px solid var(--rule); }
-.home-study-modes dt { color: var(--muted); font: .75rem/1.5 'IBM Plex Mono', monospace; letter-spacing: .04em; }
-.home-study-modes dd { margin: .25rem 0 0; font-size: .87rem; line-height: 1.55; }
-.home-study-link { margin-top: .25rem; font-size: .9rem; font-weight: 600; white-space: nowrap; }
 .home-study-greeting { font-size: 1.05rem; margin: 0 0 .8rem; overflow-wrap: anywhere; }
 .home-study-total { display: flex; align-items: baseline; gap: .7rem; margin: 0; }
 .home-study-total strong { color: var(--accent); font: 600 3.2rem 'IBM Plex Mono', monospace; line-height: 1; }
@@ -281,18 +274,11 @@ h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.18; font-weight: 600; 
   .filter-toggle { display: inline-flex; align-items: center; }
   .library-filters.is-collapsed > :not(.filter-heading) { display: none; }
   .home-hero { grid-template-columns: minmax(0, 1fr) minmax(250px, 330px); gap: 1rem; }
-  .home-study-panel.is-intro { grid-template-columns: minmax(140px, .6fr) minmax(0, 1.4fr); }
-  .home-study-modes { grid-column: 2; }
-  .home-study-link { grid-column: 2; }
 }
 @media (max-width: 720px) {
   .home-hero { grid-template-columns: 1fr; gap: 0; }
   .home-visual { margin: 0; }
   .home-visual img { width: min(100%, 330px); }
-  .home-study-panel.is-intro { grid-template-columns: 1fr; gap: .8rem; }
-  .home-study-modes, .home-study-link { grid-column: 1; }
-  .home-study-modes { gap: .6rem; }
-  .home-study-intro { max-width: none; }
   .home-deck-grid { grid-template-columns: 1fr; }
   .exam-card-grid { grid-template-columns: 1fr; }
   .exam-facts { grid-template-columns: repeat(2, 1fr); }
@@ -317,7 +303,6 @@ h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.18; font-weight: 600; 
   .home-search-box { flex-wrap: wrap; }
   .home-search-box input { flex-basis: calc(100% - 4rem); }
   .home-search-box .button { width: 100%; }
-  .home-study-modes { grid-template-columns: 1fr; }
   .home-deck { min-height: 125px; }
   .library-filters { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 1rem; }
   .library-filters .filter-chip-group { grid-column: 1 / -1; }
