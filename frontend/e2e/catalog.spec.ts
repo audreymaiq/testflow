@@ -121,3 +121,36 @@ test('manual exam stays private across catalog and detail routes', async ({ page
   await expect(page).toHaveURL(/\/library$/)
   await expect(page.getByText(`Đề riêng tư ${suffix}`)).toHaveCount(0)
 })
+
+test('pagination appears only for another page and keeps page navigation usable', async ({ page }) => {
+  let hasNext = false
+  const exam = {
+    id: '00000000-0000-4000-8000-000000000001', title: 'Đề minh họa', subtitle: '',
+    level: 'THPT', grade: 12, icon: '', color: '', subject: 'Toán', exam_type: 'ON_TAP',
+    visibility: 'PUBLIC', question_count: 1, duration_minutes: 30, has_answer_key: true,
+    year: null, is_system_sample: false,
+  }
+  await page.route('**/api/v1/exams/?*', async (route) => {
+    const current = new URL(route.request().url()).searchParams.get('page') === '2'
+    await route.fulfill({ json: {
+      count: hasNext ? 2 : 1,
+      next: hasNext && !current ? '?page=2' : null,
+      previous: current ? '?page=1' : null,
+      results: [exam],
+    } })
+  })
+
+  await page.goto('/library')
+  await expect(page.locator('.result-count')).toHaveText('1 đề')
+  await expect(page.getByRole('navigation', { name: 'Phân trang đề thi' })).toHaveCount(0)
+
+  hasNext = true
+  await page.reload()
+  const pagination = page.getByRole('navigation', { name: 'Phân trang đề thi' })
+  await expect(pagination).toBeVisible()
+  await pagination.getByRole('button', { name: 'Trang sau' }).click()
+  await expect(page).toHaveURL(/page=2/)
+  await expect(pagination.locator('[aria-current="page"]')).toHaveText('Trang 2')
+  await pagination.getByRole('button', { name: 'Trang trước' }).click()
+  await expect(page).not.toHaveURL(/page=2/)
+})
