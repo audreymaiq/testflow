@@ -25,7 +25,7 @@ test('home grid searches real exams and respects private ownership', async ({ pa
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Bộ đề' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Thư viện đề' })).toBeVisible()
   await page.getByLabel('Tìm bộ đề').fill(suffix)
   await page.getByRole('button', { name: 'Tìm đề' }).click()
   const card = page.locator('.home-deck', { hasText: title })
