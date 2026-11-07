@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 640 530" fill="none" role="img" aria-labelledby="title">
+  <title id="title">Phiếu trả lời trên hành trình học tập</title>
+  <defs>
+    <linearGradient id="stage" x1="87" y1="76" x2="519" y2="464" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#39717C"/><stop offset="1" stop-color="#204654"/>
+    </linearGradient>
+    <linearGradient id="paper" x1="190" y1="103" x2="430" y2="423" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF"/><stop offset="1" stop-color="#F0F5F5"/>
+    </linearGradient>
+    <filter id="shadow" x="91" y="31" width="470" height="481" filterUnits="userSpaceOnUse">
+      <feGaussianBlur in="SourceAlpha" stdDeviation="12"/>
+      <feOffset dy="10"/><feComponentTransfer><feFuncA type="linear" slope=".2"/></feComponentTransfer>
+      <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <clipPath id="front"><path d="M183 89 480 125 440 454 143 418Z"/></clipPath>
+  </defs>
+  <path d="M68 245c8-111 105-198 238-206 128-8 232 62 254 169 25 123-69 244-194 266C213 501 57 394 68 245Z" fill="url(#stage)"/>
+  <g stroke="#72A6AF" stroke-width="1.5" opacity=".55">
+    <circle cx="311" cy="257" r="185"/><circle cx="311" cy="257" r="210" stroke-dasharray="2 13"/>
+    <path d="M100 257h37m351 0h39M311 46v35m0 350v36"/>
+    <path d="M129 160 99 144m421 238-29-17M200 68l-14-31m246 437-13-30"/>
+  </g>
+  <path d="M105 384c71 73 177 103 278 74 73-21 132-74 151-146" stroke="#88D0BE" stroke-width="6" stroke-linecap="round"/>
+  <path d="m524 321 10-13 7 15" stroke="#88D0BE" stroke-width="6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="105" cy="384" r="11" fill="#E5B36C" stroke="#204654" stroke-width="5"/>
+  <circle cx="538" cy="290" r="9" fill="#88D0BE" stroke="#204654" stroke-width="4"/>
+  <g filter="url(#shadow)">
+    <path d="m117 158 265-75 91 315-265 75Z" fill="#D9E6E8" stroke="#B7CDD2" stroke-width="2"/>
+    <path d="m117 158 265-75 18 62-265 75Z" fill="#88D0BE"/>
+    <path d="m157 251 98-28m-86 70 116-33m-104 74 82-24m-69 67 102-29" stroke="#B5C9CE" stroke-width="7" stroke-linecap="round"/>
+    <g stroke="#39717C" stroke-width="3"><circle cx="229" cy="402" r="12"/><circle cx="269" cy="391" r="12"/><circle cx="309" cy="380" r="12"/></g>
+    <circle cx="269" cy="391" r="12" fill="#39717C"/>
+    <path d="M194 102 491 138 451 467 154 431Z" fill="#B6CBD1"/>
+    <path d="M183 89 480 125 440 454 143 418Z" fill="url(#paper)" stroke="#D0E0E3" stroke-width="2"/>
+    <g clip-path="url(#front)">
+      <path d="m183 89 297 36-9 71-297-36Z" fill="#163B48"/>
+      <path d="m208 118 117 14m-119 9 73 9" stroke="#F4F8F8" stroke-width="6" stroke-linecap="round"/>
+      <path d="m377 144 65 8m-65 14 43 5" stroke="#89B4BA" stroke-width="3" stroke-linecap="round"/>
+      <path d="m151 222 316 38m-322 36 316 38m-322 36 316 38" stroke="#D6E2E5" stroke-width="2"/>
+      <g stroke="#92A9AF" stroke-width="4" stroke-linecap="round"><path d="m178 192 21 3m-28 70 21 3m-28 70 21 3m-28 70 21 3"/></g>
+      <g stroke="#849DA5" stroke-width="2.5">
+        <circle cx="244" cy="207" r="11"/><circle cx="293" cy="213" r="11"/><circle cx="342" cy="219" r="11"/><circle cx="391" cy="225" r="11"/>
+        <circle cx="235" cy="277" r="11"/><circle cx="284" cy="283" r="11"/><circle cx="333" cy="289" r="11"/><circle cx="382" cy="295" r="11"/>
+        <circle cx="226" cy="347" r="11"/><circle cx="275" cy="353" r="11"/><circle cx="324" cy="359" r="11"/><circle cx="373" cy="365" r="11"/>
+        <circle cx="217" cy="417" r="11"/><circle cx="266" cy="423" r="11"/><circle cx="315" cy="429" r="11"/><circle cx="364" cy="435" r="11"/>
+      </g>
+      <g fill="#3157C7"><circle cx="293" cy="213" r="11"/><circle cx="333" cy="289" r="11"/><circle cx="226" cy="347" r="11"/></g>
+      <circle cx="315" cy="429" r="11" fill="#4C9C8E"/>
+      <path d="m431 125 49 6-6 48-43-54Z" fill="#E1ECED"/>
+      <path d="m431 125 43 54" stroke="#B8CED2" stroke-width="2"/>
+    </g>
+  </g>
+  <path d="M73 202h75m-58 13h46" stroke="#A7C8C9" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="92" cy="142" r="20" fill="#E5B36C" stroke="#173B47" stroke-width="3"/>
+  <path d="m83 142 7 7 12-15" stroke="#173B47" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M509 98h55m-39 13h26" stroke="#A7C8C9" stroke-width="3" stroke-linecap="round"/>
+</svg>
