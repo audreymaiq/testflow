@@ -76,8 +76,17 @@ def job_payload(job, *, include_draft=False):
     return payload
 
 
-def create_txt_job(upload, *, uploader):
+def create_txt_job(upload, *, uploader, duration_mode="FILE", duration_minutes=None):
     started = monotonic()
+    if (
+        duration_mode not in {"FILE", "TIMED", "UNTIMED"}
+        or (
+            duration_mode == "TIMED"
+            and (duration_minutes is None or not 1 <= duration_minutes <= 300)
+        )
+        or (duration_mode != "TIMED" and duration_minutes is not None)
+    ):
+        raise ValidationFailed("DURATION_INVALID", "Thời gian làm bài không hợp lệ.")
     if not upload.name.lower().endswith(".txt"):
         raise InvalidFileType("INVALID_FILE_TYPE", "Chỉ chấp nhận tệp .txt.")
     if upload.size > MAX_BYTES:
@@ -93,6 +102,11 @@ def create_txt_job(upload, *, uploader):
         raise InvalidFileType("INVALID_FILE_TYPE", "Tệp TXT cần mã hóa UTF-8.") from exc
     digest = hashlib.sha256(raw).hexdigest()
     outcome = parse_txt(content)
+    data = outcome.draft.model_dump(mode="json")
+    if duration_mode != "FILE":
+        data["metadata"]["duration_minutes"] = (
+            duration_minutes if duration_mode == "TIMED" else None
+        )
     parse_ms = round((monotonic() - started) * 1000, 2)
     filename = PurePath(upload.name.replace("\\", "/")).name[:255]
     job = ImportJob(
@@ -134,7 +148,6 @@ def create_txt_job(upload, *, uploader):
             job.original_file.save("original.txt", ContentFile(raw), save=False)
             job.save()
             job.transition(ImportJob.Status.ASSEMBLING)
-            data = outcome.draft.model_dump(mode="json")
             Draft.objects.create(
                 job=job,
                 schema_version=outcome.draft.schema_version,
