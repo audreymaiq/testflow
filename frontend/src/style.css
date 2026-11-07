@@ -293,8 +293,8 @@ h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.18; font-weight: 600; 
   .theme-controls { gap: .35rem; padding-left: .5rem; }
   .theme-controls label { font-size: 0; }
   .theme-controls select { max-width: 75px; min-height: 34px; font-size: .74rem; }
-  .topbar nav { margin-top: .45rem; }
-  .topbar nav a, .topbar nav .text-button { padding: .5rem .42rem; font-size: .78rem; }
+  .topbar nav { flex-wrap: wrap; overflow-x: visible; gap: .1rem .25rem; margin-top: .45rem; padding-bottom: .45rem; }
+  .topbar nav a, .topbar nav .text-button { min-height: 36px; padding: .35rem .42rem; font-size: .78rem; }
   main { margin: 1.25rem auto 3rem; }
   .home-page { gap: 2.5rem; }
   .home-hero { min-height: 0; padding: 1.5rem; }
