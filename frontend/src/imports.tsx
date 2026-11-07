@@ -172,6 +172,10 @@ export function ImportReviewPage() {
       setError('Điền tên đề và môn học hợp lệ.')
       return
     }
+    if (!Array.isArray(metadata.schools) || metadata.schools.length === 0) {
+      setError('Chọn hoặc thêm ít nhất một trường.')
+      return
+    }
     await replace({ ...job.draft, metadata })
   }
 
@@ -234,7 +238,7 @@ export function ImportReviewPage() {
             {['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level || '')) && <label><span>Lớp<span className="required-mark" aria-hidden="true"> *</span></span><input required type="number" min={metadata.level === 'THPT' ? 10 : metadata.level === 'THCS' ? 6 : 1} max={metadata.level === 'THPT' ? 12 : metadata.level === 'THCS' ? 9 : 5} value={metadata.grade == null ? '' : String(metadata.grade)} onChange={(event) => field('grade', event.target.value ? Number(event.target.value) : null)} /></label>}
             <label><span>Loại đề<span className="required-mark" aria-hidden="true"> *</span></span><select required value={String(metadata.exam_type || '')} onChange={(event) => field('exam_type', event.target.value)}><option value="">Chọn loại</option><option value="ON_TAP">Ôn tập</option><option value="KIEM_TRA">Kiểm tra</option><option value="GIUA_KY">Giữa kỳ</option><option value="CUOI_KY">Cuối kỳ</option><option value="THI_CHINH_THUC">Thi chính thức</option><option value="OLYMPIC">Olympic</option><option value="KHAC">Khác</option></select></label>
           </div>
-          <TaxonomyNames kind="SCHOOL" label="Trường" values={Array.isArray(metadata.schools) ? metadata.schools as string[] : []} onChange={(values) => fieldList('schools', values)} />
+          <TaxonomyNames kind="SCHOOL" label="Trường" values={Array.isArray(metadata.schools) ? metadata.schools as string[] : []} onChange={(values) => fieldList('schools', values)} required />
           <TaxonomyNames kind="MAJOR" label="Ngành" values={Array.isArray(metadata.majors) ? metadata.majors as string[] : []} onChange={(values) => fieldList('majors', values)} />
           <label>Nguồn đề<input maxLength={300} value={String(metadata.source || '')} onChange={(event) => field('source', event.target.value)} /></label>
           <button type="submit" className="button secondary" disabled={pending}>Lưu thông tin đề</button>
@@ -257,7 +261,7 @@ export function ImportReviewPage() {
           <button type="button" className="button secondary" onClick={() => { setEditor(JSON.stringify(job.draft, null, 2)); setEditing(!editing) }}>{editing ? 'Đóng trình sửa' : 'Sửa bản nháp JSON'}</button>
           {editing && <div><label>Bản nháp JSON<textarea className="draft-editor" value={editor} onChange={(event) => setEditor(event.target.value)} /></label><button type="button" className="button secondary" disabled={pending} onClick={save}>Lưu bản nháp</button></div>}
           <label>Lý do bỏ bản nháp (không bắt buộc)<input maxLength={500} value={discardReason} onChange={(event) => setDiscardReason(event.target.value)} /></label>
-          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !String(metadata.title || '').trim() || !String(metadata.subject || '').trim() || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
+          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !String(metadata.title || '').trim() || !String(metadata.subject || '').trim() || !Array.isArray(metadata.schools) || metadata.schools.length === 0 || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
         </div>
       </>}
       {job.status === 'REJECTED' && job.discard_reason && <p>Lý do bỏ: {job.discard_reason}</p>}
