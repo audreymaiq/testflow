@@ -200,6 +200,8 @@ def test_personal_history_stats_and_wrong_summary_are_scoped(exam_users):
     assert history.data["results"][0]["exam_title"] == exam.title
     assert history.data["results"][0]["total_questions"] == 1
     assert history.data["results"][0]["answered_questions"] == 1
+    assert client.get(reverse("practice-history"), {"status": "IN_PROGRESS"}).data["count"] == 0
+    assert client.get(reverse("practice-history"), {"status": "INVALID"}).status_code == 400
     assert client.get(reverse("practice-stats")).data == {
         "total_sessions": 1,
         "completed_sessions": 1,
