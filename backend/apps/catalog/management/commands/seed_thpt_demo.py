@@ -132,5 +132,5 @@ class Command(BaseCommand):
             owner=owner, title=TITLE, source="TestFlow synthetic demo"
         ).first()
         if exam is None:
-            exam = create_exam(demo_draft(), owner=owner)
+            exam = create_exam(demo_draft(), owner=owner, allow_schoolless_demo=True)
         self.stdout.write(str(exam.id))
