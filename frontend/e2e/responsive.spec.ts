@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test'
+import AxeBuilder from '@axe-core/playwright'
 
 test('mobile catalog keeps search and theme controls usable without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
@@ -20,4 +21,18 @@ test('mobile catalog keeps search and theme controls usable without horizontal o
   await page.getByLabel('Chế độ').selectOption('dark')
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+})
+
+test('guest discovery keeps primary actions visible and accessible on a narrow screen', async ({ page }) => {
+  await page.setViewportSize({ width: 320, height: 780 })
+  await page.goto('/')
+  await expect(page.getByRole('link', { name: 'Tạo tài khoản', exact: true })).toBeVisible()
+  await expect(page.getByRole('button', { name: 'Tìm đề' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
+
+  await page.goto('/library')
+  await expect(page.getByRole('button', { name: 'Hiện bộ lọc' })).toBeVisible()
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([])
 })
