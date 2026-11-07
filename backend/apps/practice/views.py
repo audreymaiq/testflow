@@ -104,7 +104,13 @@ class HistoryView(GenericAPIView):
     serializer_class = HistorySerializer
 
     def get(self, request):
-        page = self.paginate_queryset(visible_history(request.user))
+        status_filter = request.query_params.get("status", "")
+        if status_filter not in ("", "IN_PROGRESS"):
+            raise ValidationError({"status": "Only IN_PROGRESS is supported."})
+        history = visible_history(request.user)
+        if status_filter:
+            history = history.filter(status=status_filter)
+        page = self.paginate_queryset(history)
         return self.get_paginated_response(self.get_serializer(page, many=True).data)
 
 
