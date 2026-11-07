@@ -15,6 +15,9 @@ test('home grid searches real exams and respects private ownership', async ({ pa
 
   await page.goto('/exams/new')
   await page.getByLabel('Tên đề').fill(title)
+  await page.getByLabel('Thêm trường').fill(`Trường Mẫu ${suffix}`)
+  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Kiểm tra tên' }).click()
+  await page.getByRole('group', { name: 'Trường' }).getByRole('button', { name: 'Tạo tên mới' }).click()
   await page.getByLabel('Nội dung').fill('Một cộng một bằng bao nhiêu?')
   await page.getByLabel('Đáp án A', { exact: true }).fill('Một')
   await page.getByLabel('Đáp án B', { exact: true }).fill('Hai')
