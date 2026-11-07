@@ -3,6 +3,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from './auth'
 import answerStage from './assets/answer-stage.svg'
+import { DeckMark } from './exam-art'
+export { DeckMark } from './exam-art'
 
 type HomeExam = {
   id: string; title: string; subtitle: string; icon: string; color: string; subject: string
@@ -11,17 +13,6 @@ type HomeExam = {
 type Page<T> = { count: number; next: string | null; results: T[] }
 type StudyStats = { total_sessions: number; completed_sessions: number; timed_sessions: number; practice_sessions: number }
 type RecentSession = { id: string; exam_title: string; mode: 'TIMED' | 'PRACTICE'; status: string }
-
-export function DeckMark({ title, icon, color }: Pick<HomeExam, 'title' | 'icon' | 'color'>) {
-  const legacyEye = icon.replace(/\uFE0F/g, '') === '👁'
-  return <span className="home-deck-mark" aria-hidden="true"
-    style={/^#[0-9a-fA-F]{6}$/.test(color) ? { borderColor: color } : undefined}>
-    {legacyEye ? <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" strokeWidth="1.6">
-      <path d="M3 16c3.5-5 7.8-7.5 13-7.5S25.5 11 29 16c-3.5 5-7.8 7.5-13 7.5S6.5 21 3 16Z" />
-      <circle cx="16" cy="16" r="3.5" />
-    </svg> : title.trim().slice(0, 2).toLocaleUpperCase('vi-VN')}
-  </span>
-}
 
 export function Home() {
   const { api, user, loading } = useAuth()
