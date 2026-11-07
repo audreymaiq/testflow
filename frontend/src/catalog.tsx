@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
-import { AnswerSheetArt, DeckMark } from './exam-art'
+import { AnswerSheetArt } from './exam-art'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 import heroDashboard from './assets/hero-dashboard.webp'
 
@@ -36,26 +36,20 @@ type Facets = {
 const levelNames: Record<string, string> = {
   TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
 }
-
-function FilterChips({ label, values, counts, selected, onChange }: {
-  label: string; values: string[]; counts: Record<string, number>
-  selected: string; onChange: (value: string) => void
-}) {
-  return <fieldset className="filter-chip-group"><legend>{label}</legend>
-    <div className="filter-chip-list">
-      <button type="button" aria-pressed={!selected} onClick={() => onChange('')}>Tất cả</button>
-      {values.map((value) => <button type="button" key={value} aria-pressed={selected === value}
-        onClick={() => onChange(selected === value ? '' : value)}>{value} <span className="mono">({counts[value] || 0})</span></button>)}
-    </div>
-  </fieldset>
+const examTypeNames: Record<string, string> = {
+  THI_CHINH_THUC: 'Đề thi chính thức', GIUA_KY: 'Đề giữa kỳ', CUOI_KY: 'Đề cuối kỳ',
+  KIEM_TRA: 'Đề kiểm tra', ON_TAP: 'Đề ôn tập', OLYMPIC: 'Đề Olympic', KHAC: 'Đề khác',
 }
 
 export function LibraryPage() {
   const { user, api } = useAuth()
+  const [heroQuery, setHeroQuery] = useState('')
+  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [filtersOpen, setFiltersOpen] = useState(() =>
     typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 901px)').matches)
   const [urlParams, setUrlParams] = useSearchParams()
   const query = urlParams.get('q') || ''
+  const ordering = urlParams.get('ordering') || '-created_at'
   const mine = urlParams.get('mine') === 'true'
   const level = urlParams.get('level') || ''
   const grade = urlParams.get('grade') || ''
@@ -66,6 +60,7 @@ export function LibraryPage() {
   const examType = urlParams.get('exam_type') || ''
   const hasKey = urlParams.get('has_answer_key') === 'true'
   const page = Math.max(1, Number.parseInt(urlParams.get('page') || '1', 10) || 1)
+  useEffect(() => setHeroQuery(query), [query])
   function updateFilter(key: string, value: string, clearGrade = false) {
     const next = new URLSearchParams(urlParams)
     if (value.trim()) next.set(key, value.trim())
@@ -83,6 +78,7 @@ export function LibraryPage() {
   const facets = useQuery({ queryKey: ['facets', user?.id], queryFn: () => api<Facets>('/facets/') })
   const params = new URLSearchParams(urlParams)
   params.set('page', String(page))
+  params.set('page_size', '6')
   const search = params.toString()
   const exams = useQuery({
     queryKey: ['exams', user?.id, search],
@@ -97,52 +93,38 @@ export function LibraryPage() {
     ['has_answer_key', hasKey ? 'true' : '', 'Có đáp án'], ['mine', mine ? 'true' : '', 'Đề của tôi'],
   ].filter(([, value]) => value)
 
-  return <section className="library-layout">
+  return <div className="library-page">
+    <section className="library-hero" aria-labelledby="library-hero-title">
+      <img src={heroDashboard} alt="" />
+      <div className="library-hero-content">
+        <h1 id="library-hero-title">Khám phá kho đề phong phú</h1>
+        <p>Hàng ngàn đề thi, đề kiểm tra, đề ôn tập từ cấp 1 đến đại học, có cộng đồng chia sẻ.</p>
+        <form className="library-hero-search" role="search" onSubmit={(event: FormEvent) => { event.preventDefault(); updateFilter('q', heroQuery) }}>
+          <label className="visually-hidden" htmlFor="library-hero-query">Tìm đề thi</label>
+          <div className="home-search-box"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" strokeWidth="2" /><path d="m16 16 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg><input id="library-hero-query" type="search" value={heroQuery} onChange={(event) => setHeroQuery(event.target.value)} placeholder="Tìm đề thi, mã đề, chủ đề, trường, ngành..." /><button type="submit">Tìm đề</button></div>
+        </form>
+      </div>
+    </section>
+    <section className="library-layout">
     <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
-      <div className="filter-heading">
-        <div className="filter-heading-copy">
-          <h2>Bộ lọc</h2>
-          {activeFilters.length > 0 && <p className="filter-heading-count">{activeFilters.length} tiêu chí đang chọn</p>}
-        </div>
-        <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>
-          {filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}
-        </button>
+      <div className="filter-heading"><h2><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 5h18M6 10h12m-9 5h6m-4 0v5l2-1.5V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>Bộ lọc</h2>
+        <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>↶ Đặt lại</button>
+        <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>{filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}</button>
       </div>
       <div className="filter-fields" id="library-filter-fields">
+        <fieldset className="library-levels"><legend>Cấp học</legend><div>{Object.entries(levelNames).map(([code, name]) => <button type="button" key={code} className={level === code ? 'is-active' : ''} aria-pressed={level === code} onClick={() => updateFilter('level', level === code ? '' : code, true)}>{name}</button>)}</div></fieldset>
+        <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}><option value="">Tất cả môn học</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.subject_counts[code] || 0})</option>)}</select></label>
+        <fieldset className="library-types"><legend>Loại đề</legend><div>{Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <label key={code}><input type="radio" name="exam-type" checked={examType === code} onChange={() => updateFilter('exam_type', code)} />{name}</label>)}</div>{examType && <button type="button" onClick={() => updateFilter('exam_type', '')}>Bỏ chọn loại đề</button>}</fieldset>
+        <div className="library-switches"><label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>{user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}</div>
+        <label>Trường<select value={school} onChange={(event) => updateFilter('school', event.target.value)}><option value="">Chọn trường...</option>{facets.data?.schools.map((name) => <option key={name} value={name}>{name} ({facets.data?.school_counts[name] || 0})</option>)}</select></label>
+        <label>Ngành<select value={major} onChange={(event) => updateFilter('major', event.target.value)}><option value="">Chọn ngành...</option>{facets.data?.majors.map((name) => <option key={name} value={name}>{name} ({facets.data?.major_counts[name] || 0})</option>)}</select></label>
+        <details className="library-extra-filters"><summary>Lọc thêm theo lớp, năm</summary><div><label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}><option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label></div></details>
         <label className="filter-search">Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
-        {activeFilters.length > 0 && <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xóa bộ lọc</button>}
-        <div className="filter-section">
-          <p className="filter-section-title">CẤP HỌC & MÔN</p>
-          <label>Cấp học<select value={level} onChange={(event) => updateFilter('level', event.target.value, true)}>
-            <option value="">Tất cả</option>
-            {Object.entries(levelNames).map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.level_counts[code] || 0})</option>)}
-          </select></label>
-          <label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}>
-            <option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item} ({facets.data?.grade_counts[item] || 0})</option>)}
-          </select></label>
-          <label>Môn học<select value={subject} onChange={(event) => updateFilter('subject', event.target.value)}>
-            <option value="">Tất cả</option>{facets.data?.subjects.map(([code, name]) => <option key={code} value={code}>{name} ({facets.data?.subject_counts[code] || 0})</option>)}
-          </select></label>
-        </div>
-        <div className="filter-section">
-          <p className="filter-section-title">CHI TIẾT ĐỀ</p>
-          <label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label>
-          <label>Loại đề<select value={examType} onChange={(event) => updateFilter('exam_type', event.target.value)}>
-            <option value="">Tất cả</option>
-            {Object.entries({ THI_CHINH_THUC: 'Thi chính thức', GIUA_KY: 'Giữa kỳ', CUOI_KY: 'Cuối kỳ', KIEM_TRA: 'Kiểm tra', ON_TAP: 'Ôn tập', OLYMPIC: 'Olympic', KHAC: 'Khác' }).map(([code, name]) => <option key={code} value={code}>{name}</option>)}
-          </select></label>
-          <label className="check-label"><input type="checkbox" checked={hasKey} onChange={(event) => updateFilter('has_answer_key', event.target.checked ? 'true' : '')} /> Có đáp án</label>
-          {user && <label className="check-label"><input type="checkbox" checked={mine} onChange={(event) => updateFilter('mine', event.target.checked ? 'true' : '')} /> Chỉ đề của tôi</label>}
-        </div>
-        {((facets.data?.schools.length || 0) > 0 || school) && <FilterChips label="Trường" values={facets.data?.schools || []} counts={facets.data?.school_counts || {}} selected={school}
-          onChange={(value) => updateFilter('school', value)} />}
-        {((facets.data?.majors.length || 0) > 0 || major) && <FilterChips label="Ngành" values={facets.data?.majors || []} counts={facets.data?.major_counts || {}} selected={major}
-          onChange={(value) => updateFilter('major', value)} />}
         {facets.isError && <p role="alert">Không tải được các lựa chọn lọc. <button type="button" onClick={() => facets.refetch()}>Thử lại</button></p>}
       </div>
     </aside>
     <div className="library-results paper">
-      <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div></div>
+      <div className="library-results-heading"><div className="library-results-title"><svg viewBox="0 0 32 32" width="39" height="39" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M16 28c-4-3-8-4-13-3V6c5-1 9 0 13 3 4-3 8-4 13-3v19c-5-1-9 0-13 3ZM16 9v19" /></svg><h2>Thư viện đề</h2></div><div className="library-toolbar"><div className="library-view-mode" role="group" aria-label="Kiểu hiển thị"><button type="button" aria-label="Dạng lưới" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}>▦</button><button type="button" aria-label="Dạng danh sách" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}>☷</button></div><label className="library-sort">Sắp xếp: <select aria-label="Sắp xếp" value={ordering} onChange={(event) => updateFilter('ordering', event.target.value)}><option value="-created_at">Mới nhất</option><option value="-attempt_count">Phổ biến</option><option value="year">Theo năm</option></select></label></div></div>
       {activeFilters.length > 0 && <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
         {activeFilters.map(([key, , label]) => <button type="button" key={key}
           onClick={() => updateFilter(key, '', key === 'level')} aria-label={`Bỏ lọc ${label}`}>
@@ -151,34 +133,24 @@ export function LibraryPage() {
       {exams.isPending && <p role="status">Đang tải danh sách…</p>}
       {exams.isError && <p role="alert">{exams.error.message} <button onClick={() => exams.refetch()}>Thử lại</button></p>}
       {exams.data && <>
-        <p className="result-count">{exams.data.count} đề</p>
+        <p className="result-count">Tìm thấy <strong>{exams.data.count.toLocaleString('vi-VN')}</strong> đề</p>
         {exams.data.count === 0 ? <div className="library-empty"><p>Chưa có đề phù hợp với bộ lọc.</p>
-          {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className="exam-card-grid" aria-label="Danh sách đề">
-          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}
-            style={{ '--cover-accent': /^#[0-9a-fA-F]{6}$/.test(exam.color) ? exam.color : '#2547C4' } as CSSProperties}>
-            <span className="exam-card-cover" aria-hidden="true">
-              <AnswerSheetArt />
-              <span>{exam.subject}</span>
-            </span>
-            <span className="exam-card-body">
-              <span className="exam-card-meta"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} />
-                <span>{levelNames[exam.level] || exam.level}{exam.grade ? ` · Lớp ${exam.grade}` : ''}</span>
-                <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span></span>
-              <strong className="exam-card-title">{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
-              {exam.subtitle && <small>{exam.subtitle}</small>}
-              <span className="exam-card-foot"><span className="mono">{exam.question_count} câu{exam.duration_minutes ? ` · ${exam.duration_minutes} phút` : ''}</span>
-                <span>Xem đề <span aria-hidden="true">↗</span></span></span>
-            </span>
+          {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className={`exam-card-grid${viewMode === 'list' ? ' is-list' : ''}`} aria-label="Danh sách đề">
+          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}>
+            <span className="exam-card-cover"><span>{examTypeNames[exam.exam_type] || 'Đề thi'}</span>{exam.visibility === 'PRIVATE' && <span className="exam-card-private">Riêng tư</span>}</span>
+            <span className="exam-card-body"><strong className="exam-card-subject">{exam.subject}</strong><span className="exam-card-meta">{exam.grade ? `Lớp ${exam.grade}` : levelNames[exam.level] || exam.level}</span><strong className="exam-card-title">{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>{exam.subtitle && <small>{exam.subtitle}</small>}<span className="exam-card-foot"><span>{exam.duration_minutes ? `${exam.duration_minutes} phút` : 'Không giới hạn giờ'}</span><span>{exam.question_count} câu</span><span className="exam-card-arrow" aria-hidden="true">→</span></span></span>
           </Link>)}
         </section>}
         <nav className="pagination" aria-label="Phân trang đề thi">
-          <button type="button" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}><span aria-hidden="true">←</span> Trang trước</button>
-          <span className="pagination-current" aria-current="page">Trang {page}</span>
-          <button type="button" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>Trang sau <span aria-hidden="true">→</span></button>
+          <button type="button" aria-label="Trang trước" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}>‹</button>
+          {Array.from({ length: Math.min(5, Math.max(1, Math.ceil(exams.data.count / 6))) }, (_, index) => Math.max(1, Math.min(page - 2, Math.max(1, Math.ceil(exams.data.count / 6) - 4))) + index).map((number) => <button type="button" key={number} className={number === page ? 'pagination-current' : ''} aria-current={number === page ? 'page' : undefined} aria-label={`Trang ${number}`} onClick={() => updatePage(number)}>{number}</button>)}
+          {Math.ceil(exams.data.count / 6) > 5 && <><span aria-hidden="true">…</span><button type="button" aria-label={`Trang ${Math.ceil(exams.data.count / 6)}`} onClick={() => updatePage(Math.ceil(exams.data.count / 6))}>{Math.ceil(exams.data.count / 6)}</button></>}
+          <button type="button" aria-label="Trang sau" disabled={!exams.data.next} onClick={() => updatePage(page + 1)}>›</button>
         </nav>
       </>}
     </div>
-  </section>
+    </section>
+  </div>
 }
 
 export function ExamDetailPage() {
