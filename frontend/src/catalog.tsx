@@ -144,7 +144,6 @@ export function LibraryPage() {
       <div className="section-heading"><div><p className="eyebrow">THƯ VIỆN</p><h1>Đề thi</h1></div>
         {user && <Link className="button primary" to="/exams/new">Tạo đề</Link>}
       </div>
-      <p className="section-lede">Tìm đề phù hợp, xem cấu trúc rồi chọn thi thử hoặc ôn tập.</p>
       {activeFilters.length > 0 && <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
         {activeFilters.map(([key, , label]) => <button type="button" key={key}
           onClick={() => updateFilter(key, '', key === 'level')} aria-label={`Bỏ lọc ${label}`}>
