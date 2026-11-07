@@ -334,7 +334,7 @@ export function ExamDetailPage() {
     </div>}
     {user?.roles.includes('Admin') && <div className="owner-actions"><button type="button" className="button secondary" disabled={ownerBusy} onClick={() => setConfirmation('HIDE')}>Ẩn đề với mọi người</button>{ownerMessage && !exam.data.is_owner && <p role="status">{ownerMessage}</p>}</div>}
     <h2>Nội dung đề</h2>
-    <ul>{exam.data.sections.map((section) => <li key={section.id}>{section.title} · {section.kind}</li>)}</ul>
+    <ul>{exam.data.sections.map((section) => <li key={section.id}>{section.title}</li>)}</ul>
     <h2>Xem trước</h2>
     {preview.isPending && <p role="status">Đang tải câu mẫu…</p>}
     {preview.isError && <p role="alert">{preview.error.message}</p>}
