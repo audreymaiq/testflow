@@ -18,6 +18,7 @@ function Shell({ children }: { children: ReactNode }) {
   const [leaving, setLeaving] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const isHome = useLocation().pathname === '/'
   const closeLogout = useCallback(() => { if (!leaving) setConfirmLogout(false) }, [leaving])
   const closeMessage = useCallback(() => setMessage(''), [])
 
@@ -35,29 +36,44 @@ function Shell({ children }: { children: ReactNode }) {
 
   return <>
     <a className="skip-link" href="#main">Bỏ qua điều hướng</a>
-    <header className="topbar bg-surface text-text">
+    <header className={`topbar bg-surface text-text${isHome ? ' topbar-dashboard' : ''}`}>
       <div className="topbar-inner">
       <Link to="/" className="brand" aria-label="TestFlow, trang chủ">
-        <svg className="brand-symbol" viewBox="0 0 48 48" width="34" height="34" fill="none" aria-hidden="true">
-          <path d="M4 7h40v8H29v9h12v7H29v11h-8V15H4V7Z" stroke="currentColor" strokeWidth="2.8" strokeLinejoin="miter" />
+        <svg className="brand-symbol" viewBox="0 0 48 48" width="38" height="38" fill="none" aria-hidden="true">
+          <path d="M24 41c-5.6-4.3-11.4-5.9-19-5.6V9.5C13 8.7 19 10.8 24 15v26Z" fill="#00A8B5" />
+          <path d="M24 41c5.6-4.3 11.4-5.9 19-5.6V9.5C35 8.7 29 10.8 24 15v26Z" fill="#0757D7" />
+          <path d="M24 15v26" stroke="#FFFFFF" strokeWidth="1.6" />
         </svg>
-        <span className="brand-wordmark"><span>Test</span><span>Flow</span></span>
+        <span className="brand-wordmark">TestFlow</span>
       </Link>
       <nav aria-label="Điều hướng chính">
-        <NavLink to="/library">Thư viện</NavLink>
-        <NavLink to="/add-exam">Thêm đề</NavLink>
-        {user ? <>
-          <NavLink to="/history">Lịch sử</NavLink>
-          <NavLink to="/account">Tài khoản</NavLink>
-          {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <NavLink to="/publish-requests">Duyệt đề</NavLink>}
-          {user.roles.includes('Admin') && <NavLink to="/ops">Vận hành</NavLink>}
-          <button type="button" className="text-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
+        {isHome ? <>
+          <NavLink to="/" end>Trang chủ</NavLink>
+          <NavLink to="/library">Thư viện</NavLink>
+          <NavLink to={user ? '/history' : '/login'}>Kết quả</NavLink>
         </> : <>
-          <NavLink to="/login">Đăng nhập</NavLink>
-          <Link to="/register" className="header-action">Tạo tài khoản</Link>
+          <NavLink to="/library">Thư viện</NavLink>
+          <NavLink to="/add-exam">Thêm đề</NavLink>
+          {user ? <>
+            <NavLink to="/history">Lịch sử</NavLink>
+            <NavLink to="/account">Tài khoản</NavLink>
+            {(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <NavLink to="/publish-requests">Duyệt đề</NavLink>}
+            {user.roles.includes('Admin') && <NavLink to="/ops">Vận hành</NavLink>}
+            <button type="button" className="text-button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button>
+          </> : <>
+            <NavLink to="/login">Đăng nhập</NavLink>
+            <Link to="/register" className="header-action">Tạo tài khoản</Link>
+          </>}
         </>}
       </nav>
-      <ModeControl />
+      {isHome ? <div className="header-dashboard-actions">
+        {user ? <>
+          <details className="header-popover header-notifications"><summary aria-label="Thông báo"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M18 8a6 6 0 0 0-12 0c0 7-2.5 7.5-2.5 9h17C20.5 15.5 18 15 18 8ZM10 20h4" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg></summary><div className="header-popover-panel" role="status">Chưa có thông báo.</div></details>
+          <details className="header-popover header-account"><summary aria-label="Mở menu tài khoản"><span className="header-avatar" aria-hidden="true">{(user.display_name || user.username).slice(0, 1).toUpperCase()}</span><svg viewBox="0 0 20 20" fill="none" aria-hidden="true"><path d="m4 7 6 6 6-6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg></summary>
+            <div className="header-popover-panel"><Link to="/account">Tài khoản</Link><Link to="/add-exam">Thêm đề</Link>{(user.roles.includes('Reviewer') || user.roles.includes('Admin')) && <Link to="/publish-requests">Duyệt đề</Link>}{user.roles.includes('Admin') && <Link to="/ops">Vận hành</Link>}<ModeControl /><button type="button" onClick={() => setConfirmLogout(true)}>Đăng xuất</button></div>
+          </details>
+        </> : <><Link className="header-guest-link" to="/login">Đăng nhập</Link><Link className="header-guest-action" to="/register">Tạo tài khoản</Link><ModeControl /></>}
+      </div> : <ModeControl />}
       </div>
     </header>
     <main id="main">{children}</main>
