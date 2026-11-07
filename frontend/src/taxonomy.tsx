@@ -1,13 +1,14 @@
-import { useRef, useState } from 'react'
+import { useId, useRef, useState } from 'react'
 import { useAuth } from './auth'
 
 type Kind = 'SUBJECT' | 'SCHOOL' | 'MAJOR'
 type Match = { id: number; name: string; code: string | null }
 type Lookup = { match: Match | null; suggestions: Match[] }
 
-export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed }: {
+export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed, required = false, suggestions = [] }: {
   kind: Kind; label: string; value: string; onChange: (value: string) => void
   onConfirmed?: (name: string) => void
+  required?: boolean; suggestions?: string[]
 }) {
   const { api } = useAuth()
   const [lookup, setLookup] = useState<Lookup | null>(null)
@@ -15,6 +16,7 @@ export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed }: {
   const [busy, setBusy] = useState(false)
   const [hasFormula, setHasFormula] = useState(false)
   const currentValue = useRef(value)
+  const suggestionsId = useId()
   currentValue.current = value
 
   async function check() {
@@ -45,9 +47,10 @@ export function TaxonomyEntry({ kind, label, value, onChange, onConfirmed }: {
   }
 
   return <div className="taxonomy-entry">
-    <label>{label}<input disabled={busy} maxLength={kind === 'SUBJECT' ? 120 : 200} value={value} onChange={(event) => {
+    <label><span>{label}{required && <span className="required-mark" aria-hidden="true"> *</span>}</span><input required={required} list={suggestions.length ? suggestionsId : undefined} disabled={busy} maxLength={kind === 'SUBJECT' ? 120 : 200} value={value} onChange={(event) => {
       onChange(event.target.value); setLookup(null); setMessage('')
     }} /></label>
+    {suggestions.length > 0 && <datalist id={suggestionsId}>{suggestions.map((name) => <option key={name} value={name} />)}</datalist>}
     <button type="button" disabled={busy || !value.trim()} onClick={check}>Kiểm tra tên</button>
     {busy && <p role="status">Đang xử lý…</p>}
     {lookup?.match && <p role="status">Tên chuẩn: {lookup.match.name}</p>}
