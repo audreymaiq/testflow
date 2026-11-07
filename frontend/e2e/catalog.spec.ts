@@ -153,4 +153,7 @@ test('pagination appears only for another page and keeps page navigation usable'
   await expect(pagination.locator('[aria-current="page"]')).toHaveText('Trang 2')
   await pagination.getByRole('button', { name: 'Trang trước' }).click()
   await expect(page).not.toHaveURL(/page=2/)
+  await page.setViewportSize({ width: 320, height: 700 })
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
+  await expect(pagination.getByRole('button', { name: 'Trang sau' })).toBeVisible()
 })
