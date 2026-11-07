@@ -74,7 +74,8 @@ h1 { font-size: clamp(2rem, 4vw, 3.25rem); line-height: 1.18; font-weight: 600; 
 .home-search-box svg { flex: none; margin-left: .7rem; color: #526A70; }
 .home-search input { flex: 1; min-width: 0; min-height: 44px; padding: .6rem .2rem; border: 0; color: #1B2C31; background: transparent; outline: 0; }
 .home-search input::placeholder { color: #637D83; }
-.home-search-box .button { flex: none; min-height: 46px; padding-inline: 1.2rem; border-radius: 5px; }
+.home-search-box .button { flex: none; min-height: 46px; padding-inline: 1.2rem; border-color: #E6B86B; border-radius: 5px; background: #E6B86B; color: #173B48; }
+.home-search-box .button:hover:not(:disabled) { border-color: #F2D39A; background: #F2D39A; color: #173B48; }
 .home-deck-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 1.5rem; }
 .home-deck { display: grid; grid-template-columns: 42px minmax(0, 1fr); grid-template-rows: auto auto; align-content: start; gap: .35rem 1rem; min-width: 0; min-height: 135px; padding: 1.15rem .4rem; color: var(--text); text-decoration: none; background: transparent; border: 0; border-top: 1px solid var(--rule); border-radius: 0; }
 .home-deck:hover, .home-deck:focus-visible { background: var(--surface-alt); }
