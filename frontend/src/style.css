@@ -434,12 +434,13 @@ main:has(.library-page) { width: min(1502px, calc(100% - 10vw)); margin: 20px au
 .filter-fields select, .filter-fields input:not([type=checkbox]):not([type=radio]) { min-height: 37px; padding: .25rem .7rem; border: 1px solid #cad6eb; border-radius: 11px; background: #fff; color: #102044; font-size: .9rem; font-weight: 500; box-shadow: 0 2px 3px #183d761b; }
 .library-levels, .library-types { min-width: 0; margin: 0; padding: 0; border: 0; }
 .library-levels legend, .library-types legend { margin-bottom: 3px; padding: 0; color: #101a34; font-size: .97rem; font-weight: 700; }
-.library-levels > div { display: flex; flex-wrap: wrap; gap: 5px; padding-left: 18px; }
+.library-levels > div { display: flex; flex-wrap: wrap; gap: 5px; }
 .library-levels button { min-width: 93px; min-height: 31px; padding: 3px 7px; border: 1px solid #d0dcef; border-radius: 10px; background: #fff; color: #101a34; font-size: .83rem; box-shadow: 0 2px 3px #183d761a; }
 .library-levels button.is-active { border-color: #0a5ce4; background: #0a5ce4; color: #fff; }
 .library-types > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px 7px; padding-left: 18px; }
 .library-types label { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: .87rem; font-weight: 500; white-space: nowrap; }
-.library-types input { width: 18px; height: 18px; margin: 0; accent-color: #0a5ce4; }
+.filter-fields .library-types input[type=radio] { appearance: none; flex: none; width: 18px; min-height: 18px; height: 18px; margin: 0; border: 1px solid #b8c8e2; border-radius: 4px; background: #fff; box-shadow: none; }
+.filter-fields .library-types input[type=radio]:checked { border-color: #0a5ce4; background: #0a5ce4 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 18 18'%3E%3Cpath d='m4 9 3 3 7-7' fill='none' stroke='white' stroke-width='2' stroke-linecap='round'/%3E%3C/svg%3E") center/16px 16px no-repeat; }
 .library-types > button { min-height: 25px; margin: 3px 0 0 18px; padding: 0; border: 0; background: transparent; color: #0a53c4; font-size: .78rem; text-decoration: underline; }
 .library-switches { display: flex; flex-wrap: wrap; gap: 10px 18px; }
 .filter-fields .library-switches .check-label { min-height: 26px; color: #101a34; font-size: .87rem; font-weight: 500; white-space: nowrap; }
