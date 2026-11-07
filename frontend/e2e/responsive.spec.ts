@@ -1,8 +1,9 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
-test('mobile catalog keeps search and theme controls usable without horizontal overflow', async ({ page }) => {
+test('mobile catalog keeps search and the mode toggle usable without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
+  await page.addInitScript(() => localStorage.setItem('tf_mode', 'light'))
   await page.goto('/library')
   const filters = page.locator('.library-filters')
   const toggle = filters.getByRole('button', { name: 'Hiện bộ lọc' })
@@ -18,7 +19,7 @@ test('mobile catalog keeps search and theme controls usable without horizontal o
   await filters.getByRole('button', { name: 'Xóa bộ lọc' }).click()
   await expect(page).not.toHaveURL(/q=/)
 
-  await page.getByLabel('Chế độ').selectOption('dark')
+  await page.getByRole('button', { name: 'Chuyển sang chế độ tối' }).click()
   await expect(page.locator('html')).toHaveAttribute('data-mode', 'dark')
   expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBeLessThanOrEqual(320)
 })
