@@ -28,7 +28,7 @@ test('home grid searches real exams and respects private ownership', async ({ pa
   await expect(page.getByRole('heading', { name: title })).toBeVisible()
 
   await page.goto('/')
-  await expect(page.getByRole('heading', { name: 'Thư viện đề' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'Đề nổi bật' })).toBeVisible()
   await page.getByLabel('Tìm bộ đề').fill(suffix)
   await page.getByRole('button', { name: 'Tìm đề' }).click()
   const card = page.locator('.home-deck', { hasText: title })
@@ -39,6 +39,7 @@ test('home grid searches real exams and respects private ownership', async ({ pa
   await expect(card).toBeVisible()
   expect(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBeTruthy()
 
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog', { name: 'Đăng xuất?' }).getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
