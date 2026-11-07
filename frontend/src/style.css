@@ -508,7 +508,9 @@ main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5
   .topbar-dashboard .brand-symbol { width: 34px; height: 34px; }
   .topbar-dashboard nav { flex-wrap: nowrap; overflow-x: auto; margin: 0; }
   .topbar-dashboard nav a { min-height: 40px; padding: .4rem .8rem; font-size: .95rem; }
-  .header-guest-link, .header-guest-action { display: none; }
+  .topbar-dashboard .topbar-inner:has(.header-guest-link) .header-dashboard-actions { grid-column: 1 / -1; grid-row: 3; justify-content: center; padding: 0 0 .6rem; }
+  .topbar-dashboard .topbar-inner:has(.header-guest-link) nav { grid-row: 2; }
+  .header-guest-link, .header-guest-action { font-size: .85rem; }
   .home-hero { min-height: 390px; padding: 32px; align-items: flex-start; }
   .home-hero-image { position: absolute; height: 100%; object-position: 65% center; }
   .home-hero::after { background: linear-gradient(90deg, #062452de 0%, #062452c0 52%, #0624524d 100%); }
