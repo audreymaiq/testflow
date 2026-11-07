@@ -3,10 +3,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query'
 import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
+import { DeckMark } from './exam-art'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type ExamSummary = {
   id: string; title: string; subtitle: string; level: string; grade: number | null
+  icon: string; color: string
   subject: string; exam_type: string; visibility: string; question_count: number
   duration_minutes: number | null; has_answer_key: boolean; year: number | null
   is_system_sample: boolean
@@ -142,13 +144,24 @@ export function LibraryPage() {
       {exams.data && <>
         <p className="result-count">{exams.data.count} đề</p>
         {exams.data.count === 0 ? <div className="library-empty"><p>Chưa có đề phù hợp với bộ lọc.</p>
-          {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className="exam-table" aria-label="Danh sách đề">
-          <div className="exam-row table-head" aria-hidden="true"><span>TÊN ĐỀ</span><span>MÔN</span><span>SỐ CÂU</span><span>HIỂN THỊ</span></div>
-          {exams.data.results.map((exam) => <Link className="exam-row" key={exam.id} to={`/exams/${exam.id}`}>
-            <span className="exam-name"><strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
-              <small>{exam.subtitle || levelNames[exam.level]}<span className="exam-mobile-subject"> · {exam.subject}</span></small></span>
-            <span>{exam.subject}</span><span className="mono">{exam.question_count}</span>
-            <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span>
+          {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className="exam-card-grid" aria-label="Danh sách đề">
+          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}>
+            <span className="exam-card-cover" aria-hidden="true">
+              <svg viewBox="0 0 240 120" fill="none"><path d="M90 134c-17-68 25-121 93-128 33-3 65 8 84 30" stroke="currentColor" strokeWidth="1.5"/>
+                <path d="M113 132c-12-53 23-91 69-96 26-3 50 5 68 20" stroke="currentColor" strokeWidth="1.5" strokeDasharray="2 8"/>
+                <circle cx="151" cy="80" r="8" stroke="currentColor" strokeWidth="2"/><circle cx="180" cy="76" r="8" fill="currentColor"/>
+                <circle cx="209" cy="72" r="8" stroke="currentColor" strokeWidth="2"/><path d="m78 53 39-7m-42 21 24-4" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/></svg>
+              <span>{exam.subject}</span>
+            </span>
+            <span className="exam-card-body">
+              <span className="exam-card-meta"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} />
+                <span>{levelNames[exam.level] || exam.level}{exam.grade ? ` · Lớp ${exam.grade}` : ''}</span>
+                <span>{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span></span>
+              <strong className="exam-card-title">{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
+              {exam.subtitle && <small>{exam.subtitle}</small>}
+              <span className="exam-card-foot"><span className="mono">{exam.question_count} câu{exam.duration_minutes ? ` · ${exam.duration_minutes} phút` : ''}</span>
+                <span>Xem đề <span aria-hidden="true">↗</span></span></span>
+            </span>
           </Link>)}
         </section>}
         <nav className="pagination" aria-label="Phân trang đề thi">
