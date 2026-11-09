@@ -407,11 +407,11 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 
 /* Exam library dashboard */
 :root[data-mode="light"]:has(.library-page) { --bg: #fff; }
-body:has(.library-page) .topbar-dashboard .topbar-inner { min-height: 65px; }
+body:has(.library-page) .topbar-dashboard .topbar-inner { width: min(1512px, calc(100% - 9vw)); min-height: 65px; }
 main:has(.library-page) { width: min(1502px, calc(100% - 10vw)); margin: 20px auto 5rem; }
-.library-page { display: grid; gap: 20px; min-width: 0; color: #091a3d; }
+.library-page { display: grid; gap: 16px; min-width: 0; color: #091a3d; }
 .library-hero { position: relative; display: flex; align-items: center; min-height: 208px; padding: 29px 4.5%; overflow: hidden; isolation: isolate; border-radius: 20px; background: #102f5a; }
-.library-hero > img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 84%; }
+.library-hero > img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 72%; }
 .library-hero::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #092c5b5c, #092c5b13 67%, transparent 80%); }
 .library-hero-content { width: min(750px, 66%); color: #fff; transform: translateY(4px); }
 .library-hero h1 { margin: 0 0 4px; color: #fff; font-size: clamp(2rem, 2.4vw, 2.35rem); line-height: 1.2; font-weight: 700; letter-spacing: -.035em; }
@@ -429,7 +429,7 @@ main:has(.library-page) { width: min(1502px, calc(100% - 10vw)); margin: 20px au
 .filter-heading h2 { display: flex; align-items: center; gap: 13px; margin: 0; color: #0b1735; font: 700 1.5rem/1.2 'IBM Plex Sans',sans-serif; }
 .filter-heading h2 svg { width: 27px; height: 27px; color: #075de0; }
 .filter-heading .filter-reset { min-height: 32px; padding: 0; color: #0b2b6b; font-size: .86rem; text-decoration: none; white-space: nowrap; }
-.filter-fields { display: grid; gap: 13px; padding: 9px 29px 0; }
+.filter-fields { display: grid; gap: 10px; padding: 9px 29px 0; }
 .filter-fields label { gap: 3px; color: #101a34; font-size: .97rem; font-weight: 700; }
 .filter-fields select, .filter-fields input:not([type=checkbox]):not([type=radio]) { min-height: 37px; padding: .25rem .7rem; border: 1px solid #cad6eb; border-radius: 11px; background: #fff; color: #102044; font-size: .9rem; font-weight: 500; box-shadow: 0 2px 3px #183d761b; }
 .library-levels, .library-types { min-width: 0; margin: 0; padding: 0; border: 0; }
@@ -450,7 +450,7 @@ main:has(.library-page) { width: min(1502px, calc(100% - 10vw)); margin: 20px au
 .library-extra-filters > div { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
 .library-extra-filters label { font-size: .82rem; }
 .filter-fields .filter-search { margin-top: 2px; font-size: .8rem; }
-.library-results { min-width: 0; border: 0; background: transparent; }
+.library-results { min-width: 0; padding-top: 5px; border: 0; background: transparent; }
 .library-results-heading { display: flex; justify-content: space-between; align-items: center; gap: 1rem; min-height: 48px; }
 .library-results-title { display: flex; align-items: center; gap: 15px; color: #075ce0; }
 .library-results-title h2 { margin: 0; color: #091a3d; font: 700 2.1rem/1.1 'IBM Plex Sans',sans-serif; letter-spacing: -.035em; }
@@ -461,7 +461,7 @@ main:has(.library-page) { width: min(1502px, calc(100% - 10vw)); margin: 20px au
 .library-view-mode button svg { width: 22px; height: 22px; vertical-align: middle; }
 .library-sort { display: flex; align-items: center; gap: 3px; min-height: 47px; padding: 0 10px 0 16px; border: 1px solid #d8e1f1; border-radius: 14px; background: #fff; color: #0d1d40; box-shadow: 0 2px 5px #1c3d6c1a; font-size: .88rem; white-space: nowrap; }
 .library-sort select { min-width: 100px; border: 0; outline: 0; background: transparent; color: #0d1d40; font-weight: 700; }
-.library-results .result-count { margin: 4px 0 21px; color: #152544; font: 1rem/1.4 'IBM Plex Sans',sans-serif; }
+.library-results .result-count { margin: 4px 0 28px; color: #152544; font: 1rem/1.4 'IBM Plex Sans',sans-serif; }
 .library-results .result-count strong { color: #075be6; }
 .library-results .active-filters { margin: 10px 0; }
 .library-results .exam-card-grid { grid-template-columns: repeat(3,minmax(0,1fr)); gap: 21px; margin: 0; }
