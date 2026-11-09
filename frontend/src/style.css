@@ -686,6 +686,23 @@ main:has(.home-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px auto 5
 }
 .filter-fields select:hover, .manual-form select:hover, .library-sort:hover { border-color: var(--accent); }
 .library-sort select { min-width: 116px; }
+.filter-heading .filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 5px 8px; border-radius: 9px; line-height: 1; }
+.filter-heading .filter-reset svg { display: block; width: 17px; height: 17px; flex: none; }
+.filter-heading .filter-reset:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
+.filter-fields select:focus-visible, .library-sort select:focus-visible, .manual-form select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
+@media (max-width: 900px) {
+  .filter-heading { gap: 8px; }
+  .filter-heading h2 { flex: 1; min-width: 0; }
+  .filter-heading .filter-reset { grid-column: auto; }
+}
+@media (max-width: 440px) {
+  .filter-heading { padding-inline: 12px; }
+  .filter-heading h2 { gap: 7px; font-size: 1.2rem; }
+  .filter-heading h2 svg { width: 22px; height: 22px; flex: none; }
+  .filter-heading .filter-reset { padding-inline: 4px; font-size: .78rem; }
+  .filter-heading .filter-reset svg { width: 15px; height: 15px; }
+  .filter-toggle { padding-inline: 7px; }
+}
 :root[data-mode="dark"] .filter-fields select, :root[data-mode="dark"] .library-sort select, :root[data-mode="dark"] .manual-form select {
   color-scheme: dark;
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none'%3E%3Cpath d='m3 6 5 5 5-5' stroke='%23EDF4FF' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
