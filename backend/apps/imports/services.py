@@ -2,6 +2,7 @@
 
 import hashlib
 import logging
+import re
 from pathlib import PurePath
 from time import monotonic
 
@@ -11,6 +12,7 @@ from django.db import IntegrityError, transaction
 from django.utils import timezone
 from pydantic import ValidationError as ContractValidationError
 from testflow_contracts.exam import ExamDraft
+from testflow_contracts.page import PageSchema
 
 from apps.catalog.services import create_exam, is_reviewer
 from apps.common.errors import (
@@ -22,7 +24,8 @@ from apps.common.errors import (
 )
 
 from .document_ingest import DOCX_MIME, MAX_DOCUMENT_BYTES, DocumentRejected, validate_docx
-from .image_ingest import MAX_IMAGE_BYTES
+from .figure_crop import FigureRejected, crop_figure
+from .image_ingest import MAX_IMAGE_BYTES, MAX_PAGE_PNG_BYTES
 from .models import Draft, ImportJob, PageResult, ReviewEdit
 from .txt_parser import MAX_BYTES, parse_txt
 
@@ -388,7 +391,47 @@ def confirm(job_id, *, user):
     if any(item["severity"] == "ERROR" for item in _issues(job)):
         raise ValidationFailed("DRAFT_HAS_ERRORS", "Cần sửa lỗi bản nháp trước khi lưu đề.")
     draft = ExamDraft.model_validate(job.draft.data)
-    exam = create_exam(draft, owner=job.uploader, source_kind=job.source_kind, source_job=job.id)
+    figure_payloads = {}
+    for section in draft.sections:
+        for question in section.questions:
+            for ref in question.figure_refs:
+                if ref in figure_payloads:
+                    continue
+                match = re.fullmatch(r"p([1-9]\d*):(.+)", ref)
+                if match is None:
+                    raise ValidationFailed("FIGURE_REF_INVALID", "Tham chiếu hình không hợp lệ.")
+                page_no, figure_id = int(match.group(1)), match.group(2)
+                page = PageResult.objects.filter(job=job, page_no=page_no).first()
+                if page is None or page.status != PageResult.Status.DONE or not page.image:
+                    raise ValidationFailed("FIGURE_PAGE_MISSING", "Không tìm thấy trang chứa hình.")
+                try:
+                    schema = PageSchema.model_validate(page.page_json)
+                except ContractValidationError as exc:
+                    raise ValidationFailed(
+                        "FIGURE_PAGE_INVALID", "Trang chứa hình không hợp lệ."
+                    ) from exc
+                figure = next((item for item in schema.figures if item.id == figure_id), None)
+                if figure is None:
+                    raise ValidationFailed(
+                        "FIGURE_REF_INVALID", "Không tìm thấy hình trên trang nguồn."
+                    )
+                try:
+                    with page.image.open("rb") as image:
+                        page_png = image.read(MAX_PAGE_PNG_BYTES + 1)
+                    if len(page_png) > MAX_PAGE_PNG_BYTES:
+                        raise FigureRejected("FIGURE_PAGE_TOO_LARGE")
+                    figure_payloads[ref] = crop_figure(page_png, figure.bbox)
+                except (OSError, FigureRejected) as exc:
+                    raise ValidationFailed(
+                        "FIGURE_CROP_FAILED", "Không thể trích hình từ trang."
+                    ) from exc
+    exam = create_exam(
+        draft,
+        owner=job.uploader,
+        source_kind=job.source_kind,
+        source_job=job.id,
+        figure_payloads=figure_payloads,
+    )
     job.exam_id = exam.id
     job.save(update_fields=["exam_id", "updated_at"])
     job.transition(ImportJob.Status.APPROVED)
