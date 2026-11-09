@@ -12,8 +12,8 @@ from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
 from apps.catalog.management.commands.seed_thpt_demo import TITLE
-from apps.catalog.models import Exam, School, Subject
-from apps.catalog.services import create_exam
+from apps.catalog.models import Exam, School, Subject, Visibility
+from apps.catalog.services import create_exam, hide_exam, make_private, soft_delete_exam
 from apps.practice.models import Answer, Session, SessionStatus, WrongQuestion
 from apps.practice.schemas import SessionConfig
 from apps.practice.selection import build_question_set
@@ -216,6 +216,113 @@ def test_personal_history_stats_and_wrong_summary_are_scoped(exam_users):
     client.force_authenticate(user=None)
     assert client.get(reverse("practice-history")).status_code == 401
     assert client.get(summary_url).status_code == 401
+
+
+@pytest.mark.django_db
+def test_withdrawn_public_exam_preserves_only_existing_student_sessions(exam_users):
+    exam, question_id, owner, student = exam_users
+    Exam.objects.filter(pk=exam.pk).update(visibility=Visibility.PUBLIC)
+    client = APIClient()
+    client.force_authenticate(user=student)
+    created = client.post(
+        reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "TIMED"}, format="json"
+    )
+    assert created.status_code == 201
+    session_id = created.data["id"]
+
+    make_private(exam.id, owner=owner)
+    assert client.get(reverse("exam-detail", kwargs={"exam_id": exam.id})).status_code == 404
+    assert (
+        client.post(
+            reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "TIMED"}, format="json"
+        ).status_code
+        == 404
+    )
+    resumed = client.get(reverse("practice-session", kwargs={"session_id": session_id}))
+    assert resumed.status_code == 200
+    assert "correct_answer" not in str(resumed.data)
+    assert client.get(reverse("practice-history")).data["count"] == 1
+    assert client.get(reverse("practice-stats")).data["total_sessions"] == 1
+    assert (
+        client.get(reverse("practice-exam-summary", kwargs={"exam_id": exam.id})).status_code == 404
+    )
+
+    answer_url = reverse(
+        "practice-answer", kwargs={"session_id": session_id, "question_id": question_id}
+    )
+    assert client.put(answer_url, {"value": {"choice": "B"}}, format="json").status_code == 200
+    submitted = client.post(reverse("practice-submit", kwargs={"session_id": session_id}))
+    assert submitted.status_code == 200
+    assert submitted.data["total_score"] == "10.00"
+    assert (
+        client.get(reverse("practice-result", kwargs={"session_id": session_id})).status_code == 200
+    )
+    assert client.get(reverse("practice-stats")).data["completed_sessions"] == 1
+
+    client.force_authenticate(user=owner)
+    assert (
+        client.get(reverse("practice-session", kwargs={"session_id": session_id})).status_code
+        == 404
+    )
+    client.force_authenticate(user=get_user_model().objects.create_user("stranger"))
+    assert (
+        client.get(reverse("practice-session", kwargs={"session_id": session_id})).status_code
+        == 404
+    )
+    assert client.get(reverse("practice-history")).data["count"] == 0
+
+
+@pytest.mark.django_db
+def test_admin_hidden_exam_revokes_practice_access(exam_users):
+    exam, _, owner, student = exam_users
+    Exam.objects.filter(pk=exam.pk).update(visibility=Visibility.PUBLIC)
+    client = APIClient()
+    client.force_authenticate(user=student)
+    created = client.post(
+        reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "TIMED"}, format="json"
+    )
+    session_id = created.data["id"]
+    admin = get_user_model().objects.create_superuser(
+        username="admin", email="admin@example.com", password="HardToGuess#2026"
+    )
+    hide_exam(exam.id, admin=admin)
+    assert (
+        client.get(reverse("practice-session", kwargs={"session_id": session_id})).status_code
+        == 404
+    )
+    assert client.get(reverse("practice-history")).data["count"] == 0
+    assert client.get(reverse("practice-stats")).data["total_sessions"] == 0
+    client.force_authenticate(user=admin)
+    assert (
+        client.post(
+            reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "TIMED"}, format="json"
+        ).status_code
+        == 404
+    )
+    client.force_authenticate(user=owner)
+    assert (
+        client.get(reverse("practice-session", kwargs={"session_id": session_id})).status_code
+        == 404
+    )
+
+
+@pytest.mark.django_db
+def test_deleted_exam_revokes_existing_practice_access(exam_users):
+    exam, _, owner, student = exam_users
+    Exam.objects.filter(pk=exam.pk).update(visibility=Visibility.PUBLIC)
+    client = APIClient()
+    client.force_authenticate(user=student)
+    created = client.post(
+        reverse("practice-sessions"), {"exam_id": str(exam.id), "mode": "TIMED"}, format="json"
+    )
+    session_id = created.data["id"]
+    soft_delete_exam(exam.id, owner=owner)
+    assert (
+        client.get(reverse("practice-session", kwargs={"session_id": session_id})).status_code
+        == 404
+    )
+    assert client.get(reverse("practice-history")).data["count"] == 0
+    assert client.get(reverse("practice-stats")).data["total_sessions"] == 0
 
 
 @pytest.mark.django_db
