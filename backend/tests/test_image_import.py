@@ -163,6 +163,24 @@ def test_worker_rejects_corrupt_image_after_magic_bytes(
     assert not PageResult.objects.filter(job=job).exists()
 
 
+@pytest.mark.django_db
+def test_worker_marks_provider_configuration_loss_as_failure(
+    context, settings, monkeypatch, django_capture_on_commit_callbacks
+):
+    client, _ = context
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda job_id: None)
+    with django_capture_on_commit_callbacks(execute=True):
+        uploaded = upload(client)
+    assert uploaded.status_code == 202
+    settings.IMPORT_INFERENCE_URL = ""
+
+    tasks.process_image_job.apply(args=(uploaded.data["id"],), throw=True)
+    job = ImportJob.objects.get(pk=uploaded.data["id"])
+    page = PageResult.objects.get(job=job, page_no=1)
+    assert job.status == ImportJob.Status.FAILED
+    assert job.error_code == page.error_code == "OCR_PROVIDER_UNCONFIGURED"
+
+
 @pytest.mark.django_db(transaction=True)
 def test_page_image_is_private_to_owner_and_reviewer(settings, tmp_path):
     settings.MEDIA_ROOT = tmp_path
