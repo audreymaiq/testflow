@@ -2,6 +2,7 @@
 
 from django.db.models import Count, Q
 
+from apps.catalog.models import Visibility
 from apps.catalog.selectors import visible_exams
 from apps.common.errors import NotFound
 
@@ -10,7 +11,8 @@ from .models import Session, SessionStatus, WrongQuestion
 
 def visible_history(user):
     return (
-        Session.objects.filter(user_id=user.pk, exam_id__in=visible_exams(user).values("id"))
+        Session.objects.filter(user_id=user.pk, exam__deleted_at__isnull=True)
+        .exclude(exam__visibility=Visibility.HIDDEN)
         .select_related("exam")
         .prefetch_related("answers")
         .order_by("-started_at", "-id")
