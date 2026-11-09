@@ -6,6 +6,7 @@ from .views import (
     ImageImportView,
     MineView,
     OriginalFileView,
+    PageImageView,
     ReviewQueueView,
     ReviewView,
     TxtImportView,
@@ -18,6 +19,11 @@ urlpatterns = [
     path("review-queue/", ReviewQueueView.as_view(), name="imports-review-queue"),
     path("<uuid:job_id>/", ReviewView.as_view(), name="imports-detail"),
     path("<uuid:job_id>/original/", OriginalFileView.as_view(), name="imports-original"),
+    path(
+        "<uuid:job_id>/pages/<int:page_no>/image/",
+        PageImageView.as_view(),
+        name="imports-page-image",
+    ),
     path("<uuid:job_id>/confirm/", ConfirmView.as_view(), name="imports-confirm"),
     path("<uuid:job_id>/discard/", DiscardView.as_view(), name="imports-discard"),
 ]
