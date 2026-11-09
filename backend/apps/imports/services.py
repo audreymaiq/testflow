@@ -1,4 +1,4 @@
-"""TXT upload, draft review, and atomic confirmation."""
+"""Import upload, draft review, and atomic confirmation."""
 
 import hashlib
 import logging
@@ -192,7 +192,12 @@ def replace_draft(job_id, *, user, data):
             "DRAFT_QUESTIONS_MISSING", "Bản nháp vẫn thiếu câu hỏi đã bỏ qua khi phân tích."
         )
     draft.data = after
-    draft.warnings = [item for item in draft.warnings if item["severity"] != "ERROR"]
+    if job.source_kind == "TXT":
+        # TXT parse errors describe skipped source lines. Once the reviewer has
+        # restored the missing question count, the edited draft supersedes them.
+        draft.warnings = [item for item in draft.warnings if item["severity"] != "ERROR"]
+    # OCR errors can describe lost figures, page gaps or conflicting metadata.
+    # A generic JSON edit cannot prove those source-level defects were repaired.
     draft.skipped_count = 0
     draft.updated_by = user
     draft.save(update_fields=["data", "warnings", "skipped_count", "updated_by", "updated_at"])
@@ -209,12 +214,12 @@ def confirm(job_id, *, user):
     if any(item["severity"] == "ERROR" for item in _issues(job)):
         raise ValidationFailed("DRAFT_HAS_ERRORS", "Cần sửa lỗi bản nháp trước khi lưu đề.")
     draft = ExamDraft.model_validate(job.draft.data)
-    exam = create_exam(draft, owner=user, source_kind="TXT", source_job=job.id)
+    exam = create_exam(draft, owner=user, source_kind=job.source_kind, source_job=job.id)
     job.exam_id = exam.id
     job.save(update_fields=["exam_id", "updated_at"])
     job.transition(ImportJob.Status.APPROVED)
     logger.info(
-        "TXT import confirmed",
+        "Import confirmed",
         extra={
             "import_job_id": str(job.id),
             "stage": "confirm",
