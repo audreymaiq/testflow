@@ -123,3 +123,25 @@ def test_network_timeout_is_retryable(monkeypatch):
 def test_invalid_configuration_fails_before_network():
     with pytest.raises(ValueError):
         inference_client.extract_page(service_url="file:///private", image_png=b"x", page_no=1)
+
+
+def test_text_layer_request_does_not_send_image_and_requires_text_source(monkeypatch):
+    def accepted(request, timeout):
+        payload = json.loads(request.data)
+        assert payload["text_layer"] == "Câu hỏi được trích trực tiếp từ PDF"
+        assert "image_b64" not in payload
+        return response(source="TEXT_LAYER")
+
+    monkeypatch.setattr(inference_client, "urlopen", accepted)
+    output = inference_client.extract_page(
+        service_url="http://inference.internal:8001",
+        text_layer="Câu hỏi được trích trực tiếp từ PDF",
+        page_no=2,
+    )
+    assert output.source == "TEXT_LAYER"
+
+    monkeypatch.setattr(inference_client, "urlopen", lambda request, timeout: response(source="VLM"))
+    with pytest.raises(inference_client.ExtractionError, match="INFERENCE_RESPONSE_INVALID"):
+        inference_client.extract_page(
+            service_url="http://inference.internal:8001", text_layer="PDF text", page_no=2
+        )
