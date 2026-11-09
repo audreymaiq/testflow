@@ -12,7 +12,7 @@ from django.utils import timezone
 from pydantic import ValidationError as ContractValidationError
 from testflow_contracts.exam import ExamDraft
 
-from apps.catalog.services import create_exam
+from apps.catalog.services import create_exam, is_reviewer
 from apps.common.errors import Conflict, NotFound, QuotaExceeded, ValidationFailed
 
 from .models import Draft, ImportJob, ReviewEdit
@@ -30,11 +30,17 @@ class InvalidFileType(ValidationFailed):
 
 
 def _owned_job(job_id, user, *, lock=False):
-    queryset = ImportJob.objects.select_for_update() if lock else ImportJob.objects
-    job = queryset.filter(pk=job_id, uploader=user).first()
+    queryset = ImportJob.objects.select_for_update(of=("self",)) if lock else ImportJob.objects
+    if not is_reviewer(user):
+        queryset = queryset.filter(uploader=user)
+    job = queryset.select_related("draft").filter(pk=job_id).first()
     if job is None:
         raise NotFound("IMPORT_NOT_FOUND", "Không tìm thấy lần nhập đề.")
     return job
+
+
+def reviewable_job(job_id, *, user):
+    return _owned_job(job_id, user)
 
 
 def _issues(job):
@@ -214,7 +220,7 @@ def confirm(job_id, *, user):
     if any(item["severity"] == "ERROR" for item in _issues(job)):
         raise ValidationFailed("DRAFT_HAS_ERRORS", "Cần sửa lỗi bản nháp trước khi lưu đề.")
     draft = ExamDraft.model_validate(job.draft.data)
-    exam = create_exam(draft, owner=user, source_kind=job.source_kind, source_job=job.id)
+    exam = create_exam(draft, owner=job.uploader, source_kind=job.source_kind, source_job=job.id)
     job.exam_id = exam.id
     job.save(update_fields=["exam_id", "updated_at"])
     job.transition(ImportJob.Status.APPROVED)
