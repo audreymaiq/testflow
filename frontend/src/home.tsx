@@ -3,13 +3,10 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { useAuth } from './auth'
 import heroDashboard from './assets/hero-dashboard.webp'
-import { DeckMark } from './exam-art'
+import { ExamCard, type ExamCardData } from './exam-card'
 export { DeckMark } from './exam-art'
 
-type HomeExam = {
-  id: string; title: string; subtitle: string; icon: string; color: string; subject: string
-  chapter_count: number; question_count: number; visibility: string; is_system_sample: boolean
-}
+type HomeExam = ExamCardData & { chapter_count: number }
 type Page<T> = { count: number; next: string | null; results: T[] }
 type Subject = { code: string; name: string }
 type RecentSession = {
@@ -109,12 +106,8 @@ export function Home() {
       {exams.isPending && <div role="status" className="home-loading">Đang tải đề thi…</div>}
       {exams.isError && <p role="alert">{exams.error.message} <button type="button" onClick={() => exams.refetch()}>Thử lại</button></p>}
       {exams.data?.count === 0 && <div className="home-empty paper"><p>{search || subject ? 'Không tìm thấy bộ đề phù hợp.' : 'Chưa có đề thi nào trong thư viện.'}</p><Link to="/library">Mở thư viện đề →</Link></div>}
-      {exams.data && exams.data.count > 0 && <div className="home-deck-grid">
-        {exams.data.results.map((exam) => <Link className="home-deck paper" key={exam.id} to={`/exams/${exam.id}`}>
-          <span className="home-deck-top"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} /></span>
-          <span className="home-deck-copy"><strong>{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>{exam.subtitle && <small>{exam.subtitle}</small>}<span className="home-deck-meta"><span>{exam.subject}</span><span>{exam.chapter_count} chương · {exam.question_count} câu</span></span></span>
-          <span className="home-deck-foot"><span className="home-deck-visibility">{exam.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</span><span className="home-deck-open">Xem đề <span aria-hidden="true">→</span></span></span>
-        </Link>)}
+      {exams.data && exams.data.count > 0 && <div className="home-deck-grid library-results">
+        {exams.data.results.map((exam) => <ExamCard key={exam.id} exam={exam} />)}
       </div>}
       {exams.data?.next && <p className="home-more"><Link to="/library">Xem thêm trong thư viện →</Link></p>}
     </section>
