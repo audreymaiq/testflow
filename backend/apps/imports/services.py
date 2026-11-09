@@ -129,6 +129,22 @@ def job_payload(job, *, include_draft=False):
     }
     if job.status == ImportJob.Status.REJECTED:
         payload["discard_reason"] = job.error_detail
+    if include_draft and job.source_kind == "OCR":
+        payload["pages"] = [
+            {
+                "page_no": page.page_no,
+                "status": page.status,
+                "source": page.source or None,
+                "attempts": page.attempts,
+                "error_code": page.error_code or None,
+                "provider_name": page.provider_name or None,
+                "model_name": page.model_name or None,
+                "model_version": page.model_version or None,
+                "artifact_digest": page.artifact_digest or None,
+                "latency_ms": page.latency_ms,
+            }
+            for page in job.pages.order_by("page_no")
+        ]
     if hasattr(job, "draft") and job.status in {
         ImportJob.Status.NEEDS_REVIEW,
         ImportJob.Status.APPROVED,
