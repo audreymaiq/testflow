@@ -12,7 +12,7 @@ from rest_framework.test import APIClient
 
 from apps.catalog.models import Exam, School, Subject
 from apps.imports import inference_client, tasks
-from apps.imports.models import ImportJob, PageResult
+from apps.imports.models import Draft, ImportJob, PageResult
 
 
 def image_file():
@@ -179,6 +179,68 @@ def test_worker_marks_provider_configuration_loss_as_failure(
     page = PageResult.objects.get(job=job, page_no=1)
     assert job.status == ImportJob.Status.FAILED
     assert job.error_code == page.error_code == "OCR_PROVIDER_UNCONFIGURED"
+
+
+@pytest.mark.django_db
+def test_worker_fails_invalid_persisted_page_instead_of_stranding_job(context):
+    _, owner = context
+    job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/invalid/original.png",
+        original_filename="exam.png",
+        sha256="c" * 64,
+        mime_type="image/png",
+        file_size=8,
+        source_kind="OCR",
+        status=ImportJob.Status.ASSEMBLING,
+    )
+    page = PageResult.objects.create(
+        job=job,
+        page_no=1,
+        status=PageResult.Status.DONE,
+        page_json={"schema_version": 1, "page_no": 1, "blocks": "invalid"},
+    )
+
+    tasks.process_image_job.apply(args=(str(job.id),), throw=True)
+
+    job.refresh_from_db()
+    page.refresh_from_db()
+    assert job.status == ImportJob.Status.FAILED
+    assert job.error_code == page.error_code == "PAGE_RESULT_INVALID"
+    assert page.status == PageResult.Status.FAILED
+    assert not Draft.objects.filter(job=job).exists()
+
+
+@pytest.mark.django_db
+def test_worker_records_assembly_rejection_instead_of_stranding_job(context, monkeypatch):
+    _, owner = context
+    job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/assembly/original.png",
+        original_filename="exam.png",
+        sha256="d" * 64,
+        mime_type="image/png",
+        file_size=8,
+        source_kind="OCR",
+        status=ImportJob.Status.ASSEMBLING,
+    )
+    PageResult.objects.create(
+        job=job,
+        page_no=1,
+        status=PageResult.Status.DONE,
+        page_json={"schema_version": 1, "page_no": 1, "blocks": []},
+    )
+
+    def reject_assembly(_pages):
+        raise ValueError("synthetic assembly rejection")
+
+    monkeypatch.setattr(tasks, "assemble_pages", reject_assembly)
+    tasks.process_image_job.apply(args=(str(job.id),), throw=True)
+
+    job.refresh_from_db()
+    assert job.status == ImportJob.Status.FAILED
+    assert job.error_code == "ASSEMBLY_INVALID"
+    assert not Draft.objects.filter(job=job).exists()
 
 
 @pytest.mark.django_db(transaction=True)
