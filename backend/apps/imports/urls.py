@@ -8,9 +8,9 @@ from .views import (
     MineView,
     OriginalFileView,
     PageImageView,
+    RetryPageView,
     ReviewQueueView,
     ReviewView,
-    RetryPageView,
     TxtImportView,
 )
 
