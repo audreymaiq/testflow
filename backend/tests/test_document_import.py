@@ -1,12 +1,15 @@
 """Document upload through per-page extraction and review, with synthetic inference."""
 
 import json
+from datetime import timedelta
 from io import BytesIO
 from urllib.error import URLError
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from apps.imports import document_ingest, inference_client, tasks
@@ -150,3 +153,43 @@ def test_docx_conversion_and_corrupt_pdf_failure(
     failed = ImportJob.objects.get(pk=corrupt.data["id"])
     assert failed.status == ImportJob.Status.FAILED
     assert failed.error_code == "PDF_INVALID"
+
+
+@pytest.mark.django_db
+def test_stale_jobs_requeue_to_matching_worker(context, monkeypatch):
+    _, owner = context
+    pdf_job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/recovery/original.pdf",
+        original_filename="recovery.pdf",
+        sha256="d" * 64,
+        mime_type="application/pdf",
+        file_size=100,
+        source_kind="OCR",
+    )
+    image_job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/recovery/original.png",
+        original_filename="recovery.png",
+        sha256="e" * 64,
+        mime_type="image/png",
+        file_size=100,
+        source_kind="OCR",
+    )
+    ImportJob.objects.filter(pk__in=[pdf_job.pk, image_job.pk]).update(
+        updated_at=timezone.now() - timedelta(minutes=10)
+    )
+    dispatched = []
+    monkeypatch.setattr(
+        tasks.process_document_job,
+        "delay",
+        lambda job_id: dispatched.append(("document", job_id)),
+    )
+    monkeypatch.setattr(
+        tasks.process_image_job, "delay", lambda job_id: dispatched.append(("image", job_id))
+    )
+    call_command("recover_import_jobs", older_than_minutes=5)
+    assert set(dispatched) == {
+        ("document", str(pdf_job.pk)),
+        ("image", str(image_job.pk)),
+    }
