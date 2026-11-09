@@ -124,6 +124,7 @@ class QuestionDraft(ContractModel):
     kind: QuestionKind
     chapter: str | None = None
     passage_ref: str | None = None
+    figure_refs: list[str] = Field(default_factory=list, max_length=20)
     text: str
     explanation: str = ""
     choices: list[ChoiceDraft] = Field(default_factory=list)
@@ -139,6 +140,10 @@ class QuestionDraft(ContractModel):
     def validate_kind(self):
         if not self.text or _TAG.search(self.text) or _TAG.search(self.explanation):
             raise ValueError("question text must be nonempty plain text")
+        if len(set(self.figure_refs)) != len(self.figure_refs) or any(
+            not item for item in self.figure_refs
+        ):
+            raise ValueError("figure references must be nonempty and unique")
         if self.order < 1:
             raise ValueError("question order must be positive")
         if self.kind in {"MCQ", "MCQ_MULTI"}:
