@@ -194,6 +194,7 @@ def test_worker_fails_invalid_persisted_page_instead_of_stranding_job(context):
         file_size=8,
         source_kind="OCR",
         status=ImportJob.Status.ASSEMBLING,
+        page_count=1,
     )
     page = PageResult.objects.create(
         job=job,
@@ -224,6 +225,7 @@ def test_worker_records_assembly_rejection_instead_of_stranding_job(context, mon
         file_size=8,
         source_kind="OCR",
         status=ImportJob.Status.ASSEMBLING,
+        page_count=1,
     )
     PageResult.objects.create(
         job=job,
