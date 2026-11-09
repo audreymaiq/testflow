@@ -100,13 +100,14 @@ def _merge_continuation(first: QuestionBlock, second: QuestionBlock) -> Question
 def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
     """Build a reviewable draft from page blocks in physical page order.
 
-    Unsupported continuations, passages and figures are explicit errors, so a
-    caller must not confirm a lossy draft. No model or database access occurs.
+    Unmatched source references are explicit errors, so a caller must not
+    confirm a lossy draft. No model or database access occurs.
     """
     ordered = sorted(pages, key=lambda page: page.page_no)
     numbers = [page.page_no for page in ordered]
     if len(numbers) != len(set(numbers)):
         raise ValueError("page numbers must be unique")
+    figure_keys = {f"p{page.page_no}:{figure.id}" for page in ordered for figure in page.figures}
 
     issues: list[AssemblyIssue] = []
     metadata: dict = {}
@@ -201,6 +202,9 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     (page.page_no, entry.number_label, entry.answer) for entry in block.entries
                 )
             elif isinstance(block, QuestionBlock):
+                block = block.model_copy(
+                    update={"figure_refs": [f"p{page.page_no}:{ref}" for ref in block.figure_refs]}
+                )
                 source_page_no = page.page_no
                 continuation_group = None
                 if block.continues_from_previous:
@@ -236,18 +240,12 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     pending = (block, source_page_no, page.page_no, continuation_group or section())
                     continue
                 if block.figure_refs:
-                    available_figures = {figure.id for figure in page.figures}
-                    if any(ref not in available_figures for ref in block.figure_refs):
+                    if any(ref not in figure_keys for ref in block.figure_refs):
                         issue(
                             page.page_no,
                             "E_FIGURE_UNMATCHED",
                             "Câu tham chiếu hình không có trên trang.",
                         )
-                    issue(
-                        page.page_no,
-                        "E_FIGURE_UNSUPPORTED",
-                        "Câu có hình chưa thể xác nhận an toàn.",
-                    )
                 group = continuation_group or section()
                 passage_ref = None
                 if block.passage_ref:
@@ -294,9 +292,20 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     question_index.setdefault(_number_key(block.number_label), []).append(
                         (candidate, page.page_no)
                     )
-        if page.figures:
+
+    referenced_figures = {
+        ref
+        for group in sections
+        for question in group["questions"]
+        for ref in question["figure_refs"]
+    }
+    for page in ordered:
+        if any(f"p{page.page_no}:{figure.id}" not in referenced_figures for figure in page.figures):
             issue(
-                page.page_no, "E_FIGURE_UNSUPPORTED", "Hình trên trang chưa được đưa vào bản nháp."
+                page.page_no,
+                "W_FIGURE_UNANCHORED",
+                "Hình trên trang chưa gắn với câu hỏi.",
+                warning=True,
             )
 
     if pending is not None:
