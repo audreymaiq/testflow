@@ -30,6 +30,7 @@ test('registration, logout and login use the running API and PostgreSQL', async 
 
   const cookies = await page.context().cookies()
   expect(cookies.find((cookie) => cookie.name === 'tf_refresh')?.httpOnly).toBe(true)
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('dialog')).toBeVisible()
   await page.keyboard.press('Escape')
@@ -74,6 +75,7 @@ test('password reset email link changes credentials in the running app', async (
   await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
   await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
   await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible({ timeout: 15000 })
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await page.goto('/login')
