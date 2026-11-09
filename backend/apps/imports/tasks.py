@@ -59,6 +59,9 @@ def process_image_job(self, job_id: str) -> None:
     page = PageResult.objects.get(job=job, page_no=1)
     if job.status == ImportJob.Status.EXTRACTING:
         if page.status != PageResult.Status.DONE:
+            if not settings.IMPORT_INFERENCE_URL.startswith(("http://", "https://")):
+                _fail(job, "OCR_PROVIDER_UNCONFIGURED", page=page)
+                return
             page.attempts += 1
             page.status = PageResult.Status.PENDING
             page.error_code = ""
