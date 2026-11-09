@@ -407,3 +407,34 @@ def test_page_retry_is_owner_scoped_and_preserves_manual_review(context):
     assert response.data["error"]["code"] == "IMPORT_REVIEW_EDITED"
     job.refresh_from_db()
     assert job.status == ImportJob.Status.NEEDS_REVIEW
+
+
+@pytest.mark.django_db
+def test_worker_loss_recovery_has_persisted_page_attempt_limit(context, monkeypatch):
+    _, owner = context
+    job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/recovery/original.png",
+        original_filename="recovery.png",
+        sha256="1" * 64,
+        mime_type="image/png",
+        file_size=100,
+        source_kind="OCR",
+        status=ImportJob.Status.EXTRACTING,
+        page_count=1,
+    )
+    page = PageResult.objects.create(job=job, page_no=1, attempts=3)
+    page.image.save("page.png", image_file(), save=True)
+
+    def unexpected(_request, timeout):
+        raise AssertionError("exhausted page must not call inference again")
+
+    monkeypatch.setattr(inference_client, "urlopen", unexpected)
+    tasks.process_image_job.apply(args=(str(job.id),), throw=True)
+    job.refresh_from_db()
+    page.refresh_from_db()
+    assert job.status == ImportJob.Status.NEEDS_REVIEW
+    assert page.status == PageResult.Status.FAILED
+    assert page.attempts == 3
+    assert page.error_code == "EXTRACTION_ATTEMPTS_EXHAUSTED"
+    assert any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
