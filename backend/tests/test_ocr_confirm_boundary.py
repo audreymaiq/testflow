@@ -138,4 +138,8 @@ def test_generic_ocr_edit_preserves_unresolved_skipped_count(context):
     assert edited.status_code == 200, edited.data
     assert edited.data["report"]["skipped"] == 1
     assert edited.data["report"]["issues"] == [error]
+    data["metadata"]["subtitle"] = "Reviewed against the source image"
+    edited_again = client.patch(f"/api/v1/imports/{job.id}/", {"draft": data}, format="json")
+    assert edited_again.status_code == 200, edited_again.data
+    assert edited_again.data["report"]["skipped"] == 1
     assert client.post(f"/api/v1/imports/{job.id}/confirm/").status_code == 400
