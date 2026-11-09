@@ -165,7 +165,7 @@ def test_unsupported_page_content_is_reported_and_skipped_not_silently_lost():
     assert outcome.valid == 0 and outcome.skipped == 3
     assert {
         "E_FIGURE_UNSUPPORTED",
-        "E_CONTINUATION_UNSUPPORTED",
+        "E_CONTINUATION_UNMATCHED",
         "E_PASSAGE_UNMATCHED",
         "E_NO_QUESTIONS",
     } <= codes(outcome)
@@ -230,3 +230,27 @@ def test_unreferenced_passage_blocks_confirmation_instead_of_disappearing():
         ]
     )
     assert "E_PASSAGE_UNANCHORED" in codes(outcome)
+
+
+def test_question_continuation_merges_text_and_choices_without_guessing():
+    first = question("Câu 9", choices=[{"label": "A", "text": "Một"}])
+    first["continues_on_next"] = True
+    second = question(
+        "Câu 9", choices=[{"label": "B", "text": "Hai"}], continues_from_previous=True
+    )
+    second["text"] = "phần tiếp theo"
+    outcome = assemble_pages([page(1, blocks=[first]), page(2, blocks=[second])])
+    assert outcome.valid == 1 and outcome.skipped == 0
+    merged = outcome.draft.sections[0].questions[0]
+    assert merged.text.endswith("phần tiếp theo")
+    assert [choice.label for choice in merged.choices] == ["A", "B"]
+    assert merged.provenance.page_no == 1
+    assert "E_CONTINUATION_UNMATCHED" not in codes(outcome)
+
+
+def test_mismatched_continuation_is_blocked_and_counted_as_skipped():
+    first = question("Câu 9", continues_on_next=True)
+    second = question("Câu 10", continues_from_previous=True)
+    outcome = assemble_pages([page(1, blocks=[first]), page(2, blocks=[second])])
+    assert outcome.valid == 0 and outcome.skipped == 1
+    assert "E_CONTINUATION_UNMATCHED" in codes(outcome)
