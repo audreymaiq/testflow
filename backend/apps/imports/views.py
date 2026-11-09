@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from apps.catalog.services import is_reviewer
 from apps.common.errors import DomainPermissionDenied, NotFound
 
-from .models import ImportJob
+from .models import ImportJob, PageResult
 from .serializers import (
     DiscardSerializer,
     DraftReplaceSerializer,
@@ -113,6 +113,23 @@ class OriginalFileView(GenericAPIView):
             filename=job.original_filename,
             content_type=job.mime_type,
         )
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
+
+
+class PageImageView(GenericAPIView):
+    @extend_schema(operation_id="imports_page_image", responses={200: bytes})
+    def get(self, request, job_id, page_no):
+        job = reviewable_job(job_id, user=request.user)
+        page = PageResult.objects.filter(job=job, page_no=page_no).first()
+        if page is None or not page.image:
+            raise NotFound("IMPORT_PAGE_NOT_FOUND", "Không tìm thấy ảnh trang.")
+        try:
+            image = page.image.open("rb")
+        except (FileNotFoundError, OSError) as exc:
+            raise NotFound("IMPORT_PAGE_NOT_FOUND", "Không tìm thấy ảnh trang.") from exc
+        response = FileResponse(image, content_type="image/png")
         response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response
