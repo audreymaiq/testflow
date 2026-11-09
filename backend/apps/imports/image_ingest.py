@@ -15,6 +15,7 @@ from PIL import Image, ImageOps, UnidentifiedImageError
 MAX_IMAGE_BYTES = 20 * 1024 * 1024
 MAX_IMAGE_PIXELS = 20_000_000
 MAX_PAGE_SIDE = 3_000
+MAX_PAGE_PNG_BYTES = 20 * 1024 * 1024
 IMAGE_MIME_TYPES = {
     "JPEG": "image/jpeg",
     "PNG": "image/png",
@@ -60,6 +61,8 @@ def normalize_image(raw: bytes) -> NormalizedImage:
                 normalized = oriented.convert("RGB")
                 output = BytesIO()
                 normalized.save(output, format="PNG", optimize=True)
+                if output.tell() > MAX_PAGE_PNG_BYTES:
+                    raise ImageRejected("PAGE_IMAGE_TOO_LARGE")
                 return NormalizedImage(
                     png=output.getvalue(),
                     width=normalized.width,
