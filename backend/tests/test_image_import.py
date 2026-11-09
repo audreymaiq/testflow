@@ -5,6 +5,7 @@ from io import BytesIO
 
 import pytest
 from django.contrib.auth import get_user_model
+from django.contrib.auth.models import Group
 from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from rest_framework.test import APIClient
@@ -158,3 +159,49 @@ def test_worker_rejects_corrupt_image_after_magic_bytes(
     assert job.status == ImportJob.Status.FAILED
     assert job.error_code == "IMAGE_DECODE_FAILED"
     assert not PageResult.objects.filter(job=job).exists()
+
+
+@pytest.mark.django_db(transaction=True)
+def test_page_image_is_private_to_owner_and_reviewer(settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    User = get_user_model()
+    owner = User.objects.create_user(
+        "page_image_owner", email="page_image_owner@example.com", password="HardToGuess#2026"
+    )
+    other = User.objects.create_user(
+        "page_image_other", email="page_image_other@example.com", password="HardToGuess#2026"
+    )
+    reviewer = User.objects.create_user(
+        "page_image_reviewer", email="page_image_reviewer@example.com", password="HardToGuess#2026"
+    )
+    reviewer.groups.add(Group.objects.get_or_create(name="Reviewer")[0])
+    job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/private/original.png",
+        original_filename="exam.png",
+        sha256="b" * 64,
+        mime_type="image/png",
+        file_size=8,
+        source_kind="OCR",
+    )
+    page = PageResult(job=job, page_no=1)
+    page.image.save("page.png", image_file(), save=True)
+    url = f"/api/v1/imports/{job.id}/pages/1/image/"
+
+    def request(actor):
+        api = APIClient()
+        if actor:
+            api.force_authenticate(actor)
+        return api.get(url)
+
+    assert request(None).status_code == 401
+    assert request(other).status_code == 404
+    for actor in (owner, reviewer):
+        response = request(actor)
+        assert response.status_code == 200
+        assert b"".join(response.streaming_content).startswith(b"\x89PNG")
+        assert response["Cache-Control"] == "private, no-store"
+        assert response["X-Content-Type-Options"] == "nosniff"
+        response.close()
+    page.image.delete(save=False)
+    assert request(owner).status_code == 404
