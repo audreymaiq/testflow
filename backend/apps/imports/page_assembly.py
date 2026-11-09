@@ -236,11 +236,18 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     pending = (block, source_page_no, page.page_no, continuation_group or section())
                     continue
                 if block.figure_refs:
+                    available_figures = {figure.id for figure in page.figures}
+                    if any(ref not in available_figures for ref in block.figure_refs):
+                        issue(
+                            page.page_no,
+                            "E_FIGURE_UNMATCHED",
+                            "Câu tham chiếu hình không có trên trang.",
+                        )
                     issue(
-                        page.page_no, "E_FIGURE_UNSUPPORTED", "Câu có hình cần được gắn thủ công."
+                        page.page_no,
+                        "E_FIGURE_UNSUPPORTED",
+                        "Câu có hình chưa thể xác nhận an toàn.",
                     )
-                    skipped += 1
-                    continue
                 group = continuation_group or section()
                 passage_ref = None
                 if block.passage_ref:
@@ -266,6 +273,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     "kind": block.kind,
                     "text": block.text,
                     "passage_ref": passage_ref,
+                    "figure_refs": block.figure_refs,
                     "choices": [
                         {"label": choice.label, "text": choice.text} for choice in block.choices
                     ],
