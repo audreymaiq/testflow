@@ -5,6 +5,7 @@ import logging
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
+from pydantic import ValidationError
 from testflow_contracts.page import PageSchema
 
 from .image_ingest import ImageRejected, normalize_image
@@ -99,7 +100,20 @@ def process_image_job(self, job_id: str) -> None:
         job.transition(ImportJob.Status.ASSEMBLING)
 
     if job.status == ImportJob.Status.ASSEMBLING:
-        outcome = assemble_pages([PageSchema.model_validate(page.page_json)])
+        try:
+            validated_page = PageSchema.model_validate(page.page_json)
+        except ValidationError:
+            _fail(job, "PAGE_RESULT_INVALID", page=page)
+            return
+        try:
+            outcome = assemble_pages([validated_page])
+        except ValueError:
+            logger.exception(
+                "Image import assembly rejected the extracted page",
+                extra={"import_job_id": str(job.id), "stage": "assemble"},
+            )
+            _fail(job, "ASSEMBLY_INVALID")
+            return
         data = outcome.draft.model_dump(mode="json")
         Draft.objects.update_or_create(
             job=job,
