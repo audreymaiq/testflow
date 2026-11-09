@@ -273,6 +273,35 @@ def test_worker_exhausts_transient_provider_retries(
     assert any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
     assert client.post(f"/api/v1/imports/{job.id}/confirm/").status_code == 400
 
+    retry_url = f"/api/v1/imports/{job.id}/pages/1/retry/"
+    dispatched = []
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda job_id: dispatched.append(job_id))
+    with django_capture_on_commit_callbacks(execute=True):
+        retried = client.post(retry_url)
+    assert retried.status_code == 202
+    assert retried.data["status"] == ImportJob.Status.EXTRACTING
+    assert "draft" not in retried.data
+    assert dispatched == [str(job.id)]
+
+    def recovered(_request, timeout):
+        return BytesIO(
+            json.dumps(
+                {
+                    "page_json": {"schema_version": 1, "page_no": 1, "blocks": []},
+                    "source": "VLM",
+                    "model_name": "synthetic-recovery",
+                }
+            ).encode("utf-8")
+        )
+
+    monkeypatch.setattr(inference_client, "urlopen", recovered)
+    tasks.process_image_job.apply(args=(str(job.id),), throw=True)
+    job.refresh_from_db()
+    page.refresh_from_db()
+    assert job.status == ImportJob.Status.NEEDS_REVIEW
+    assert page.status == PageResult.Status.DONE
+    assert not any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
+
 
 @pytest.mark.django_db(transaction=True)
 def test_page_image_is_private_to_owner_and_reviewer(settings, tmp_path):
