@@ -73,6 +73,10 @@ def create_exam(
         raise ValidationFailed("CHAPTER_ORDER", "Thứ tự chương phải liên tục từ 1.")
 
     questions = [question for section in draft.sections for question in section.questions]
+    if any(question.figure_refs for question in questions):
+        raise ValidationFailed(
+            "FIGURE_ASSETS_UNAVAILABLE", "Hình minh họa chưa được gắn thành tệp an toàn."
+        )
     graded = [question for question in questions if question.kind != "ESSAY"]
     has_answer_key = bool(graded) and all(_has_key(question) for question in graded)
     max_score = metadata.max_score
