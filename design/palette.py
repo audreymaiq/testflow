@@ -2,17 +2,17 @@
 
 from __future__ import annotations
 
-ACCENTS = {"light": "#176273", "dark": "#8BCBD0"}
+ACCENTS = {"light": "#0752C4", "dark": "#9DC5FF"}
 
 NEUTRALS = {
     "light": {
-        "bg": "#F5F3EE", "surface": "#FFFEFB", "surface_alt": "#F8F6F1",
-        "text": "#203338", "muted": "#526266", "border": "#788A8B",
+        "bg": "#FFFFFF", "surface": "#FFFFFF", "surface_alt": "#F3F6FC",
+        "text": "#0B1B3A", "muted": "#405779", "border": "#7185A5",
         "success": "#166534", "error": "#A02F2F", "skipped": "#52637C",
     },
     "dark": {
-        "bg": "#142026", "surface": "#1C2D34", "surface_alt": "#23363E",
-        "text": "#EAF1EE", "muted": "#B8CAC8", "border": "#9DB2B3",
+        "bg": "#101A2B", "surface": "#18273F", "surface_alt": "#233654",
+        "text": "#EDF4FF", "muted": "#BDCEE6", "border": "#90A6C5",
         "success": "#85D8A0", "error": "#FF9E9E", "skipped": "#C2CEDF",
     },
 }
