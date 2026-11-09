@@ -1,10 +1,13 @@
 """Durable per-page document import orchestration; inference remains a separate service."""
 
 import logging
+import uuid
+from contextlib import contextmanager
 
 from celery import shared_task
 from django.conf import settings
 from django.core.files.base import ContentFile
+from django.db import connection
 from pydantic import ValidationError
 from testflow_contracts.page import PageSchema
 
@@ -23,6 +26,21 @@ TERMINAL = {
     ImportJob.Status.APPROVED,
     ImportJob.Status.NEEDS_REVIEW,
 }
+
+
+@contextmanager
+def _job_lock(job_id: str):
+    """Hold one PostgreSQL session lock while a worker processes this job."""
+    key = uuid.UUID(job_id).int & ((1 << 63) - 1)
+    with connection.cursor() as cursor:
+        cursor.execute("SELECT pg_try_advisory_lock(%s)", [key])
+        acquired = cursor.fetchone()[0]
+    try:
+        yield acquired
+    finally:
+        if acquired:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT pg_advisory_unlock(%s)", [key])
 
 
 def _fail(job: ImportJob, code: str, *, page: PageResult | None = None) -> None:
@@ -200,11 +218,15 @@ def _process_job(task, job_id: str, *, document: bool) -> None:
         _assemble(job)
 
 
-@shared_task(bind=True, max_retries=2)
+@shared_task(bind=True, max_retries=2, acks_late=True)
 def process_image_job(self, job_id: str) -> None:
-    _process_job(self, job_id, document=False)
+    with _job_lock(job_id) as acquired:
+        if acquired:
+            _process_job(self, job_id, document=False)
 
 
-@shared_task(bind=True, max_retries=MAX_PAGES * 2)
+@shared_task(bind=True, max_retries=MAX_PAGES * 2, acks_late=True)
 def process_document_job(self, job_id: str) -> None:
-    _process_job(self, job_id, document=True)
+    with _job_lock(job_id) as acquired:
+        if acquired:
+            _process_job(self, job_id, document=True)
