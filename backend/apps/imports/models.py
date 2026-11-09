@@ -42,7 +42,7 @@ class ImportJob(models.Model):
         Status.INGESTING: {Status.EXTRACTING, Status.ASSEMBLING, Status.FAILED},
         Status.EXTRACTING: {Status.ASSEMBLING, Status.FAILED},
         Status.ASSEMBLING: {Status.NEEDS_REVIEW, Status.FAILED},
-        Status.NEEDS_REVIEW: {Status.APPROVED, Status.REJECTED, Status.FAILED},
+        Status.NEEDS_REVIEW: {Status.EXTRACTING, Status.APPROVED, Status.REJECTED, Status.FAILED},
         Status.APPROVED: set(),
         Status.REJECTED: set(),
         Status.FAILED: set(),
