@@ -15,8 +15,9 @@ async function register(page: import('@playwright/test').Page, username: string)
 }
 
 async function logout(page: import('@playwright/test').Page) {
-  await page.getByLabel('Mở menu tài khoản').click()
-  await page.getByRole('button', { name: 'Đăng xuất' }).click()
+  const accountMenu = page.locator('details.header-account')
+  if (await accountMenu.getAttribute('open') === null) await page.getByLabel('Mở menu tài khoản').click()
+  await accountMenu.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
   await expect(page).toHaveURL(/\/$/)
