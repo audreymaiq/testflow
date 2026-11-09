@@ -1,4 +1,4 @@
-"""Authenticated, owner-scoped TXT import API."""
+"""Authenticated, owner-scoped import and review API."""
 
 from django.http import FileResponse
 from drf_spectacular.utils import extend_schema
@@ -11,8 +11,21 @@ from apps.catalog.services import is_reviewer
 from apps.common.errors import DomainPermissionDenied, NotFound
 
 from .models import ImportJob
-from .serializers import DiscardSerializer, DraftReplaceSerializer, TxtUploadSerializer
-from .services import confirm, create_txt_job, discard, job_payload, replace_draft, reviewable_job
+from .serializers import (
+    DiscardSerializer,
+    DraftReplaceSerializer,
+    ImageUploadSerializer,
+    TxtUploadSerializer,
+)
+from .services import (
+    confirm,
+    create_image_job,
+    create_txt_job,
+    discard,
+    job_payload,
+    replace_draft,
+    reviewable_job,
+)
 
 
 class TxtImportView(GenericAPIView):
@@ -29,6 +42,21 @@ class TxtImportView(GenericAPIView):
             duration_minutes=serializer.validated_data.get("duration_minutes"),
         )
         return Response(job_payload(job), status=status.HTTP_201_CREATED)
+
+
+class ImageImportView(GenericAPIView):
+    serializer_class = ImageUploadSerializer
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job = create_image_job(
+            serializer.validated_data["file"],
+            uploader=request.user,
+            subject_hint=serializer.validated_data.get("subject_hint", ""),
+        )
+        return Response(job_payload(job), status=status.HTTP_202_ACCEPTED)
 
 
 class MineView(GenericAPIView):
