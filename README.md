@@ -104,6 +104,9 @@ Settings are read from `.env` in the project root. See [.env.example](.env.examp
 | `REDIS_URL` | Redis connection URL |
 | `CORS_ALLOWED_ORIGINS` | Origins allowed to call the API |
 | `IMPORT_DAILY_JOB_LIMIT` | Maximum number of imports per user per day (default: 20) |
+| `IMPORT_INFERENCE_URL` | Internal HTTP(S) page extraction service; document upload is unavailable without it |
+| `IMPORT_INFERENCE_TOKEN` | Optional bearer token for the internal extractor |
+| `SOFFICE_BIN` | LibreOffice executable for DOCX conversion (default: `soffice`) |
 | `BUILD_SHA` | Revision shown in the admin operations summary (default: `local`) |
 | `VITE_API_BASE_URL` | API address used by the web app |
 
@@ -126,6 +129,16 @@ B. 4
 
 Invalid questions are skipped and listed with a reason, so one bad question does not stop the whole import. Files must be UTF-8 encoded.
 
+## Document import backend
+
+Authenticated clients can upload JPEG/PNG/WebP, PDF, or DOCX to `POST /api/v1/imports/document/` with multipart fields `file` and optional `subject_hint`. The existing `/api/v1/imports/image/` path remains image-only. Images are limited to 10 MB; PDF and DOCX to 20 MB and 30 pages. Content is validated independently of the filename and declared MIME type. Upload returns a job ID with HTTP 202; the private original and normalized page images stay behind owner/Reviewer authorization.
+
+The Celery worker extracts embedded PDF text per page when sufficient text exists, renders every page for review, and sends either text or a page image to the configured `/v1/extract-page` runtime. That runtime must return a validated `PageSchema` v1, source (`TEXT_LAYER`, `OCR`, or `VLM`), and model provenance. A PDF can mix text and scan pages. DOCX uses LibreOffice headless conversion with a separate temporary profile; install LibreOffice on the worker and set `SOFFICE_BIN` when it is not on `PATH`. Run the converter in an isolated worker environment with resource and network controls before accepting untrusted DOCX in production.
+
+Poll `GET /api/v1/imports/{job_id}/` for status, per-page progress, errors and the review draft. A permanently failed page remains visible as a blocking review error; `POST /api/v1/imports/{job_id}/pages/{page_no}/retry/` retries that page before any manual draft edits. The worker skips completed pages after a retry or restart. Schedule `python backend/manage.py recover_import_jobs` at least every five minutes to requeue stale jobs after worker or broker loss. The command and duplicate-delivery guard require PostgreSQL. Confirmation always validates the draft and creates a private exam through the catalog service.
+
+The repository does not include a real extraction model, a deployed inference runtime, or the 30-exam annotated evaluation set. Synthetic tests establish transport and state behavior only. Image-heavy figures are currently reported as blocking review errors, so document OCR is **not yet a production-ready feature**. Do not expose the document upload path to end users until those gaps are closed and real-document quality is measured.
+
 ## API
 
 The API is served under `/api/v1/`:
@@ -135,7 +148,7 @@ The API is served under `/api/v1/`:
 | `/api/v1/auth/` | Registration, login, token refresh, logout, profile |
 | `/api/v1/exams/` | Exam library and exam details |
 | `/api/v1/practice/` | Practice sessions, answers, and results |
-| `/api/v1/imports/` | Text imports and draft review |
+| `/api/v1/imports/` | Text and document import, per-page review and retry |
 | `/api/v1/ops/` | Operations summary (admins only) |
 | `/api/v1/taxonomy/lookup/` | Resolve a canonical subject, school or major and suggest close names |
 | `/api/v1/taxonomy/names/` | Create a new canonical name explicitly, or reuse an existing exact match |
@@ -183,7 +196,7 @@ backend/
   apps/
     accounts/     Users, roles, and authentication
     catalog/      Exams, questions, library, and publishing
-    imports/      Text import and draft review
+    imports/      Text and document import, page extraction and draft review
     practice/     Sessions, grading, and results
     ops/          Admin operations summary
     common/       Shared errors, logging, and helpers
