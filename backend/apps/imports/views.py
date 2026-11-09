@@ -1,15 +1,17 @@
 """Authenticated, owner-scoped TXT import API."""
 
-from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
 from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
+from apps.catalog.services import is_reviewer
+from apps.common.errors import DomainPermissionDenied
+
 from .models import ImportJob
 from .serializers import DiscardSerializer, DraftReplaceSerializer, TxtUploadSerializer
-from .services import confirm, create_txt_job, discard, job_payload, replace_draft
+from .services import confirm, create_txt_job, discard, job_payload, replace_draft, reviewable_job
 
 
 class TxtImportView(GenericAPIView):
@@ -40,13 +42,25 @@ class MineView(GenericAPIView):
         return self.get_paginated_response([job_payload(job) for job in page])
 
 
+class ReviewQueueView(GenericAPIView):
+    @extend_schema(operation_id="imports_review_queue", responses={200: dict})
+    def get(self, request):
+        if not is_reviewer(request.user):
+            raise DomainPermissionDenied("REVIEWER_REQUIRED", "Cần quyền duyệt đề.")
+        queryset = (
+            ImportJob.objects.filter(status=ImportJob.Status.NEEDS_REVIEW)
+            .select_related("draft")
+            .order_by("-draft__priority_score", "created_at")
+        )
+        page = self.paginate_queryset(queryset)
+        return self.get_paginated_response([job_payload(job) for job in page])
+
+
 class ReviewView(GenericAPIView):
     serializer_class = DraftReplaceSerializer
 
     def get(self, request, job_id):
-        job = get_object_or_404(
-            ImportJob.objects.select_related("draft"), pk=job_id, uploader=request.user
-        )
+        job = reviewable_job(job_id, user=request.user)
         return Response(job_payload(job, include_draft=True))
 
     def patch(self, request, job_id):
