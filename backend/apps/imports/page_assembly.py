@@ -77,6 +77,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
     current: dict | None = None
     answer_entries: list[tuple[int, str, str]] = []
     question_index: dict[str, list[tuple[dict, int]]] = {}
+    passages_by_id: dict[str, list[tuple[dict, str]]] = {}
     skipped = 0
     question_serial = 0
 
@@ -86,7 +87,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
     def section(title: str = "Câu hỏi") -> dict:
         nonlocal current
         if current is None:
-            current = {"title": title, "questions": []}
+            current = {"title": title, "passages": [], "questions": []}
             sections.append(current)
         return current
 
@@ -134,15 +135,18 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
 
         for block in page.blocks:
             if isinstance(block, SectionHeading):
-                if current is not None and not current["questions"]:
+                if current is not None and not current["questions"] and not current["passages"]:
                     current["title"] = block.text
                 else:
                     current = None
                     section(block.text)
             elif isinstance(block, PassageBlock):
-                issue(
-                    page.page_no, "E_PASSAGE_UNSUPPORTED", "Đoạn văn chung cần được gắn thủ công."
+                group = section()
+                passage_id = f"page-{page.page_no}-passage-{block.id}"
+                group["passages"].append(
+                    {"tmp_id": passage_id, "order": len(group["passages"]) + 1, "text": block.text}
                 )
+                passages_by_id.setdefault(block.id, []).append((group, passage_id))
             elif isinstance(block, AnswerKeyBlock):
                 answer_entries.extend(
                     (page.page_no, entry.number_label, entry.answer) for entry in block.entries
@@ -162,15 +166,23 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     )
                     skipped += 1
                     continue
-                if block.passage_ref:
-                    issue(
-                        page.page_no,
-                        "E_PASSAGE_UNSUPPORTED",
-                        "Câu thuộc đoạn văn chung cần được gắn thủ công.",
-                    )
-                    skipped += 1
-                    continue
                 group = section()
+                passage_ref = None
+                if block.passage_ref:
+                    matches = [
+                        passage_id
+                        for passage_group, passage_id in passages_by_id.get(block.passage_ref, [])
+                        if passage_group is group
+                    ]
+                    if len(matches) != 1:
+                        issue(
+                            page.page_no,
+                            "E_PASSAGE_UNMATCHED",
+                            "Không ghép được câu hỏi với đúng một đoạn văn trong phần này.",
+                        )
+                        skipped += 1
+                        continue
+                    passage_ref = matches[0]
                 question_serial += 1
                 candidate = {
                     "tmp_id": f"page-{page.page_no}-q-{question_serial}",
@@ -178,6 +190,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     "number_label": block.number_label,
                     "kind": block.kind,
                     "text": block.text,
+                    "passage_ref": passage_ref,
                     "choices": [
                         {"label": choice.label, "text": choice.text} for choice in block.choices
                     ],
@@ -258,6 +271,10 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
         if unanswered:
             issue(numbers[0], "W_NO_ANSWER_KEY", f"{unanswered} câu chưa có đáp án.", warning=True)
 
+    for group in sections:
+        referenced = {question.get("passage_ref") for question in group["questions"]}
+        if any(passage["tmp_id"] not in referenced for passage in group["passages"]):
+            issue(numbers[0] if numbers else 0, "E_PASSAGE_UNANCHORED", "Đoạn văn chưa có câu hỏi.")
     complete_sections = [group for group in sections if group["questions"]]
     draft = ExamDraft.model_validate(
         {
@@ -269,6 +286,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     "title": group["title"],
                     "kind": "MIXED",
                     "scoring": {"type": "per_question", "points": "1"},
+                    "passages": group["passages"],
                     "questions": group["questions"],
                 }
                 for index, group in enumerate(complete_sections, start=1)
