@@ -123,6 +123,7 @@ class PageResult(models.Model):
     job = models.ForeignKey(ImportJob, on_delete=models.CASCADE, related_name="pages")
     page_no = models.PositiveSmallIntegerField()
     image = models.ImageField(upload_to=private_page_path, blank=True)
+    text_layer = models.TextField(blank=True)
     source = models.CharField(max_length=12, choices=Source.choices, blank=True)
     raw_output = models.JSONField(default=dict)
     page_json = models.JSONField(default=dict)
