@@ -409,19 +409,19 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 :root[data-mode="light"]:has(.library-page) { --bg: #fff; }
 main:has(.library-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5rem; }
 .library-page { display: grid; gap: 16px; min-width: 0; color: #091a3d; }
-.library-hero { position: relative; display: flex; align-items: center; min-height: 208px; padding: 29px 4.5%; overflow: hidden; isolation: isolate; border-radius: 20px; background: #102f5a; }
+.library-hero { position: relative; display: flex; align-items: center; min-height: 224px; padding: 34px 5%; overflow: hidden; isolation: isolate; border-radius: 20px; background: #102f5a; }
 .library-hero > img { position: absolute; z-index: -2; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center 72%; }
 .library-hero::after { content: ''; position: absolute; z-index: -1; inset: 0; background: linear-gradient(90deg, #092c5b5c, #092c5b13 67%, transparent 80%); }
-.library-hero-content { width: min(750px, 66%); color: #fff; transform: translateY(4px); }
-.library-hero h1 { margin: 0 0 4px; color: #fff; font-size: clamp(2rem, 2.4vw, 2.35rem); line-height: 1.2; font-weight: 700; letter-spacing: -.035em; }
-.library-hero p { margin: 0; color: #f4f8ff; font-size: 1.08rem; }
-.library-hero-search { width: min(725px, 100%); margin-top: 21px; }
-.library-hero-search .home-search-box { min-height: 50px; border-radius: 17px; box-shadow: none; }
+.library-hero-content { width: min(730px, 65%); color: #fff; }
+.library-hero h1 { margin: 0 0 5px; color: #fff; font-size: clamp(2rem, 2.3vw, 2.2rem); line-height: 1.18; font-weight: 700; letter-spacing: -.035em; }
+.library-hero p { margin: 0; color: #f4f8ff; font-size: 1.02rem; line-height: 1.4; }
+.library-hero-search { width: min(725px, 100%); margin-top: 18px; }
+.library-hero-search .home-search-box { min-height: 54px; border-radius: 17px; box-shadow: none; }
 .library-hero-search .home-search-box svg { width: 23px; height: 23px; margin-left: 13px; }
-.library-hero-search input { flex: 1; min-width: 0; min-height: 39px; border: 0; outline: 0; background: transparent; color: #0b1c41; font-size: .97rem; }
-.library-hero-search input::placeholder { color: #14284d; opacity: 1; }
-.library-hero-search button { min-width: 108px; min-height: 42px; border: 0; border-radius: 12px; background: #0759d6; color: #fff; font-weight: 700; box-shadow: none; }
-.library-hero-search button:hover { background: #0046ac; }
+.library-hero-search .home-search-box input { flex: 1; min-width: 0; min-height: 42px; border: 0; outline: 0; background: transparent; color: #0b1c41; font-size: 1rem; }
+.library-hero-search .home-search-box input::placeholder { color: #14284d; opacity: 1; }
+.library-hero-search .home-search-box button { min-width: 112px; min-height: 44px; border: 0; border-radius: 12px; background: #0759d6; color: #fff; font-size: 1rem; font-weight: 700; box-shadow: none; }
+.library-hero-search .home-search-box button:hover { background: #0046ac; }
 .library-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 28px; align-items: start; }
 .library-filters { overflow: hidden; padding: 0 0 19px; border: 1px solid #e1e8f4; border-radius: 20px; background: linear-gradient(145deg,#f3f6fc,#f8faff); box-shadow: 0 6px 16px #183d7620; }
 .filter-heading { min-height: 52px; padding: 12px 26px 4px; border: 0; }
@@ -514,8 +514,8 @@ main:has(.library-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px aut
   .library-hero::after { background: linear-gradient(90deg,#082856ef,#082856ba 70%,#08285676); }
   .library-hero-search .home-search-box { gap: .3rem; }
   .library-hero-search .home-search-box svg { width: 18px; margin-left: 7px; }
-  .library-hero-search input { font-size: .75rem; }
-  .library-hero-search button { min-width: 70px; padding: 0 .4rem; font-size: .8rem; }
+  .library-hero-search .home-search-box input { font-size: .75rem; }
+  .library-hero-search .home-search-box button { min-width: 70px; padding: 0 .4rem; font-size: .8rem; }
   .library-results-title h2 { font-size: 1.6rem; }
   .library-results-title svg { width: 30px; }
   .library-toolbar { width: 100%; justify-content: space-between; }
