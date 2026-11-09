@@ -82,7 +82,7 @@ def process_image_job(self, job_id: str) -> None:
             except OSError:
                 _fail(job, "PAGE_IMAGE_UNAVAILABLE", page=page)
                 return
-            page.source = PageResult.Source.OCR
+            page.source = extraction.source
             page.raw_output = extraction.raw_output
             page.page_json = extraction.page.model_dump(mode="json")
             page.provider_name = extraction.provider_name
