@@ -1,5 +1,6 @@
 """Authenticated, owner-scoped TXT import API."""
 
+from django.http import FileResponse
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
 from rest_framework.generics import GenericAPIView
@@ -7,7 +8,7 @@ from rest_framework.parsers import FormParser, MultiPartParser
 from rest_framework.response import Response
 
 from apps.catalog.services import is_reviewer
-from apps.common.errors import DomainPermissionDenied
+from apps.common.errors import DomainPermissionDenied, NotFound
 
 from .models import ImportJob
 from .serializers import DiscardSerializer, DraftReplaceSerializer, TxtUploadSerializer
@@ -68,6 +69,25 @@ class ReviewView(GenericAPIView):
         serializer.is_valid(raise_exception=True)
         job = replace_draft(job_id, user=request.user, data=serializer.validated_data["draft"])
         return Response(job_payload(job, include_draft=True))
+
+
+class OriginalFileView(GenericAPIView):
+    @extend_schema(operation_id="imports_original_file", responses={200: bytes})
+    def get(self, request, job_id):
+        job = reviewable_job(job_id, user=request.user)
+        try:
+            source = job.original_file.open("rb")
+        except (FileNotFoundError, OSError) as exc:
+            raise NotFound("IMPORT_FILE_NOT_FOUND", "Không tìm thấy tệp gốc.") from exc
+        response = FileResponse(
+            source,
+            as_attachment=True,
+            filename=job.original_filename,
+            content_type=job.mime_type,
+        )
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 class ConfirmView(GenericAPIView):
