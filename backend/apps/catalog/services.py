@@ -1,16 +1,22 @@
 """The only finalized exam write path and catalog business transitions."""
 
+import hashlib
+from collections.abc import Mapping
 from decimal import Decimal
+from io import BytesIO
 
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.core.files.base import ContentFile
 from django.db import transaction
 from django.utils import timezone
+from PIL import Image, UnidentifiedImageError
 from testflow_contracts.exam import ExamDraft
 
 from apps.common.errors import Conflict, DomainPermissionDenied, NotFound, ValidationFailed
 from apps.common.text import search_fold
 
 from .models import (
+    Asset,
     Chapter,
     Choice,
     Exam,
@@ -18,6 +24,7 @@ from .models import (
     PublishRequest,
     PublishRequestStatus,
     Question,
+    QuestionAsset,
     Section,
     Statement,
     Visibility,
@@ -47,6 +54,7 @@ def create_exam(
     source_kind: str = "MANUAL",
     source_job=None,
     allow_schoolless_demo: bool = False,
+    figure_payloads: Mapping[str, bytes] | None = None,
 ) -> Exam:
     """Validate and persist a confirmed PRIVATE exam atomically."""
     metadata = draft.metadata
@@ -73,10 +81,34 @@ def create_exam(
         raise ValidationFailed("CHAPTER_ORDER", "Thứ tự chương phải liên tục từ 1.")
 
     questions = [question for section in draft.sections for question in section.questions]
-    if any(question.figure_refs for question in questions):
-        raise ValidationFailed(
-            "FIGURE_ASSETS_UNAVAILABLE", "Hình minh họa chưa được gắn thành tệp an toàn."
-        )
+    referenced_figures = {ref for question in questions for ref in question.figure_refs}
+    payloads = figure_payloads or {}
+    if referenced_figures - payloads.keys():
+        raise ValidationFailed("FIGURE_ASSETS_UNAVAILABLE", "Hình minh họa chưa có tệp an toàn.")
+    figure_specs = {}
+    for ref in referenced_figures:
+        png = payloads[ref]
+        if not png or len(png) > 10 * 1024 * 1024:
+            raise ValidationFailed("FIGURE_ASSET_INVALID", "Tệp hình minh họa không hợp lệ.")
+        try:
+            with Image.open(BytesIO(png)) as image:
+                if (
+                    image.format != "PNG"
+                    or not 2 <= image.width <= 3000
+                    or not 2 <= image.height <= 3000
+                ):
+                    raise ValueError("invalid figure dimensions")
+                image.load()
+                figure_specs[ref] = (
+                    png,
+                    image.width,
+                    image.height,
+                    hashlib.sha256(png).hexdigest(),
+                )
+        except (OSError, ValueError, UnidentifiedImageError) as exc:
+            raise ValidationFailed(
+                "FIGURE_ASSET_INVALID", "Tệp hình minh họa không hợp lệ."
+            ) from exc
     graded = [question for question in questions if question.kind != "ESSAY"]
     has_answer_key = bool(graded) and all(_has_key(question) for question in graded)
     max_score = metadata.max_score
@@ -145,6 +177,7 @@ def create_exam(
     exam.majors.add(*majors)
 
     chapter_by_code = {}
+    asset_by_ref: dict[str, Asset] = {}
     for chapter_draft in draft.chapters:
         chapter = Chapter.objects.create(
             exam=exam,
@@ -194,6 +227,20 @@ def create_exam(
                 short_tolerance=question_draft.short_tolerance,
                 essay_model_answer=question_draft.essay_model_answer,
             )
+            for asset_order, ref in enumerate(question_draft.figure_refs, start=1):
+                asset = asset_by_ref.get(ref)
+                if asset is None:
+                    png, width, height, digest = figure_specs[ref]
+                    asset = Asset(
+                        width=width,
+                        height=height,
+                        sha256=digest,
+                        source_job=source_job,
+                    )
+                    asset.file.save("figure.png", ContentFile(png), save=False)
+                    asset.save()
+                    asset_by_ref[ref] = asset
+                QuestionAsset.objects.create(question=question, asset=asset, order=asset_order)
             Choice.objects.bulk_create(
                 [
                     Choice(
