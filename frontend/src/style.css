@@ -619,6 +619,7 @@ main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5
 }
 @media (max-width: 1100px) {
   .topbar-dashboard .topbar-inner { grid-template-columns: 1fr auto; }
+  body:has(.library-page) .topbar-dashboard .topbar-inner { grid-template-columns: 1fr auto; }
   .topbar-dashboard nav { grid-column: 1 / -1; grid-row: 2; justify-content: center; padding-bottom: .5rem; }
   .header-dashboard-actions { grid-column: 2; grid-row: 1; }
   .home-resume { grid-template-columns: 1fr auto; gap: 15px; }
@@ -637,6 +638,7 @@ main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5
   .topbar-dashboard .topbar-inner:has(.header-guest-link) nav { grid-row: 2; }
   .header-guest-link, .header-guest-action { font-size: .85rem; }
   .home-hero { min-height: 390px; padding: 32px; align-items: flex-start; }
+  .home-hero { margin-inline: 0; }
   .home-hero-image { position: absolute; height: 100%; object-position: 65% center; }
   .home-hero::after { background: linear-gradient(90deg, #062452de 0%, #062452c0 52%, #0624524d 100%); }
   .home-hero-content { width: 100%; }
