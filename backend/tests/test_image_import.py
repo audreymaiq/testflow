@@ -84,6 +84,7 @@ def test_image_upload_worker_review_and_confirm(
                 ],
             },
             "model_name": "fixture-model",
+            "source": "VLM",
             "artifact_digest": "a" * 64,
         }
         return BytesIO(json.dumps(response).encode("utf-8"))
@@ -95,6 +96,7 @@ def test_image_upload_worker_review_and_confirm(
     assert job.page_count == 1
     page = PageResult.objects.get(job=job, page_no=1)
     assert page.status == PageResult.Status.DONE
+    assert page.source == PageResult.Source.VLM
     assert page.model_name == "fixture-model"
     assert page.artifact_digest == "a" * 64
     assert page.image.name == f"imports/{job_id}/pages/1.png"
