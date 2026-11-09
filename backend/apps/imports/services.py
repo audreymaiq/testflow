@@ -21,6 +21,7 @@ from apps.common.errors import (
     ValidationFailed,
 )
 
+from .document_ingest import DOCX_MIME, MAX_DOCUMENT_BYTES, DocumentRejected, validate_docx
 from .image_ingest import MAX_IMAGE_BYTES
 from .models import Draft, ImportJob, ReviewEdit
 from .txt_parser import MAX_BYTES, parse_txt
@@ -73,6 +74,18 @@ def _image_mime(raw: bytes) -> str:
     if raw.startswith(b"RIFF") and raw[8:12] == b"WEBP":
         return "image/webp"
     raise InvalidFileType("INVALID_FILE_TYPE", "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.")
+
+
+def _document_mime(raw: bytes) -> str:
+    if raw.startswith(b"%PDF-"):
+        return "application/pdf"
+    if raw.startswith(b"PK\x03\x04"):
+        try:
+            validate_docx(raw)
+        except DocumentRejected as exc:
+            raise InvalidFileType(exc.code, "Tệp DOCX không hợp lệ hoặc không an toàn.") from exc
+        return DOCX_MIME
+    return _image_mime(raw)
 
 
 def _owned_job(job_id, user, *, lock=False):
@@ -198,16 +211,30 @@ def create_txt_job(upload, *, uploader, duration_mode="FILE", duration_minutes=N
 
 def create_image_job(upload, *, uploader, subject_hint=""):
     """Accept a bounded image and enqueue its private, asynchronous extraction."""
+    return _create_binary_job(
+        upload, uploader=uploader, subject_hint=subject_hint, allow_documents=False
+    )
+
+
+def create_document_job(upload, *, uploader, subject_hint=""):
+    """Accept a PDF, DOCX, or image through one content-validated import boundary."""
+    return _create_binary_job(
+        upload, uploader=uploader, subject_hint=subject_hint, allow_documents=True
+    )
+
+
+def _create_binary_job(upload, *, uploader, subject_hint: str, allow_documents: bool):
     if not settings.IMPORT_INFERENCE_URL.startswith(("http://", "https://")):
         raise ExternalServiceError(
             "OCR_UNAVAILABLE", "Dịch vụ nhận dạng đề hiện chưa được cấu hình."
         )
-    if upload.size > MAX_IMAGE_BYTES:
+    limit = MAX_DOCUMENT_BYTES if allow_documents else MAX_IMAGE_BYTES
+    if upload.size > limit:
         raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
-    raw = upload.read(MAX_IMAGE_BYTES + 1)
-    if len(raw) > MAX_IMAGE_BYTES:
+    raw = upload.read(limit + 1)
+    if len(raw) > limit:
         raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
-    mime = _image_mime(raw)
+    mime = _document_mime(raw) if allow_documents else _image_mime(raw)
     filename = PurePath(upload.name.replace("\\", "/")).name[:255]
     job = ImportJob(
         uploader=uploader,
@@ -217,16 +244,23 @@ def create_image_job(upload, *, uploader, subject_hint=""):
         file_size=len(raw),
         source_kind="OCR",
         subject_hint=subject_hint,
-        pipeline_version="image-v1",
+        pipeline_version="document-v1" if mime in {"application/pdf", DOCX_MIME} else "image-v1",
     )
     try:
         with transaction.atomic():
             _reserve_upload(job, raw)
-            from .tasks import process_image_job
+            if mime in {"application/pdf", DOCX_MIME}:
+                from .tasks import process_document_job
+
+                worker = process_document_job
+            else:
+                from .tasks import process_image_job
+
+                worker = process_image_job
 
             def enqueue() -> None:
                 try:
-                    process_image_job.delay(str(job.id))
+                    worker.delay(str(job.id))
                 except Exception:
                     job.transition(ImportJob.Status.FAILED, error_code="QUEUE_UNAVAILABLE")
                     logger.exception(
