@@ -15,6 +15,7 @@ async function register(page: import('@playwright/test').Page, username: string)
 }
 
 async function logout(page: import('@playwright/test').Page) {
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
@@ -49,6 +50,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   const code = `from django.contrib.auth import get_user_model; from django.contrib.auth.models import Group; get_user_model().objects.get(username='${reviewer}').groups.add(Group.objects.get(name='Reviewer'))`
   execFileSync(python, ['backend/manage.py', 'shell', '-c', code], { cwd: root })
   await page.reload()
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('link', { name: 'Duyệt đề' }).click()
   await expect(page.getByText(`Đề duyệt ${suffix}`)).toBeVisible()
   await page.getByRole('article').filter({ hasText: `Đề duyệt ${suffix}` }).getByRole('link', { name: 'Xem và duyệt' }).click()
@@ -73,7 +75,7 @@ test('owner publication request is approved by reviewer and private withdrawal i
   await page.goto(examUrl)
   await expect(page.getByText(/1 lượt làm · 0 câu trong ngân hàng câu sai/)).toBeVisible()
   await logout(page)
-  await page.getByRole('link', { name: 'Thêm đề', exact: true }).click()
+  await page.goto('/add-exam')
   await expect(page.getByRole('heading', { name: 'Đăng nhập' })).toBeVisible()
   await page.getByLabel('Tên đăng nhập hoặc email').fill(learner)
   await page.getByRole('button', { name: 'Tiếp tục' }).click()
