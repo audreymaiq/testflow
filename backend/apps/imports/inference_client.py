@@ -28,7 +28,7 @@ class ExtractionError(Exception):
 class PageExtraction:
     page: PageSchema
     raw_output: object
-    source: Literal["OCR", "VLM"]
+    source: Literal["OCR", "VLM", "TEXT_LAYER"]
     provider_name: str
     model_name: str
     model_version: str
@@ -52,7 +52,8 @@ def _read_response(response) -> dict:
 def extract_page(
     *,
     service_url: str,
-    image_png: bytes,
+    image_png: bytes | None = None,
+    text_layer: str = "",
     page_no: int,
     subject_hint: str = "",
     timeout_seconds: int = 60,
@@ -61,17 +62,18 @@ def extract_page(
     """Call one configured internal runtime; never accept a URL from an end user."""
     if not service_url.startswith(("http://", "https://")):
         raise ValueError("service_url must be an HTTP(S) URL")
-    if not image_png or page_no < 1 or timeout_seconds < 1:
+    if bool(image_png) == bool(text_layer) or page_no < 1 or timeout_seconds < 1:
         raise ValueError("invalid extraction input")
-    body = json.dumps(
-        {
-            "image_b64": base64.b64encode(image_png).decode("ascii"),
-            "page_no": page_no,
-            "subject_hint": subject_hint or None,
-            "schema_version": 1,
-        },
-        separators=(",", ":"),
-    ).encode("utf-8")
+    request_data = {
+        "page_no": page_no,
+        "subject_hint": subject_hint or None,
+        "schema_version": 1,
+    }
+    if image_png:
+        request_data["image_b64"] = base64.b64encode(image_png).decode("ascii")
+    else:
+        request_data["text_layer"] = text_layer
+    body = json.dumps(request_data, separators=(",", ":")).encode("utf-8")
     headers = {"Content-Type": "application/json", "Accept": "application/json"}
     if token:
         headers["Authorization"] = f"Bearer {token}"
@@ -92,7 +94,7 @@ def extract_page(
             raise ExtractionError("INFERENCE_PAGE_MISMATCH", retryable=False)
         model_name = payload["model_name"]
         source = payload["source"]
-        if source not in {"OCR", "VLM"}:
+        if source not in ({"OCR", "VLM"} if image_png else {"TEXT_LAYER"}):
             raise ValueError("unsupported extraction source")
         if not isinstance(model_name, str) or not model_name.strip() or len(model_name) > 80:
             raise ValueError("model_name is required")
