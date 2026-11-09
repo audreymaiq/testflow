@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { useAuth } from './auth'
 import { Modal } from './shared'
 import { AnswerSheetArt } from './exam-art'
-import { ExamCard, levelNames, type ExamCardData } from './exam-card'
+import { ExamCard, examTypeNames, levelNames, type ExamCardData } from './exam-card'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 import heroDashboard from './assets/hero-dashboard.webp'
 
@@ -76,7 +76,7 @@ export function LibraryPage() {
     ['grade', grade, `Lớp ${grade}`],
     ['subject', subject, facets.data?.subjects.find(([code]) => code === subject)?.[1] || subject],
     ['school', school, school], ['major', major, major], ['year', year, `Năm ${year}`],
-    ['exam_type', examType, `Loại: ${examType}`],
+    ['exam_type', examType, `Loại: ${examTypeNames[examType] || examType}`],
     ['has_answer_key', hasKey ? 'true' : '', 'Có đáp án'], ['mine', mine ? 'true' : '', 'Đề của tôi'],
   ].filter(([, value]) => value)
 
@@ -95,7 +95,7 @@ export function LibraryPage() {
     <section className="library-layout">
     <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
       <div className="filter-heading"><h2><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 5h18M6 10h12m-9 5h6m-4 0v5l2-1.5V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>Bộ lọc</h2>
-        <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>↶ Đặt lại</button>
+        <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.4 7M3 17v-6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Đặt lại</button>
         <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>{filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}</button>
       </div>
       <div className="filter-fields" id="library-filter-fields">
