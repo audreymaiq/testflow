@@ -57,13 +57,14 @@ def test_header_is_only_copied_when_present_and_conflicts_are_reported():
         [
             page(1, blocks=[question()], header={"title": "Đề kiểm tra", "school": "Trường A"}),
             page(2, header={"title": "Đề khác", "school": "Trường B", "year": 1999}),
+            page(3, header={"title": "Đề kiểm tra", "school": "Trường A"}),
         ]
     )
 
-    assert outcome.draft.metadata.title == "Đề kiểm tra"
-    assert outcome.draft.metadata.schools == ["Trường A"]
+    assert outcome.draft.metadata.title is None
+    assert outcome.draft.metadata.schools == []
     assert outcome.draft.metadata.year is None
-    assert [issue.code for issue in outcome.issues].count("W_HEADER_CONFLICT") == 2
+    assert [issue.code for issue in outcome.issues].count("E_HEADER_CONFLICT") == 2
     assert "W_HEADER_INVALID" in codes(outcome)
 
 
