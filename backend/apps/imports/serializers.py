@@ -12,7 +12,9 @@ class TxtUploadSerializer(serializers.Serializer):
         if mode == "TIMED" and not has_minutes:
             raise serializers.ValidationError({"duration_minutes": "Nhập thời gian làm bài."})
         if mode != "TIMED" and has_minutes:
-            raise serializers.ValidationError({"duration_minutes": "Chỉ nhập số phút cho bài có giờ."})
+            raise serializers.ValidationError(
+                {"duration_minutes": "Chỉ nhập số phút cho bài có giờ."}
+            )
         return attrs
 
 
