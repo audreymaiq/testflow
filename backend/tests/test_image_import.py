@@ -13,7 +13,7 @@ from rest_framework.test import APIClient
 
 from apps.catalog.models import Exam, School, Subject
 from apps.imports import inference_client, tasks
-from apps.imports.models import Draft, ImportJob, PageResult
+from apps.imports.models import Draft, ImportJob, PageResult, ReviewEdit
 
 
 def image_file():
@@ -377,3 +377,33 @@ def test_queue_failure_returns_error_and_releases_duplicate_reservation(
     retried = upload(client)
     assert retried.status_code == 202
     assert dispatched == [retried.data["id"]]
+
+
+@pytest.mark.django_db
+def test_page_retry_is_owner_scoped_and_preserves_manual_review(context):
+    client, owner = context
+    job = ImportJob.objects.create(
+        uploader=owner,
+        original_file="imports/retry/original.png",
+        original_filename="retry.png",
+        sha256="f" * 64,
+        mime_type="image/png",
+        file_size=8,
+        source_kind="OCR",
+        status=ImportJob.Status.NEEDS_REVIEW,
+        page_count=1,
+    )
+    PageResult.objects.create(job=job, page_no=1, status=PageResult.Status.FAILED)
+    url = f"/api/v1/imports/{job.id}/pages/1/retry/"
+    outsider = get_user_model().objects.create_user(
+        "retry_outsider", email="retry_outsider@example.com", password="HardToGuess#2026"
+    )
+    other = APIClient()
+    other.force_authenticate(outsider)
+    assert other.post(url).status_code == 404
+    ReviewEdit.objects.create(job=job, reviewer=owner, path="/", before={}, after={})
+    response = client.post(url)
+    assert response.status_code == 409
+    assert response.data["error"]["code"] == "IMPORT_REVIEW_EDITED"
+    job.refresh_from_db()
+    assert job.status == ImportJob.Status.NEEDS_REVIEW
