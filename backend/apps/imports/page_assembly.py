@@ -244,12 +244,12 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                 group = continuation_group or section()
                 passage_ref = None
                 if block.passage_ref:
-                    matches = [
+                    passage_matches = [
                         passage_id
                         for passage_group, passage_id in passages_by_id.get(block.passage_ref, [])
                         if passage_group is group
                     ]
-                    if len(matches) != 1:
+                    if len(passage_matches) != 1:
                         issue(
                             page.page_no,
                             "E_PASSAGE_UNMATCHED",
@@ -257,7 +257,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                         )
                         skipped += 1
                         continue
-                    passage_ref = matches[0]
+                    passage_ref = passage_matches[0]
                 question_serial += 1
                 candidate = {
                     "tmp_id": f"page-{source_page_no}-q-{question_serial}",
