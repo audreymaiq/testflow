@@ -93,6 +93,11 @@ def _extract_pages(task, job: ImportJob) -> bool:
             return False
         if page.status in {PageResult.Status.DONE, PageResult.Status.FAILED}:
             continue
+        if page.attempts >= 3:
+            page.status = PageResult.Status.FAILED
+            page.error_code = page.error_code or "EXTRACTION_ATTEMPTS_EXHAUSTED"
+            page.save(update_fields=["status", "error_code", "updated_at"])
+            continue
         if not settings.IMPORT_INFERENCE_URL.startswith(("http://", "https://")):
             _fail(job, "OCR_PROVIDER_UNCONFIGURED", page=page)
             return False
