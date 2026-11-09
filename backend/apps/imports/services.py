@@ -259,8 +259,9 @@ def replace_draft(job_id, *, user, data):
     draft = job.draft
     before = draft.data
     after = validated.model_dump(mode="json")
-    required_count = sum(len(section["questions"]) for section in before["sections"])
-    required_count += draft.skipped_count
+    current_count = sum(len(section["questions"]) for section in before["sections"])
+    source_count = sum(len(section["questions"]) for section in draft.original_data["sections"])
+    required_count = max(current_count, source_count + draft.skipped_count)
     after_count = sum(len(section["questions"]) for section in after["sections"])
     if after_count < required_count:
         raise ValidationFailed(
