@@ -23,7 +23,7 @@ from apps.common.errors import (
 
 from .document_ingest import DOCX_MIME, MAX_DOCUMENT_BYTES, DocumentRejected, validate_docx
 from .image_ingest import MAX_IMAGE_BYTES
-from .models import Draft, ImportJob, ReviewEdit
+from .models import Draft, ImportJob, PageResult, ReviewEdit
 from .txt_parser import MAX_BYTES, parse_txt
 
 logger = logging.getLogger("testflow.imports")
@@ -129,7 +129,11 @@ def job_payload(job, *, include_draft=False):
     }
     if job.status == ImportJob.Status.REJECTED:
         payload["discard_reason"] = job.error_detail
-    if hasattr(job, "draft"):
+    if hasattr(job, "draft") and job.status in {
+        ImportJob.Status.NEEDS_REVIEW,
+        ImportJob.Status.APPROVED,
+        ImportJob.Status.REJECTED,
+    }:
         payload["report"] = report(job)
         payload["draft_summary"] = {
             "title": job.draft.data["metadata"].get("title"),
@@ -221,6 +225,45 @@ def create_document_job(upload, *, uploader, subject_hint=""):
     return _create_binary_job(
         upload, uploader=uploader, subject_hint=subject_hint, allow_documents=True
     )
+
+
+@transaction.atomic
+def retry_page(job_id, page_no: int, *, user):
+    """Retry one failed page before manual edits, then rebuild the draft."""
+    job = _owned_job(job_id, user, lock=True)
+    if job.source_kind != "OCR" or job.status != ImportJob.Status.NEEDS_REVIEW:
+        raise Conflict("IMPORT_STATE_CONFLICT", "Đề chưa ở trạng thái cho phép thử lại trang.")
+    if ReviewEdit.objects.filter(job=job).exists():
+        raise Conflict("IMPORT_REVIEW_EDITED", "Không thể thử lại sau khi đã sửa bản nháp.")
+    page = PageResult.objects.select_for_update().filter(job=job, page_no=page_no).first()
+    if page is None:
+        raise NotFound("IMPORT_PAGE_NOT_FOUND", "Không tìm thấy trang cần thử lại.")
+    if page.status != PageResult.Status.FAILED:
+        raise Conflict("IMPORT_PAGE_NOT_FAILED", "Trang này không có lỗi trích xuất.")
+    page.status = PageResult.Status.PENDING
+    page.attempts = 0
+    page.error_code = ""
+    page.save(update_fields=["status", "attempts", "error_code", "updated_at"])
+    job.transition(ImportJob.Status.EXTRACTING)
+
+    def enqueue() -> None:
+        from .tasks import process_document_job, process_image_job
+
+        worker = (
+            process_document_job
+            if job.mime_type in {"application/pdf", DOCX_MIME}
+            else process_image_job
+        )
+        try:
+            worker.delay(str(job.id))
+        except Exception:
+            logger.exception(
+                "Page retry queue unavailable",
+                extra={"import_job_id": str(job.id), "stage": "enqueue"},
+            )
+
+    transaction.on_commit(enqueue)
+    return job
 
 
 def _create_binary_job(upload, *, uploader, subject_hint: str, allow_documents: bool):
