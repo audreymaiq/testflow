@@ -163,9 +163,8 @@ def test_unsupported_page_content_is_reported_and_skipped_not_silently_lost():
     )
 
     assert outcome.valid == 1 and outcome.skipped == 2
-    assert outcome.draft.sections[0].questions[0].figure_refs == ["f1"]
+    assert outcome.draft.sections[0].questions[0].figure_refs == ["p1:f1"]
     assert {
-        "E_FIGURE_UNSUPPORTED",
         "E_CONTINUATION_UNMATCHED",
         "E_PASSAGE_UNMATCHED",
     } <= codes(outcome)
