@@ -267,8 +267,11 @@ def test_worker_exhausts_transient_provider_retries(
     page = PageResult.objects.get(job=job, page_no=1)
     assert len(attempts) == 3
     assert page.attempts == 3
-    assert job.status == ImportJob.Status.FAILED
-    assert job.error_code == page.error_code == "INFERENCE_UNAVAILABLE"
+    assert job.status == ImportJob.Status.NEEDS_REVIEW
+    assert page.status == PageResult.Status.FAILED
+    assert page.error_code == "INFERENCE_UNAVAILABLE"
+    assert any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
+    assert client.post(f"/api/v1/imports/{job.id}/confirm/").status_code == 400
 
 
 @pytest.mark.django_db(transaction=True)
