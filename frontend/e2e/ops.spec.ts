@@ -17,12 +17,14 @@ test('admin sees live operations counts after a private TXT upload', async ({ pa
   const code = `from django.contrib.auth import get_user_model; from django.contrib.auth.models import Group; u=get_user_model().objects.get(username='${username}'); u.is_staff=True; u.save(update_fields=['is_staff']); u.groups.add(Group.objects.get(name='Admin'))`
   execFileSync(python, ['backend/manage.py', 'shell', '-c', code], { cwd: root })
   await page.reload()
+  await page.getByLabel('Mở menu tài khoản').click()
   await expect(page.getByRole('link', { name: 'Vận hành' })).toBeVisible()
   await page.goto('/imports/new')
   const content = `#TITLE: Ops ${suffix}\n[C1] Math\nQuestion?\nA. One\nB. Two\n=>B\n`
   await page.getByLabel('Chọn tệp .txt').setInputFiles({ name: `ops-${suffix}.txt`, mimeType: 'text/plain', buffer: Buffer.from(content) })
   await page.getByRole('button', { name: 'Xác nhận' }).click()
   await expect(page.getByRole('heading', { name: `Ops ${suffix}` })).toBeVisible()
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('link', { name: 'Vận hành' }).click()
   await expect(page.getByRole('heading', { name: 'Tình trạng hệ thống' })).toBeVisible()
   await expect(page.getByText('Chờ kiểm tra', { exact: true })).toBeVisible()
