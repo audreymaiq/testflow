@@ -24,7 +24,11 @@ def _require_session(session_id, user, *, lock=False) -> Session:
     if lock:
         queryset = queryset.select_for_update()
     session = queryset.filter(pk=session_id, user_id=user.pk).first()
-    if session is None or not visible_exams(user).filter(pk=session.exam_id).exists():
+    if (
+        session is None
+        or session.exam.deleted_at is not None
+        or session.exam.visibility == Visibility.HIDDEN
+    ):
         raise NotFound("SESSION_NOT_FOUND", "Không tìm thấy phiên làm bài.")
     return session
 
@@ -146,7 +150,13 @@ def _record_wrong(user, question: Question, status: str) -> None:
 def create_session(*, user, exam_id, mode: str, config: SessionConfig) -> Session:
     if mode not in SessionMode.values:
         raise ValidationFailed("MODE_INVALID", "Chế độ làm bài không hợp lệ.")
-    exam = visible_exams(user).select_for_update().filter(pk=exam_id).first()
+    exam = (
+        visible_exams(user)
+        .exclude(visibility=Visibility.HIDDEN)
+        .select_for_update()
+        .filter(pk=exam_id)
+        .first()
+    )
     if exam is None:
         raise NotFound("EXAM_NOT_FOUND", "Không tìm thấy đề.")
     if not exam.has_answer_key:
