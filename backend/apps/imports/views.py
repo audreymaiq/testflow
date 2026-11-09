@@ -25,6 +25,7 @@ from .services import (
     discard,
     job_payload,
     replace_draft,
+    retry_page,
     reviewable_job,
 )
 
@@ -141,6 +142,13 @@ class PageImageView(GenericAPIView):
         response["Cache-Control"] = "private, no-store"
         response["X-Content-Type-Options"] = "nosniff"
         return response
+
+
+class RetryPageView(GenericAPIView):
+    @extend_schema(operation_id="imports_retry_page", request=None, responses={202: dict})
+    def post(self, request, job_id, page_no):
+        job = retry_page(job_id, page_no, user=request.user)
+        return Response(job_payload(job), status=status.HTTP_202_ACCEPTED)
 
 
 class ConfirmView(GenericAPIView):
