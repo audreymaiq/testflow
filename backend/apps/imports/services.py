@@ -271,9 +271,9 @@ def replace_draft(job_id, *, user, data):
         # TXT parse errors describe skipped source lines. Once the reviewer has
         # restored the missing question count, the edited draft supersedes them.
         draft.warnings = [item for item in draft.warnings if item["severity"] != "ERROR"]
+        draft.skipped_count = 0
     # OCR errors can describe lost figures, page gaps or conflicting metadata.
     # A generic JSON edit cannot prove those source-level defects were repaired.
-    draft.skipped_count = 0
     draft.updated_by = user
     draft.save(update_fields=["data", "warnings", "skipped_count", "updated_by", "updated_at"])
     ReviewEdit.objects.create(job=job, reviewer=user, path="/", before=before, after=after)
