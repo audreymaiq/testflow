@@ -52,7 +52,7 @@ test('mobile catalog keeps search and the mode toggle usable without horizontal 
   await filters.locator('input[type=search]').fill('khong-co-de-nay')
   await expect(page).toHaveURL(/q=khong-co-de-nay/)
   await expect(page.getByRole('button', { name: 'Bỏ lọc Tìm: khong-co-de-nay' })).toBeVisible()
-  await filters.getByRole('button', { name: 'Xóa bộ lọc' }).click()
+  await filters.getByRole('button', { name: 'Đặt lại' }).click()
   await expect(page).not.toHaveURL(/q=/)
 
   await page.getByRole('button', { name: 'Chuyển sang chế độ tối' }).click()
