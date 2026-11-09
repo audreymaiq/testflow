@@ -18,6 +18,11 @@ class TxtUploadSerializer(serializers.Serializer):
         return attrs
 
 
+class ImageUploadSerializer(serializers.Serializer):
+    file = serializers.FileField()
+    subject_hint = serializers.CharField(required=False, allow_blank=True, max_length=40)
+
+
 class DraftReplaceSerializer(serializers.Serializer):
     draft = serializers.JSONField()
 
