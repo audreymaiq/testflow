@@ -26,6 +26,7 @@ def response(page_no=2, **changes):
         },
         "raw_output": {"text": "synthetic"},
         "provider_name": "local-runtime",
+        "source": "VLM",
         "model_name": "synthetic-fixture",
         "model_version": "test-v1",
         "artifact_digest": "a" * 64,
@@ -62,6 +63,7 @@ def test_valid_response_is_checked_and_model_provenance_is_retained(monkeypatch)
     assert output.page.blocks[0].text == "Hai cộng hai bằng mấy?"
     assert output.raw_output == {"text": "synthetic"}
     assert output.model_name == "synthetic-fixture"
+    assert output.source == "VLM"
     assert output.artifact_digest == "a" * 64
     assert output.latency_ms >= 0
 
@@ -71,6 +73,7 @@ def test_valid_response_is_checked_and_model_provenance_is_retained(monkeypatch)
     [
         (lambda: response(page_no=3), "INFERENCE_PAGE_MISMATCH"),
         (lambda: response(model_name=""), "INFERENCE_RESPONSE_INVALID"),
+        (lambda: response(source="UNKNOWN"), "INFERENCE_RESPONSE_INVALID"),
         (lambda: response(artifact_digest="not-a-digest"), "INFERENCE_RESPONSE_INVALID"),
         (
             lambda: response(page_json={"schema_version": 2, "page_no": 2}),
