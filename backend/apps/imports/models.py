@@ -11,7 +11,15 @@ from apps.common.errors import Conflict
 
 
 def private_upload_path(instance, _filename):
-    return f"imports/{instance.id}/original.txt"
+    extension = {
+        "text/plain; charset=utf-8": "txt",
+        "image/jpeg": "jpg",
+        "image/png": "png",
+        "image/webp": "webp",
+        "application/pdf": "pdf",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document": "docx",
+    }.get(instance.mime_type, "bin")
+    return f"imports/{instance.id}/original.{extension}"
 
 
 def private_page_path(instance, _filename):
