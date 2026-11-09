@@ -4,16 +4,11 @@ import { Link, useLocation, useNavigate, useParams, useSearchParams } from 'reac
 import { useAuth } from './auth'
 import { Modal } from './shared'
 import { AnswerSheetArt } from './exam-art'
+import { ExamCard, levelNames, type ExamCardData } from './exam-card'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 import heroDashboard from './assets/hero-dashboard.webp'
 
-type ExamSummary = {
-  id: string; title: string; subtitle: string; level: string; grade: number | null
-  icon: string; color: string
-  subject: string; exam_type: string; visibility: string; question_count: number
-  duration_minutes: number | null; has_answer_key: boolean; year: number | null
-  is_system_sample: boolean
-}
+type ExamSummary = ExamCardData & { has_answer_key: boolean; year: number | null }
 type ExamDetail = ExamSummary & {
   is_owner: boolean
   schools: string[]
@@ -31,14 +26,6 @@ type Facets = {
   subject_counts: Record<string, number>; school_counts: Record<string, number>
   major_counts: Record<string, number>; level_counts: Record<string, number>
   grade_counts: Record<string, number>
-}
-
-const levelNames: Record<string, string> = {
-  TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
-}
-const examTypeNames: Record<string, string> = {
-  THI_CHINH_THUC: 'Đề thi chính thức', GIUA_KY: 'Đề giữa kỳ', CUOI_KY: 'Đề cuối kỳ',
-  KIEM_TRA: 'Đề kiểm tra', ON_TAP: 'Đề ôn tập', OLYMPIC: 'Đề Olympic', KHAC: 'Đề khác',
 }
 
 export function LibraryPage() {
@@ -136,10 +123,7 @@ export function LibraryPage() {
         <p className="result-count">Tìm thấy <strong>{exams.data.count.toLocaleString('vi-VN')}</strong> đề</p>
         {exams.data.count === 0 ? <div className="library-empty"><p>Chưa có đề phù hợp với bộ lọc.</p>
           {activeFilters.length > 0 && <button type="button" className="button secondary" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}>Xem tất cả đề</button>}</div> : <section className={`exam-card-grid${viewMode === 'list' ? ' is-list' : ''}`} aria-label="Danh sách đề">
-          {exams.data.results.map((exam) => <Link className="exam-card" key={exam.id} to={`/exams/${exam.id}`}>
-            <span className="exam-card-cover"><span>{examTypeNames[exam.exam_type] || 'Đề thi'}</span>{exam.visibility === 'PRIVATE' && <span className="exam-card-private">Riêng tư</span>}</span>
-            <span className="exam-card-body"><strong className="exam-card-subject">{exam.subject}</strong><span className="exam-card-meta">{exam.grade ? `Lớp ${exam.grade}` : levelNames[exam.level] || exam.level}</span><strong className="exam-card-title">{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>{exam.subtitle && <small>{exam.subtitle}</small>}<span className="exam-card-foot"><span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 5v5l3 2" /></svg>{exam.duration_minutes ? `${exam.duration_minutes} phút` : 'Không giới hạn giờ'}</span><span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 7 7-4 7 4-7 4-7-4Zm0 4 7 4 7-4M3 15l7 4 7-4" /></svg>{exam.question_count} câu</span><span className="exam-card-arrow" aria-hidden="true">→</span></span></span>
-          </Link>)}
+          {exams.data.results.map((exam) => <ExamCard key={exam.id} exam={exam} />)}
         </section>}
         <nav className="pagination" aria-label="Phân trang đề thi">
           <button type="button" aria-label="Trang trước" disabled={!exams.data.previous} onClick={() => updatePage(page - 1)}>‹</button>
