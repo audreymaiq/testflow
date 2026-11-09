@@ -59,6 +59,44 @@ def _missing_key(question: dict) -> bool:
     return False
 
 
+def _merge_continuation(first: QuestionBlock, second: QuestionBlock) -> QuestionBlock:
+    if first.kind != second.kind or (
+        first.number_label
+        and second.number_label
+        and _number_key(first.number_label) != _number_key(second.number_label)
+    ):
+        raise ValueError("continuation kind or number mismatch")
+    if first.passage_ref and second.passage_ref and first.passage_ref != second.passage_ref:
+        raise ValueError("continuation passage mismatch")
+
+    def merge_labeled(left, right):
+        values = [item.model_dump() for item in left]
+        by_label = {item["label"]: item for item in values}
+        for item in right:
+            if item.label in by_label:
+                existing = by_label[item.label]
+                existing["text"] = f"{existing['text'].rstrip()} {item.text.lstrip()}".strip()
+            else:
+                added = item.model_dump()
+                values.append(added)
+                by_label[item.label] = added
+        return values
+
+    return QuestionBlock.model_validate(
+        {
+            **first.model_dump(),
+            "number_label": first.number_label or second.number_label,
+            "text": f"{first.text.rstrip()} {second.text.lstrip()}".strip(),
+            "choices": merge_labeled(first.choices, second.choices),
+            "statements": merge_labeled(first.statements, second.statements),
+            "figure_refs": list(dict.fromkeys([*first.figure_refs, *second.figure_refs])),
+            "passage_ref": first.passage_ref or second.passage_ref,
+            "continues_from_previous": False,
+            "continues_on_next": second.continues_on_next,
+        }
+    )
+
+
 def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
     """Build a reviewable draft from page blocks in physical page order.
 
@@ -78,6 +116,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
     answer_entries: list[tuple[int, str, str]] = []
     question_index: dict[str, list[tuple[dict, int]]] = {}
     passages_by_id: dict[str, list[tuple[dict, str]]] = {}
+    pending: tuple[QuestionBlock, int, int, dict] | None = None
     skipped = 0
     question_serial = 0
 
@@ -92,6 +131,10 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
         return current
 
     for page in ordered:
+        if pending is not None and page.page_no != pending[2] + 1:
+            issue(pending[1], "E_CONTINUATION_UNMATCHED", "Câu qua trang không có phần tiếp theo.")
+            skipped += 1
+            pending = None
         if page.page_no > 1 and page.page_no - 1 not in numbers:
             issue(page.page_no, "E_PAGE_GAP", "Thiếu trang trước trang này.")
         header = page.header
@@ -135,6 +178,12 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
 
         for block in page.blocks:
             if isinstance(block, SectionHeading):
+                if pending is not None:
+                    issue(
+                        pending[1], "E_CONTINUATION_UNMATCHED", "Câu qua trang đổi phần đột ngột."
+                    )
+                    skipped += 1
+                    pending = None
                 if current is not None and not current["questions"] and not current["passages"]:
                     current["title"] = block.text
                 else:
@@ -152,13 +201,39 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     (page.page_no, entry.number_label, entry.answer) for entry in block.entries
                 )
             elif isinstance(block, QuestionBlock):
-                if block.continues_from_previous or block.continues_on_next:
+                source_page_no = page.page_no
+                continuation_group = None
+                if block.continues_from_previous:
+                    if pending is None or pending[2] + 1 != page.page_no:
+                        issue(
+                            page.page_no,
+                            "E_CONTINUATION_UNMATCHED",
+                            "Phần tiếp của câu không có trang trước phù hợp.",
+                        )
+                        skipped += 1
+                        continue
+                    first, source_page_no, _, continuation_group = pending
+                    pending = None
+                    try:
+                        block = _merge_continuation(first, block)
+                    except ValueError:
+                        issue(
+                            page.page_no,
+                            "E_CONTINUATION_UNMATCHED",
+                            "Hai phần của câu qua trang không khớp.",
+                        )
+                        skipped += 1
+                        continue
+                elif pending is not None:
                     issue(
-                        page.page_no,
-                        "E_CONTINUATION_UNSUPPORTED",
-                        "Câu qua trang cần được ghép thủ công.",
+                        pending[1],
+                        "E_CONTINUATION_UNMATCHED",
+                        "Câu qua trang không có phần tiếp theo.",
                     )
                     skipped += 1
+                    pending = None
+                if block.continues_on_next:
+                    pending = (block, source_page_no, page.page_no, continuation_group or section())
                     continue
                 if block.figure_refs:
                     issue(
@@ -166,7 +241,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     )
                     skipped += 1
                     continue
-                group = section()
+                group = continuation_group or section()
                 passage_ref = None
                 if block.passage_ref:
                     matches = [
@@ -185,7 +260,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     passage_ref = matches[0]
                 question_serial += 1
                 candidate = {
-                    "tmp_id": f"page-{page.page_no}-q-{question_serial}",
+                    "tmp_id": f"page-{source_page_no}-q-{question_serial}",
                     "order": len(group["questions"]) + 1,
                     "number_label": block.number_label,
                     "kind": block.kind,
@@ -198,7 +273,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                         {"label": statement.label, "text": statement.text}
                         for statement in block.statements
                     ],
-                    "provenance": {"kind": "page", "page_no": page.page_no},
+                    "provenance": {"kind": "page", "page_no": source_page_no},
                 }
                 try:
                     QuestionDraft.model_validate(candidate)
@@ -215,6 +290,10 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
             issue(
                 page.page_no, "E_FIGURE_UNSUPPORTED", "Hình trên trang chưa được đưa vào bản nháp."
             )
+
+    if pending is not None:
+        issue(pending[1], "E_CONTINUATION_UNMATCHED", "Câu qua trang không có phần tiếp theo.")
+        skipped += 1
 
     for page_no, label, answer in answer_entries:
         matches = question_index.get(_number_key(label), [])
