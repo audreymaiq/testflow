@@ -21,7 +21,7 @@ export function ExamCard({ exam }: { exam: ExamCardData }) {
     <span className="exam-card-cover">
       <span className="exam-card-type">{examTypeNames[exam.exam_type] || 'Đề thi'}</span>
       {exam.visibility === 'PRIVATE' && <span className="exam-card-private">Riêng tư</span>}
-      <span className="exam-card-mark"><DeckMark title={exam.title} icon={exam.icon} color={exam.color} /></span>
+      <span className="exam-card-mark"><DeckMark title={exam.subject} icon={exam.icon} color={exam.color} /></span>
     </span>
     <span className="exam-card-body">
       <strong className="exam-card-subject">{exam.subject}</strong>
