@@ -48,7 +48,7 @@ function Shell({ children }: { children: ReactNode }) {
       <nav aria-label="Điều hướng chính">
         <NavLink to="/" end>Trang chủ</NavLink>
         <NavLink to="/library">Thư viện</NavLink>
-        <NavLink to={user ? '/history' : '/login'}>Kết quả</NavLink>
+        {user ? <NavLink to="/history">Kết quả</NavLink> : <Link to="/login">Kết quả</Link>}
       </nav>
       <div className="header-dashboard-actions">
         {user ? <>
