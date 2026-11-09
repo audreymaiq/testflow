@@ -146,6 +146,17 @@ def test_school_is_required_for_new_exam(users):
 
 
 @pytest.mark.django_db
+def test_unpersisted_figure_cannot_be_silently_dropped(users):
+    owner, _ = users
+    draft = draft_data()
+    draft["sections"][0]["questions"][0]["figure_refs"] = ["f1"]
+    with pytest.raises(ValidationFailed) as error:
+        create_exam(ExamDraft.model_validate(draft), owner=owner)
+    assert error.value.code == "FIGURE_ASSETS_UNAVAILABLE"
+    assert Exam.objects.count() == 0
+
+
+@pytest.mark.django_db
 def test_private_exam_is_absent_from_other_user_and_visitor_reads(users):
     owner, other = users
     exam = create_exam(ExamDraft.model_validate(draft_data()), owner=owner)
