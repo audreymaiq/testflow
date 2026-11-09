@@ -7,6 +7,7 @@ import json
 import re
 from dataclasses import dataclass
 from time import monotonic
+from typing import Literal
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
@@ -27,6 +28,7 @@ class ExtractionError(Exception):
 class PageExtraction:
     page: PageSchema
     raw_output: object
+    source: Literal["OCR", "VLM"]
     provider_name: str
     model_name: str
     model_version: str
@@ -89,6 +91,9 @@ def extract_page(
         if page.page_no != page_no:
             raise ExtractionError("INFERENCE_PAGE_MISMATCH", retryable=False)
         model_name = payload["model_name"]
+        source = payload["source"]
+        if source not in {"OCR", "VLM"}:
+            raise ValueError("unsupported extraction source")
         if not isinstance(model_name, str) or not model_name.strip() or len(model_name) > 80:
             raise ValueError("model_name is required")
         provider_name = payload.get("provider_name", "internal")
@@ -107,6 +112,7 @@ def extract_page(
         return PageExtraction(
             page=page,
             raw_output=payload.get("raw_output", {}),
+            source=source,
             provider_name=provider_name,
             model_name=model_name,
             model_version=model_version,
