@@ -112,6 +112,10 @@ def test_mixed_pdf_import_routes_text_and_image_and_resumes(
     assert pages[0].text_layer and not pages[1].text_layer
     assert all(page.image.name.startswith(f"imports/{job_id}/pages/") for page in pages)
     assert len(job.draft.data["sections"][0]["questions"]) == 2
+    detail = client.get(f"/api/v1/imports/{job_id}/")
+    assert detail.status_code == 200
+    assert [item["source"] for item in detail.data["pages"]] == ["TEXT_LAYER", "VLM"]
+    assert all(item["artifact_digest"] == "a" * 64 for item in detail.data["pages"])
     assert client.get(f"/api/v1/imports/{job_id}/pages/2/image/").status_code == 200
 
 
