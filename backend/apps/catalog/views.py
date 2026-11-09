@@ -1,6 +1,7 @@
 """Read-only public catalog and authenticated manual creation."""
 
 from django.db.models import Count
+from django.http import FileResponse
 from django.shortcuts import get_object_or_404
 from drf_spectacular.utils import extend_schema
 from rest_framework import status
@@ -8,9 +9,9 @@ from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAuthenticatedOrReadOnly
 from rest_framework.response import Response
 
-from apps.common.errors import DomainPermissionDenied, ValidationFailed
+from apps.common.errors import DomainPermissionDenied, NotFound, ValidationFailed
 
-from .models import PublishRequest, Subject, Visibility
+from .models import PublishRequest, QuestionAsset, Subject, Visibility
 from .selectors import list_exams, publication_queue, visible_exams
 from .serializers import (
     ExamDetailSerializer,
@@ -83,6 +84,27 @@ class ExamDetailView(GenericAPIView):
     def delete(self, request, exam_id):
         soft_delete_exam(exam_id, owner=request.user)
         return Response(status=status.HTTP_204_NO_CONTENT)
+
+
+class ExamAssetView(GenericAPIView):
+    permission_classes = (AllowAny,)
+
+    @extend_schema(operation_id="exams_asset", responses={200: bytes})
+    def get(self, request, exam_id, asset_id):
+        exam = get_object_or_404(visible_exams(request.user), pk=exam_id)
+        link = get_object_or_404(
+            QuestionAsset.objects.select_related("asset"),
+            question__section__exam=exam,
+            asset_id=asset_id,
+        )
+        try:
+            image = link.asset.file.open("rb")
+        except (FileNotFoundError, OSError) as exc:
+            raise NotFound("ASSET_NOT_FOUND", "Không tìm thấy hình minh họa.") from exc
+        response = FileResponse(image, content_type="image/png")
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 class ExamPreviewView(GenericAPIView):
