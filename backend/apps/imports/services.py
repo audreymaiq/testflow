@@ -227,11 +227,12 @@ def create_image_job(upload, *, uploader, subject_hint=""):
             def enqueue() -> None:
                 try:
                     process_image_job.delay(str(job.id))
-                except Exception as exc:
+                except Exception:
                     job.transition(ImportJob.Status.FAILED, error_code="QUEUE_UNAVAILABLE")
-                    raise ExternalServiceError(
-                        "QUEUE_UNAVAILABLE", "Hàng đợi xử lý đề hiện không khả dụng."
-                    ) from exc
+                    logger.exception(
+                        "Image import queue unavailable",
+                        extra={"import_job_id": str(job.id), "stage": "enqueue"},
+                    )
 
             transaction.on_commit(enqueue)
     except Exception as exc:
@@ -241,6 +242,8 @@ def create_image_job(upload, *, uploader, subject_hint=""):
         if isinstance(exc, IntegrityError):
             raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.") from exc
         raise
+    if job.status == ImportJob.Status.FAILED:
+        raise ExternalServiceError("QUEUE_UNAVAILABLE", "Hàng đợi xử lý đề hiện không khả dụng.")
     logger.info("Image import queued", extra={"import_job_id": str(job.id), "stage": "upload"})
     return job
 
