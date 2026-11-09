@@ -230,11 +230,13 @@ def _create_binary_job(upload, *, uploader, subject_hint: str, allow_documents: 
         )
     limit = MAX_DOCUMENT_BYTES if allow_documents else MAX_IMAGE_BYTES
     if upload.size > limit:
-        raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
+        raise FileTooLarge("FILE_TOO_LARGE", "Tệp vượt giới hạn cho phép.")
     raw = upload.read(limit + 1)
     if len(raw) > limit:
-        raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
+        raise FileTooLarge("FILE_TOO_LARGE", "Tệp vượt giới hạn cho phép.")
     mime = _document_mime(raw) if allow_documents else _image_mime(raw)
+    if mime.startswith("image/") and len(raw) > MAX_IMAGE_BYTES:
+        raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 10 MB.")
     filename = PurePath(upload.name.replace("\\", "/")).name[:255]
     job = ImportJob(
         uploader=uploader,
