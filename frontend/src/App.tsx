@@ -1,4 +1,4 @@
-import { useCallback, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { request } from './api'
 import { useAuth } from './auth'
@@ -18,8 +18,24 @@ function Shell({ children }: { children: ReactNode }) {
   const [leaving, setLeaving] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const headerRef = useRef<HTMLElement>(null)
   const closeLogout = useCallback(() => { if (!leaving) setConfirmLogout(false) }, [leaving])
   const closeMessage = useCallback(() => setMessage(''), [])
+
+  useEffect(() => {
+    const header = headerRef.current
+    if (!header) return
+    const syncHeight = () => document.documentElement.style.setProperty('--header-height', `${header.getBoundingClientRect().height}px`)
+    syncHeight()
+    const observer = typeof ResizeObserver === 'undefined' ? null : new ResizeObserver(syncHeight)
+    observer?.observe(header)
+    window.addEventListener('resize', syncHeight)
+    return () => {
+      observer?.disconnect()
+      window.removeEventListener('resize', syncHeight)
+      document.documentElement.style.removeProperty('--header-height')
+    }
+  }, [])
 
   async function leave() {
     if (leaving) return
@@ -35,7 +51,7 @@ function Shell({ children }: { children: ReactNode }) {
 
   return <>
     <a className="skip-link" href="#main">Bỏ qua điều hướng</a>
-    <header className="topbar topbar-dashboard bg-surface text-text">
+    <header ref={headerRef} className="topbar topbar-dashboard bg-surface text-text">
       <div className="topbar-inner">
       <Link to="/" className="brand" aria-label="TestFlow, trang chủ">
         <svg className="brand-symbol" viewBox="0 0 48 48" width="38" height="38" fill="none" aria-hidden="true">
