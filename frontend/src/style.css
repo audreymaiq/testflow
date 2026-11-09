@@ -493,6 +493,12 @@ main:has(.library-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px aut
 :root[data-mode="dark"] .library-results .exam-card-cover { background: #2d4260; }
 :root[data-mode="dark"] .library-levels button, :root[data-mode="dark"] .filter-fields select, :root[data-mode="dark"] .filter-fields input:not([type=checkbox]):not([type=radio]), :root[data-mode="dark"] .library-sort, :root[data-mode="dark"] .library-sort select, :root[data-mode="dark"] .library-view-mode, :root[data-mode="dark"] .library-results .pagination button { background: #223650; border-color: #435c79; color: #edf4ff; }
 :root[data-mode="dark"] .library-view-mode button, :root[data-mode="dark"] .filter-fields .library-switches .check-label { color: #edf4ff; }
+:root[data-mode="dark"] .filter-heading .filter-reset, :root[data-mode="dark"] .library-extra-filters, :root[data-mode="dark"] .library-results-title, :root[data-mode="dark"] .library-results .result-count strong { color: var(--accent); }
+:root[data-mode="dark"] .library-results .exam-card-meta { color: var(--muted); }
+:root[data-mode="dark"] .library-results .exam-card-cover { color: var(--accent); }
+:root[data-mode="dark"] .library-results .exam-card-cover > span:first-child { background: #344f77; color: var(--text); }
+:root[data-mode="dark"] .library-results .exam-card-arrow { background: #375173; color: var(--accent); }
+:root[data-mode="dark"] .library-results .exam-card-foot > span:last-child { color: var(--accent); }
 @media (max-width: 1200px) {
   .library-layout { grid-template-columns: 300px minmax(0,1fr); gap: 18px; }
   .library-results .exam-card-grid { grid-template-columns: repeat(2,minmax(0,1fr)); }
@@ -601,6 +607,8 @@ main:has(.home-page) { width: min(1536px, calc(100% - 8vw)); margin: 26px auto 5
 :root[data-mode="dark"] .topbar-dashboard { background: #152844; border-color: #35465f; }
 :root[data-mode="dark"] .topbar-dashboard .brand, :root[data-mode="dark"] .topbar-dashboard nav a, :root[data-mode="dark"] .header-dashboard-actions, :root[data-mode="dark"] .home-page, :root[data-mode="dark"] .home-resume h2, :root[data-mode="dark"] .home-library h2 { color: #edf4ff; }
 :root[data-mode="dark"] .topbar-dashboard nav a.active, :root[data-mode="dark"] .topbar-dashboard nav a:hover { background: #294267; color: #edf4ff; }
+:root[data-mode="dark"] .header-guest-link, :root[data-mode="dark"] .header-guest-action, :root[data-mode="dark"] .home-resume-all, :root[data-mode="dark"] .home-library-heading > a { color: var(--accent); }
+:root[data-mode="dark"] .header-guest-action { background: #294267; }
 :root[data-mode="dark"] .home-resume { background: #233650; }
 :root[data-mode="dark"] .home-resume-intro p, :root[data-mode="dark"] .home-resume-empty, :root[data-mode="dark"] .home-progress { color: #d2dff2; }
 :root[data-mode="dark"] .home-resume-item, :root[data-mode="dark"] .home-resume-document, :root[data-mode="dark"] .home-subjects button, :root[data-mode="dark"] .home-deck { background: #223650; color: #edf4ff; border-color: #45617d; }
