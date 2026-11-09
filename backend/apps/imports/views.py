@@ -19,6 +19,7 @@ from .serializers import (
 )
 from .services import (
     confirm,
+    create_document_job,
     create_image_job,
     create_txt_job,
     discard,
@@ -47,16 +48,23 @@ class TxtImportView(GenericAPIView):
 class ImageImportView(GenericAPIView):
     serializer_class = ImageUploadSerializer
     parser_classes = (MultiPartParser, FormParser)
+    create_job = staticmethod(create_image_job)
 
     def post(self, request):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        job = create_image_job(
+        job = self.create_job(
             serializer.validated_data["file"],
             uploader=request.user,
             subject_hint=serializer.validated_data.get("subject_hint", ""),
         )
         return Response(job_payload(job), status=status.HTTP_202_ACCEPTED)
+
+
+class DocumentImportView(ImageImportView):
+    """Upload PDF, DOCX, or image using the same review and confirmation flow."""
+
+    create_job = staticmethod(create_document_job)
 
 
 class MineView(GenericAPIView):
