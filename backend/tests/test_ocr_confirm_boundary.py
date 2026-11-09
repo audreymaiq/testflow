@@ -60,7 +60,7 @@ def context(db, settings, tmp_path):
     return client, owner
 
 
-def make_job(owner, *, digest, issues=None):
+def make_job(owner, *, digest, issues=None, skipped_count=0):
     job = ImportJob.objects.create(
         uploader=owner,
         original_file="imports/synthetic/original.png",
@@ -78,6 +78,7 @@ def make_job(owner, *, digest, issues=None):
         data=data,
         original_data=data,
         warnings=issues or [],
+        skipped_count=skipped_count,
     )
     return job
 
@@ -114,3 +115,27 @@ def test_confirmed_ocr_draft_retains_ocr_source_kind(context):
     assert exam.source_kind == "OCR"
     assert exam.visibility == "PRIVATE"
     assert str(exam.source_job) == str(job.id)
+
+
+@pytest.mark.django_db
+def test_generic_ocr_edit_preserves_unresolved_skipped_count(context):
+    client, owner = context
+    error = {
+        "page_no": 1,
+        "code": "E_FIGURE_UNSUPPORTED",
+        "message": "Figure needs review.",
+        "severity": "ERROR",
+    }
+    job = make_job(owner, digest="a" * 64, issues=[error], skipped_count=1)
+    data = ocr_draft()
+    extra = data["sections"][0]["questions"][0].copy()
+    extra["tmp_id"] = "page-1-q-2"
+    extra["order"] = 2
+    extra["number_label"] = "Câu 2"
+    data["sections"][0]["questions"].append(extra)
+
+    edited = client.patch(f"/api/v1/imports/{job.id}/", {"draft": data}, format="json")
+    assert edited.status_code == 200, edited.data
+    assert edited.data["report"]["skipped"] == 1
+    assert edited.data["report"]["issues"] == [error]
+    assert client.post(f"/api/v1/imports/{job.id}/confirm/").status_code == 400
