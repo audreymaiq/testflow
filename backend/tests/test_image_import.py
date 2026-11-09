@@ -205,3 +205,33 @@ def test_page_image_is_private_to_owner_and_reviewer(settings, tmp_path):
         response.close()
     page.image.delete(save=False)
     assert request(owner).status_code == 404
+
+
+@pytest.mark.django_db(transaction=True)
+def test_queue_failure_returns_error_and_releases_duplicate_reservation(
+    settings, tmp_path, monkeypatch
+):
+    settings.MEDIA_ROOT = tmp_path
+    settings.IMPORT_INFERENCE_URL = "http://ocr.internal:8001"
+    owner = get_user_model().objects.create_user(
+        "queue_owner", email="queue_owner@example.com", password="HardToGuess#2026"
+    )
+    client = APIClient()
+    client.force_authenticate(owner)
+
+    def unavailable(job_id):
+        raise RuntimeError("synthetic queue outage")
+
+    monkeypatch.setattr(tasks.process_image_job, "delay", unavailable)
+    response = upload(client)
+    assert response.status_code == 502
+    assert response.data["error"]["code"] == "QUEUE_UNAVAILABLE"
+    job = ImportJob.objects.get()
+    assert job.status == ImportJob.Status.FAILED
+    assert job.error_code == "QUEUE_UNAVAILABLE"
+
+    dispatched = []
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda job_id: dispatched.append(job_id))
+    retried = upload(client)
+    assert retried.status_code == 202
+    assert dispatched == [retried.data["id"]]
