@@ -166,7 +166,7 @@ def test_unsupported_page_content_is_reported_and_skipped_not_silently_lost():
     assert {
         "E_FIGURE_UNSUPPORTED",
         "E_CONTINUATION_UNSUPPORTED",
-        "E_PASSAGE_UNSUPPORTED",
+        "E_PASSAGE_UNMATCHED",
         "E_NO_QUESTIONS",
     } <= codes(outcome)
 
@@ -201,3 +201,32 @@ def test_section_changes_keep_unique_question_ids():
 def test_duplicate_page_number_is_rejected():
     with pytest.raises(ValueError, match="unique"):
         assemble_pages([page(1), page(1)])
+
+
+def test_shared_passage_survives_cross_page_question_reference():
+    outcome = assemble_pages(
+        [
+            page(1, blocks=[{"type": "passage", "id": "reading-1", "text": "Đọc đoạn văn."}]),
+            page(2, blocks=[question(passage_ref="reading-1")]),
+        ]
+    )
+    section = outcome.draft.sections[0]
+    assert len(section.passages) == 1
+    assert section.questions[0].passage_ref == section.passages[0].tmp_id
+    assert "E_PASSAGE_UNANCHORED" not in codes(outcome)
+    assert "E_PASSAGE_UNMATCHED" not in codes(outcome)
+
+
+def test_unreferenced_passage_blocks_confirmation_instead_of_disappearing():
+    outcome = assemble_pages(
+        [
+            page(
+                blocks=[
+                    {"type": "passage", "id": "reading-1", "text": "Đọc đoạn văn."},
+                    {"type": "section_heading", "text": "Phần kế tiếp"},
+                    question(),
+                ]
+            )
+        ]
+    )
+    assert "E_PASSAGE_UNANCHORED" in codes(outcome)
