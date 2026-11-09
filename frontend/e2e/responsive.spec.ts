@@ -18,8 +18,8 @@ test('home and library share the same header scale and alignment', async ({ page
   expect(libraryHeader).toEqual(homeHeader)
   expect(libraryNav?.x).toBe(homeNav?.x)
   expect(libraryImage).toBe(homeImage)
-  expect(libraryHero!.width).toBeLessThan(homeHero!.width)
-  expect(libraryHero!.width).toBeGreaterThan(homeHero!.width - 40)
+  expect(libraryHero!.x).toBe(homeHero!.x)
+  expect(libraryHero!.width).toBe(homeHero!.width)
   expect(libraryHero!.height).toBeLessThan(homeHero!.height)
 })
 
