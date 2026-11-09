@@ -2,6 +2,7 @@
 
 import json
 from io import BytesIO
+from urllib.error import URLError
 
 import pytest
 from django.contrib.auth import get_user_model
@@ -241,6 +242,31 @@ def test_worker_records_assembly_rejection_instead_of_stranding_job(context, mon
     assert job.status == ImportJob.Status.FAILED
     assert job.error_code == "ASSEMBLY_INVALID"
     assert not Draft.objects.filter(job=job).exists()
+
+
+@pytest.mark.django_db
+def test_worker_exhausts_transient_provider_retries(
+    context, monkeypatch, django_capture_on_commit_callbacks
+):
+    client, _ = context
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda job_id: None)
+    with django_capture_on_commit_callbacks(execute=True):
+        uploaded = upload(client)
+    attempts = []
+
+    def unavailable(_request, timeout):
+        attempts.append(timeout)
+        raise URLError("synthetic outage")
+
+    monkeypatch.setattr(inference_client, "urlopen", unavailable)
+    tasks.process_image_job.apply(args=(uploaded.data["id"],), throw=False)
+
+    job = ImportJob.objects.get(pk=uploaded.data["id"])
+    page = PageResult.objects.get(job=job, page_no=1)
+    assert len(attempts) == 3
+    assert page.attempts == 3
+    assert job.status == ImportJob.Status.FAILED
+    assert job.error_code == page.error_code == "INFERENCE_UNAVAILABLE"
 
 
 @pytest.mark.django_db(transaction=True)
