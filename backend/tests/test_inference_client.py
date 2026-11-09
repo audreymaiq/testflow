@@ -140,7 +140,9 @@ def test_text_layer_request_does_not_send_image_and_requires_text_source(monkeyp
     )
     assert output.source == "TEXT_LAYER"
 
-    monkeypatch.setattr(inference_client, "urlopen", lambda request, timeout: response(source="VLM"))
+    monkeypatch.setattr(
+        inference_client, "urlopen", lambda request, timeout: response(source="VLM")
+    )
     with pytest.raises(inference_client.ExtractionError, match="INFERENCE_RESPONSE_INVALID"):
         inference_client.extract_page(
             service_url="http://inference.internal:8001", text_layer="PDF text", page_no=2
