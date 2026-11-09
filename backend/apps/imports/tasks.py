@@ -91,7 +91,7 @@ def _extract_pages(task, job: ImportJob) -> bool:
         if page is None or not page.image:
             _fail(job, "PAGE_RESULT_MISSING")
             return False
-        if page.status == PageResult.Status.DONE:
+        if page.status in {PageResult.Status.DONE, PageResult.Status.FAILED}:
             continue
         if not settings.IMPORT_INFERENCE_URL.startswith(("http://", "https://")):
             _fail(job, "OCR_PROVIDER_UNCONFIGURED", page=page)
@@ -117,8 +117,14 @@ def _extract_pages(task, job: ImportJob) -> bool:
                 page.error_code = exc.code
                 page.save(update_fields=["error_code", "updated_at"])
                 raise task.retry(exc=exc, countdown=2 ** (page.attempts - 1)) from exc
-            _fail(job, exc.code, page=page)
-            return False
+            page.status = PageResult.Status.FAILED
+            page.error_code = exc.code
+            page.save(update_fields=["status", "error_code", "updated_at"])
+            logger.warning(
+                "Document page extraction failed",
+                extra={"import_job_id": str(job.id), "page_no": page_no, "stage": exc.code},
+            )
+            continue
         except OSError:
             _fail(job, "PAGE_IMAGE_UNAVAILABLE", page=page)
             return False
@@ -147,7 +153,18 @@ def _assemble(job: ImportJob) -> None:
         _fail(job, "PAGE_RESULT_MISSING")
         return
     validated = []
+    failed = []
     for page in pages:
+        if page.status == PageResult.Status.FAILED:
+            failed.append(
+                {
+                    "page_no": page.page_no,
+                    "code": "E_PAGE_FAILED",
+                    "message": "Trang chưa được trích xuất; cần thử lại trước khi xác nhận đề.",
+                    "severity": "ERROR",
+                }
+            )
+            continue
         if page.status != PageResult.Status.DONE:
             _fail(job, "PAGE_RESULT_INCOMPLETE", page=page)
             return
@@ -176,7 +193,7 @@ def _assemble(job: ImportJob) -> None:
             "schema_version": outcome.draft.schema_version,
             "data": data,
             "original_data": data,
-            "warnings": [issue.__dict__ for issue in outcome.issues],
+            "warnings": [issue.__dict__ for issue in outcome.issues] + failed,
             "skipped_count": outcome.skipped,
         },
     )
