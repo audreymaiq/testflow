@@ -16,7 +16,7 @@ def pdf_bytes(*, pages=1, text="A question on this page with enough searchable t
         b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
     ]
     kids = []
-    for _ in range(pages):
+    for page_index in range(pages):
         page_id = len(objects) + 1
         stream_id = page_id + 1
         kids.append(f"{page_id} 0 R")
@@ -24,7 +24,8 @@ def pdf_bytes(*, pages=1, text="A question on this page with enough searchable t
             f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] "
             f"/Resources << /Font << /F1 3 0 R >> >> /Contents {stream_id} 0 R >>".encode()
         )
-        content = f"BT /F1 12 Tf 72 720 Td ({text}) Tj ET".encode()
+        page_text = text[page_index] if isinstance(text, list) else text
+        content = f"BT /F1 12 Tf 72 720 Td ({page_text}) Tj ET".encode()
         objects.append(
             f"<< /Length {len(content)} >>\nstream\n".encode() + content + b"\nendstream"
         )
