@@ -72,6 +72,7 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
 
     issues: list[AssemblyIssue] = []
     metadata: dict = {}
+    conflicted_fields: set[str] = set()
     sections: list[dict] = []
     current: dict | None = None
     answer_entries: list[tuple[int, str, str]] = []
@@ -97,6 +98,8 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
             value = getattr(header, field)
             if value is None or value == "":
                 continue
+            if field in conflicted_fields:
+                continue
             if field not in metadata:
                 try:
                     Metadata.model_validate({field: value})
@@ -110,21 +113,23 @@ def assemble_pages(pages: Sequence[PageSchema]) -> AssemblyOutcome:
                     continue
                 metadata[field] = value
             elif metadata[field] != value:
+                metadata.pop(field)
+                conflicted_fields.add(field)
                 issue(
                     page.page_no,
-                    "W_HEADER_CONFLICT",
+                    "E_HEADER_CONFLICT",
                     f"Thông tin {field} không thống nhất giữa các trang.",
-                    warning=True,
                 )
-        if header.school:
+        if header.school and "schools" not in conflicted_fields:
             if "schools" not in metadata:
                 metadata["schools"] = [header.school]
             elif metadata["schools"] != [header.school]:
+                metadata.pop("schools")
+                conflicted_fields.add("schools")
                 issue(
                     page.page_no,
-                    "W_HEADER_CONFLICT",
+                    "E_HEADER_CONFLICT",
                     "Tên trường không thống nhất giữa các trang.",
-                    warning=True,
                 )
 
         for block in page.blocks:
