@@ -11,7 +11,7 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Exam, School, Subject
+from apps.catalog.models import Asset, Exam, QuestionAsset, School, Subject
 from apps.imports import inference_client, tasks
 from apps.imports.models import Draft, ImportJob, PageResult, ReviewEdit
 
@@ -438,3 +438,73 @@ def test_worker_loss_recovery_has_persisted_page_attempt_limit(context, monkeypa
     assert page.attempts == 3
     assert page.error_code == "EXTRACTION_ATTEMPTS_EXHAUSTED"
     assert any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
+
+
+@pytest.mark.django_db
+def test_figure_is_cropped_and_attached_only_at_private_confirmation(
+    context, monkeypatch, django_capture_on_commit_callbacks
+):
+    client, owner = context
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda _job_id: None)
+    with django_capture_on_commit_callbacks(execute=True):
+        uploaded = upload(client)
+    job_id = uploaded.data["id"]
+
+    def figure_response(_request, timeout):
+        return BytesIO(
+            json.dumps(
+                {
+                    "page_json": {
+                        "schema_version": 1,
+                        "page_no": 1,
+                        "figures": [{"id": "fig-1", "bbox": [0.1, 0.1, 0.5, 0.5]}],
+                        "blocks": [
+                            {
+                                "type": "question",
+                                "number_label": "Câu 1",
+                                "kind": "MCQ",
+                                "text": "Chọn hình phù hợp?",
+                                "choices": [
+                                    {"label": "A", "text": "Một"},
+                                    {"label": "B", "text": "Hai"},
+                                ],
+                                "figure_refs": ["fig-1"],
+                            }
+                        ],
+                    },
+                    "source": "VLM",
+                    "model_name": "synthetic-figure",
+                }
+            ).encode("utf-8")
+        )
+
+    monkeypatch.setattr(inference_client, "urlopen", figure_response)
+    tasks.process_image_job.apply(args=(job_id,), throw=True)
+    job = ImportJob.objects.get(pk=job_id)
+    assert job.status == ImportJob.Status.NEEDS_REVIEW
+    assert not any(issue["severity"] == "ERROR" for issue in job.draft.warnings)
+    assert Asset.objects.count() == 0
+
+    draft = client.get(f"/api/v1/imports/{job_id}/").data["draft"]
+    draft["metadata"].update(
+        {
+            "title": "Đề kiểm tra hình",
+            "level": "THPT",
+            "grade": 12,
+            "subject": "toan",
+            "exam_type": "KIEM_TRA",
+            "schools": ["Trường Mẫu"],
+        }
+    )
+    edited = client.patch(f"/api/v1/imports/{job_id}/", {"draft": draft}, format="json")
+    assert edited.status_code == 200, edited.data
+    confirmed = client.post(f"/api/v1/imports/{job_id}/confirm/")
+    assert confirmed.status_code == 200, confirmed.data
+    exam = Exam.objects.get(pk=confirmed.data["exam_id"])
+    assert exam.owner_id == owner.id
+    assert exam.visibility == "PRIVATE"
+    link = QuestionAsset.objects.get(question__section__exam=exam)
+    assert link.asset.source_job == job.id
+    assert link.asset.width > 2 and link.asset.height > 2
+    with link.asset.file.open("rb") as image:
+        assert image.read(8) == b"\x89PNG\r\n\x1a\n"
