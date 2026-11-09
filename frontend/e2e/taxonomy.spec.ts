@@ -31,6 +31,7 @@ test('users create new names themselves and reuse the same canonical records', a
     await expect(field.locator('.taxonomy-chip').filter({ hasText: name })).toBeVisible()
   }
 
+  await page.getByLabel('Mở menu tài khoản').click()
   await page.getByRole('button', { name: 'Đăng xuất' }).click()
   await page.getByRole('dialog').getByRole('button', { name: 'Đăng xuất' }).click()
   await expect(page.getByRole('link', { name: 'Đăng nhập' })).toBeVisible()
