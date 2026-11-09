@@ -12,7 +12,7 @@ from io import BytesIO
 
 from PIL import Image, ImageOps, UnidentifiedImageError
 
-MAX_IMAGE_BYTES = 20 * 1024 * 1024
+MAX_IMAGE_BYTES = 10 * 1024 * 1024
 MAX_IMAGE_PIXELS = 20_000_000
 MAX_PAGE_SIDE = 3_000
 MAX_PAGE_PNG_BYTES = 20 * 1024 * 1024
