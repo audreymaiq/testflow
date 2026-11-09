@@ -10,6 +10,7 @@ from .views import (
     PageImageView,
     ReviewQueueView,
     ReviewView,
+    RetryPageView,
     TxtImportView,
 )
 
@@ -25,6 +26,11 @@ urlpatterns = [
         "<uuid:job_id>/pages/<int:page_no>/image/",
         PageImageView.as_view(),
         name="imports-page-image",
+    ),
+    path(
+        "<uuid:job_id>/pages/<int:page_no>/retry/",
+        RetryPageView.as_view(),
+        name="imports-retry-page",
     ),
     path("<uuid:job_id>/confirm/", ConfirmView.as_view(), name="imports-confirm"),
     path("<uuid:job_id>/discard/", DiscardView.as_view(), name="imports-discard"),
