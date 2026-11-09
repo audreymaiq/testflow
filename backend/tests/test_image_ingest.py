@@ -77,3 +77,10 @@ def test_byte_and_pixel_limits_are_enforced(monkeypatch):
     with pytest.raises(image_ingest.ImageRejected) as exc:
         image_ingest.normalize_image(raw)
     assert exc.value.code == "IMAGE_PIXELS_EXCEEDED"
+
+
+def test_normalized_page_size_is_bounded_before_inference(monkeypatch):
+    monkeypatch.setattr(image_ingest, "MAX_PAGE_PNG_BYTES", 16)
+    with pytest.raises(image_ingest.ImageRejected) as exc:
+        image_ingest.normalize_image(encoded_image())
+    assert exc.value.code == "PAGE_IMAGE_TOO_LARGE"
