@@ -13,8 +13,15 @@ from pydantic import ValidationError as ContractValidationError
 from testflow_contracts.exam import ExamDraft
 
 from apps.catalog.services import create_exam, is_reviewer
-from apps.common.errors import Conflict, NotFound, QuotaExceeded, ValidationFailed
+from apps.common.errors import (
+    Conflict,
+    ExternalServiceError,
+    NotFound,
+    QuotaExceeded,
+    ValidationFailed,
+)
 
+from .image_ingest import MAX_IMAGE_BYTES
 from .models import Draft, ImportJob, ReviewEdit
 from .txt_parser import MAX_BYTES, parse_txt
 
@@ -27,6 +34,45 @@ class FileTooLarge(ValidationFailed):
 
 class InvalidFileType(ValidationFailed):
     status_code = 415
+
+
+def _reserve_upload(job: ImportJob, raw: bytes) -> None:
+    """Serialize deduplication and daily quota checks across all import types."""
+    type(job.uploader).objects.select_for_update().get(pk=job.uploader_id)
+    existing = (
+        ImportJob.objects.filter(sha256=job.sha256)
+        .exclude(status__in=[ImportJob.Status.REJECTED, ImportJob.Status.FAILED])
+        .first()
+    )
+    if existing:
+        details = (
+            {"existing_job_id": str(existing.id)} if existing.uploader_id == job.uploader_id else {}
+        )
+        raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.", details)
+    local_midnight = timezone.localtime(timezone.now()).replace(
+        hour=0, minute=0, second=0, microsecond=0
+    )
+    used = ImportJob.objects.filter(
+        uploader_id=job.uploader_id, created_at__gte=local_midnight
+    ).count()
+    if used >= settings.IMPORT_DAILY_JOB_LIMIT:
+        raise QuotaExceeded(
+            "UPLOAD_QUOTA_EXCEEDED",
+            "Bạn đã dùng hết số lượt nhập đề hôm nay.",
+            {"daily_limit": settings.IMPORT_DAILY_JOB_LIMIT},
+        )
+    job.original_file.save("original", ContentFile(raw), save=False)
+    job.save()
+
+
+def _image_mime(raw: bytes) -> str:
+    if raw.startswith(b"\xff\xd8\xff"):
+        return "image/jpeg"
+    if raw.startswith(b"\x89PNG\r\n\x1a\n"):
+        return "image/png"
+    if raw.startswith(b"RIFF") and raw[8:12] == b"WEBP":
+        return "image/webp"
+    raise InvalidFileType("INVALID_FILE_TYPE", "Chỉ chấp nhận ảnh JPEG, PNG hoặc WebP.")
 
 
 def _owned_job(job_id, user, *, lock=False):
@@ -126,33 +172,7 @@ def create_txt_job(upload, *, uploader, duration_mode="FILE", duration_minutes=N
     )
     try:
         with transaction.atomic():
-            type(uploader).objects.select_for_update().get(pk=uploader.pk)
-            existing = (
-                ImportJob.objects.filter(sha256=digest)
-                .exclude(status__in=[ImportJob.Status.REJECTED, ImportJob.Status.FAILED])
-                .first()
-            )
-            if existing:
-                details = (
-                    {"existing_job_id": str(existing.id)}
-                    if existing.uploader_id == uploader.id
-                    else {}
-                )
-                raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.", details)
-            local_midnight = timezone.localtime(timezone.now()).replace(
-                hour=0, minute=0, second=0, microsecond=0
-            )
-            used = ImportJob.objects.filter(
-                uploader=uploader, created_at__gte=local_midnight
-            ).count()
-            if used >= settings.IMPORT_DAILY_JOB_LIMIT:
-                raise QuotaExceeded(
-                    "UPLOAD_QUOTA_EXCEEDED",
-                    "Bạn đã dùng hết số lượt nhập đề hôm nay.",
-                    {"daily_limit": settings.IMPORT_DAILY_JOB_LIMIT},
-                )
-            job.original_file.save("original.txt", ContentFile(raw), save=False)
-            job.save()
+            _reserve_upload(job, raw)
             job.transition(ImportJob.Status.ASSEMBLING)
             Draft.objects.create(
                 job=job,
@@ -173,6 +193,55 @@ def create_txt_job(upload, *, uploader, duration_mode="FILE", duration_minutes=N
         "TXT import assembled",
         extra={"import_job_id": str(job.id), "stage": "assemble", "latency_ms": parse_ms},
     )
+    return job
+
+
+def create_image_job(upload, *, uploader, subject_hint=""):
+    """Accept a bounded image and enqueue its private, asynchronous extraction."""
+    if not settings.IMPORT_INFERENCE_URL.startswith(("http://", "https://")):
+        raise ExternalServiceError(
+            "OCR_UNAVAILABLE", "Dịch vụ nhận dạng đề hiện chưa được cấu hình."
+        )
+    if upload.size > MAX_IMAGE_BYTES:
+        raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
+    raw = upload.read(MAX_IMAGE_BYTES + 1)
+    if len(raw) > MAX_IMAGE_BYTES:
+        raise FileTooLarge("FILE_TOO_LARGE", "Ảnh vượt giới hạn 20 MB.")
+    mime = _image_mime(raw)
+    filename = PurePath(upload.name.replace("\\", "/")).name[:255]
+    job = ImportJob(
+        uploader=uploader,
+        original_filename=filename,
+        sha256=hashlib.sha256(raw).hexdigest(),
+        mime_type=mime,
+        file_size=len(raw),
+        source_kind="OCR",
+        subject_hint=subject_hint,
+        pipeline_version="image-v1",
+    )
+    try:
+        with transaction.atomic():
+            _reserve_upload(job, raw)
+            from .tasks import process_image_job
+
+            def enqueue() -> None:
+                try:
+                    process_image_job.delay(str(job.id))
+                except Exception as exc:
+                    job.transition(ImportJob.Status.FAILED, error_code="QUEUE_UNAVAILABLE")
+                    raise ExternalServiceError(
+                        "QUEUE_UNAVAILABLE", "Hàng đợi xử lý đề hiện không khả dụng."
+                    ) from exc
+
+            transaction.on_commit(enqueue)
+    except Exception as exc:
+        if not job.pk or not ImportJob.objects.filter(pk=job.pk).exists():
+            if job.original_file.name:
+                job.original_file.delete(save=False)
+        if isinstance(exc, IntegrityError):
+            raise Conflict("DUPLICATE_FILE", "Tệp này đã được nhập.") from exc
+        raise
+    logger.info("Image import queued", extra={"import_job_id": str(job.id), "stage": "upload"})
     return job
 
 
