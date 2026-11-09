@@ -139,6 +139,8 @@ STATIC_ROOT = ROOT_DIR / "staticfiles"
 MEDIA_ROOT = ROOT_DIR / "media" / "private"
 MEDIA_URL = None
 IMPORT_DAILY_JOB_LIMIT = env.int("IMPORT_DAILY_JOB_LIMIT", default=20)
+IMPORT_INFERENCE_URL = env("IMPORT_INFERENCE_URL", default="")
+IMPORT_INFERENCE_TOKEN = env("IMPORT_INFERENCE_TOKEN", default="")
 BUILD_SHA = env("BUILD_SHA", default="local")
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 LOGGING = {
