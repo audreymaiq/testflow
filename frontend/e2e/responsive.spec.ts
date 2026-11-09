@@ -1,6 +1,28 @@
 import { expect, test } from '@playwright/test'
 import AxeBuilder from '@axe-core/playwright'
 
+test('home and library share the same header scale and alignment', async ({ page }) => {
+  await page.setViewportSize({ width: 1671, height: 941 })
+  await page.goto('/')
+  const homeHeader = await page.locator('.topbar-dashboard .topbar-inner').boundingBox()
+  const homeNav = await page.locator('.topbar-dashboard nav').boundingBox()
+  const homeHero = await page.locator('.home-hero').boundingBox()
+  const homeImage = await page.locator('.home-hero-image').getAttribute('src')
+
+  await page.goto('/library')
+  const libraryHeader = await page.locator('.topbar-dashboard .topbar-inner').boundingBox()
+  const libraryNav = await page.locator('.topbar-dashboard nav').boundingBox()
+  const libraryHero = await page.locator('.library-hero').boundingBox()
+  const libraryImage = await page.locator('.library-hero img').getAttribute('src')
+
+  expect(libraryHeader).toEqual(homeHeader)
+  expect(libraryNav?.x).toBe(homeNav?.x)
+  expect(libraryImage).toBe(homeImage)
+  expect(libraryHero!.width).toBeLessThan(homeHero!.width)
+  expect(libraryHero!.width).toBeGreaterThan(homeHero!.width - 40)
+  expect(libraryHero!.height).toBeLessThan(homeHero!.height)
+})
+
 test('mobile catalog keeps search and the mode toggle usable without horizontal overflow', async ({ page }) => {
   await page.setViewportSize({ width: 320, height: 700 })
   await page.addInitScript(() => localStorage.setItem('tf_mode', 'light'))
