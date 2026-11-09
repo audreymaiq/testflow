@@ -21,6 +21,20 @@ test('home and library share the same header scale and alignment', async ({ page
   expect(libraryHero!.x).toBe(homeHero!.x)
   expect(libraryHero!.width).toBe(homeHero!.width)
   expect(libraryHero!.height).toBeLessThan(homeHero!.height)
+
+  for (const path of ['/login', '/forgot-password']) {
+    await page.goto(path)
+    expect(await page.locator('.topbar-dashboard .topbar-inner').boundingBox()).toEqual(homeHeader)
+    expect((await page.locator('.topbar-dashboard nav').boundingBox())?.x).toBe(homeNav?.x)
+  }
+})
+
+test('shared header stays visible while the homepage scrolls', async ({ page }) => {
+  await page.setViewportSize({ width: 1280, height: 600 })
+  await page.goto('/')
+  await page.evaluate(() => window.scrollTo(0, document.body.scrollHeight))
+  await expect.poll(() => page.evaluate(() => window.scrollY)).toBeGreaterThan(0)
+  await expect.poll(async () => (await page.locator('.topbar').boundingBox())?.y).toBe(0)
 })
 
 test('mobile catalog keeps search and the mode toggle usable without horizontal overflow', async ({ page }) => {
