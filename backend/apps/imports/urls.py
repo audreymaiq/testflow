@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     ConfirmView,
     DiscardView,
+    DocumentImportView,
     ImageImportView,
     MineView,
     OriginalFileView,
@@ -15,6 +16,7 @@ from .views import (
 urlpatterns = [
     path("txt/", TxtImportView.as_view(), name="imports-txt"),
     path("image/", ImageImportView.as_view(), name="imports-image"),
+    path("document/", DocumentImportView.as_view(), name="imports-document"),
     path("mine/", MineView.as_view(), name="imports-mine"),
     path("review-queue/", ReviewQueueView.as_view(), name="imports-review-queue"),
     path("<uuid:job_id>/", ReviewView.as_view(), name="imports-detail"),
