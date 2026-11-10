@@ -152,6 +152,7 @@ export function ImportReviewPage() {
   const [message, setMessage] = useState('')
   const [discardReason, setDiscardReason] = useState('')
   const [selectedPage, setSelectedPage] = useState(1)
+  const [pageZoom, setPageZoom] = useState(1)
   const [resolutionReasons, setResolutionReasons] = useState<Record<number, string>>({})
   const [retryVersion, setRetryVersion] = useState(0)
 
@@ -320,11 +321,11 @@ export function ImportReviewPage() {
       {processingStatuses.has(job.status) && <p role="status">Hệ thống đang xử lý từng trang. Trang này tự cập nhật khi bản nháp sẵn sàng.</p>}
       {job.status === 'FAILED' && <p role="alert">Không thể xử lý tệp ({job.error_code || 'không rõ nguyên nhân'}). Bạn có thể kiểm tra tệp gốc và nhập lại một tệp đã sửa.</p>}
       {job.source_kind === 'OCR' && !!job.pages?.length && <div className="import-source" role="region" aria-label="Trang nguồn">
-        <div className="import-source-heading"><h2>Trang nguồn</h2><label>Trang <select value={selectedPage} onChange={(event) => setSelectedPage(Number(event.target.value))}>{job.pages.map((page) => <option key={page.page_no} value={page.page_no}>{page.page_no} · {page.status}</option>)}</select></label></div>
+        <div className="import-source-heading"><h2>Trang nguồn</h2><label>Trang <select value={selectedPage} onChange={(event) => setSelectedPage(Number(event.target.value))}>{job.pages.map((page) => <option key={page.page_no} value={page.page_no}>{page.page_no} · {page.status}</option>)}</select></label><label>Phóng to <select aria-label="Phóng to trang" value={pageZoom} onChange={(event) => setPageZoom(Number(event.target.value))}><option value={1}>100%</option><option value={1.5}>150%</option><option value={2}>200%</option></select></label></div>
         {job.pages.find((page) => page.page_no === selectedPage)?.status === 'FAILED' && <p role="alert">Trang {selectedPage} chưa xử lý được: {job.pages.find((page) => page.page_no === selectedPage)?.error_code || 'Lỗi không xác định'}.
           {job.status === 'NEEDS_REVIEW' && <button type="button" className="button secondary" disabled={pending} onClick={() => { void retryPage(selectedPage) }}>Thử lại trang</button>}
         </p>}
-        <div className="import-source-image"><PrivateImage path={`/imports/${job.id}/pages/${selectedPage}/image/`} alt={`Trang ${selectedPage} của ${job.original_filename}`} /></div>
+        <div className="import-source-image"><div style={{ width: `${pageZoom * 100}%` }}><PrivateImage path={`/imports/${job.id}/pages/${selectedPage}/image/`} alt={`Trang ${selectedPage} của ${job.original_filename}`} /></div></div>
       </div>}
       {!!job.report?.issues.length && <div role="region" aria-label="Báo cáo nhập đề"><h2>Báo cáo phân tích</h2><ul>{job.report.issues.map((issue, index) => <li key={index}>
         {issue.page_no ? `Trang ${issue.page_no}` : issue.line ? `Dòng ${issue.line}` : 'Toàn đề'}: {issue.code} — {issue.message}
