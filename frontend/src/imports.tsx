@@ -7,7 +7,12 @@ import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
 type Issue = { line?: number; page_no?: number; code: string; message: string; severity: 'ERROR' | 'WARNING'; resolved_at?: string }
 type DraftChoice = { label: string; text: string; is_correct: boolean }
-type DraftQuestion = { tmp_id: string; order: number; kind: string; text: string; explanation: string; choices: DraftChoice[] }
+type DraftQuestion = {
+  tmp_id: string; order: number; kind: string; text: string; explanation: string
+  choices: DraftChoice[]; statements: { label: string; text: string; is_true: boolean | null }[]
+  tf_answer: boolean | null; short_answer: string | null; short_tolerance: string | null
+  essay_model_answer: string; figure_refs: string[]; provenance: { page_no?: number; line?: number }
+}
 type ImportDraft = { metadata: Record<string, unknown>; sections: { title: string; questions: DraftQuestion[] }[] }
 type Job = {
   id: string
@@ -323,6 +328,7 @@ export function ImportReviewPage() {
       </div>}
       {!!job.report?.issues.length && <div role="region" aria-label="Báo cáo nhập đề"><h2>Báo cáo phân tích</h2><ul>{job.report.issues.map((issue, index) => <li key={index}>
         {issue.page_no ? `Trang ${issue.page_no}` : issue.line ? `Dòng ${issue.line}` : 'Toàn đề'}: {issue.code} — {issue.message}
+        {issue.page_no && <button type="button" className="text-button" onClick={() => { if (issue.page_no) setSelectedPage(issue.page_no) }}>Xem nguồn</button>}
         {issue.resolved_at && <span> · Đã đối chiếu</span>}
         {job.source_kind === 'OCR' && job.status === 'NEEDS_REVIEW' && issue.severity === 'ERROR' && !issue.resolved_at && resolvableCodes.has(issue.code) && <div className="import-issue-resolution">
           <label>Lý do xác nhận sau khi sửa bản nháp<input minLength={10} maxLength={500} value={resolutionReasons[index] || ''} onChange={(event) => setResolutionReasons((current) => ({ ...current, [index]: event.target.value }))} /></label>
@@ -349,7 +355,11 @@ export function ImportReviewPage() {
         </form>
         {allQuestions.length > 0 && <div className="manual-form" role="region" aria-label="Kiểm tra câu hỏi">
           <h2>Kiểm tra câu hỏi</h2>
-          <label>Chọn câu hỏi<select value={selectedQuestion} onChange={(event) => setSelectedQuestion(event.target.value)}>{job.draft?.sections.flatMap((section, sectionIndex) => section.questions.map((question) => <option key={question.tmp_id} value={question.tmp_id}>{section.title || `Phần ${sectionIndex + 1}`} · Câu {question.order}</option>))}</select></label>
+          <label>Chọn câu hỏi<select value={selectedQuestion} onChange={(event) => {
+            setSelectedQuestion(event.target.value)
+            const source = allQuestions.find((question) => question.tmp_id === event.target.value)?.provenance.page_no
+            if (source) setSelectedPage(source)
+          }}>{job.draft?.sections.flatMap((section, sectionIndex) => section.questions.map((question) => <option key={question.tmp_id} value={question.tmp_id}>{section.title || `Phần ${sectionIndex + 1}`} · Câu {question.order}</option>))}</select></label>
           {currentQuestion && <>
             <p>Loại: {currentQuestion.kind}</p>
             <label>Nội dung câu hỏi<textarea value={currentQuestion.text} onChange={(event) => changeQuestion((question) => { question.text = event.target.value })} /></label>
@@ -357,6 +367,24 @@ export function ImportReviewPage() {
               <label>{choice.label}<input value={choice.text} onChange={(event) => changeQuestion((question) => { question.choices[index].text = event.target.value })} /></label>
               <label className="review-answer-key"><input type={currentQuestion.kind === 'MCQ' ? 'radio' : 'checkbox'} name={`answer-${currentQuestion.tmp_id}`} checked={choice.is_correct} onChange={() => changeQuestion((question) => { question.choices.forEach((item, answerIndex) => { item.is_correct = currentQuestion.kind === 'MCQ' ? answerIndex === index : answerIndex === index ? !item.is_correct : item.is_correct }) })} /> Đúng</label>
             </div>)}</fieldset>}
+            {currentQuestion.kind === 'TRUE_FALSE' && <label>Đáp án đúng<select value={currentQuestion.tf_answer == null ? '' : String(currentQuestion.tf_answer)} onChange={(event) => changeQuestion((question) => { question.tf_answer = event.target.value === '' ? null : event.target.value === 'true' })}>
+              <option value="">Chưa xác định</option><option value="true">Đúng</option><option value="false">Sai</option>
+            </select></label>}
+            {currentQuestion.kind === 'TF_GROUP' && <fieldset className="review-answers"><legend>Đúng / sai từng ý</legend>{currentQuestion.statements.map((statement, index) => <div className="review-answer-row" key={statement.label}>
+              <label>Ý {statement.label}<input value={statement.text} onChange={(event) => changeQuestion((question) => { question.statements[index].text = event.target.value })} /></label>
+              <label>Đáp án<select value={statement.is_true == null ? '' : String(statement.is_true)} onChange={(event) => changeQuestion((question) => { question.statements[index].is_true = event.target.value === '' ? null : event.target.value === 'true' })}>
+                <option value="">Chưa rõ</option><option value="true">Đúng</option><option value="false">Sai</option>
+              </select></label>
+            </div>)}</fieldset>}
+            {currentQuestion.kind === 'SHORT' && <div className="form-grid">
+              <label>Đáp án ngắn<input value={currentQuestion.short_answer || ''} onChange={(event) => changeQuestion((question) => { question.short_answer = event.target.value || null })} /></label>
+              <label>Sai số cho phép<input type="number" min={0} step="any" value={currentQuestion.short_tolerance ?? ''} onChange={(event) => changeQuestion((question) => { question.short_tolerance = event.target.value || null })} /></label>
+            </div>}
+            {currentQuestion.kind === 'ESSAY' && <label>Đáp án tham khảo (không bắt buộc)<textarea value={currentQuestion.essay_model_answer || ''} onChange={(event) => changeQuestion((question) => { question.essay_model_answer = event.target.value })} /></label>}
+            {!!currentQuestion.figure_refs.length && <div><strong>Hình minh họa</strong><ul>{currentQuestion.figure_refs.map((ref) => <li key={ref}>{ref} <button type="button" className="text-button" onClick={() => {
+              const page = /^p([1-9]\d*):/.exec(ref)?.[1]
+              if (page) setSelectedPage(Number(page))
+            }}>Xem trang</button> <button type="button" className="text-button" onClick={() => changeQuestion((question) => { question.figure_refs = question.figure_refs.filter((item) => item !== ref) })}>Bỏ hình</button></li>)}</ul></div>}
             <label>Giải thích (không bắt buộc)<textarea value={currentQuestion.explanation || ''} onChange={(event) => changeQuestion((question) => { question.explanation = event.target.value })} /></label>
             <button type="button" className="button secondary" disabled={pending || !questionsDirty || metadataDirty} onClick={() => replace(job.draft)}>Lưu câu hỏi</button>
           </>}
