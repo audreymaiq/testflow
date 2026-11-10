@@ -1,5 +1,29 @@
 import { expect, test } from '@playwright/test'
 
+test('document upload reports unavailable OCR without creating a pending job', async ({ page }) => {
+  const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
+  const username = `docuser${suffix}`
+  await page.goto('/register')
+  await page.getByLabel('Tên đăng nhập', { exact: true }).fill(username)
+  await page.getByLabel('Email').fill(`${username}@example.test`)
+  await page.getByLabel('Mật khẩu').fill('Zebra!Planet#42')
+  await page.getByRole('button', { name: 'Tạo tài khoản' }).click()
+  await expect(page.getByRole('heading', { name: `Xin chào, ${username}` })).toBeVisible()
+
+  await page.goto('/imports/document/new')
+  await page.getByLabel('Chọn PDF, DOCX hoặc ảnh').setInputFiles({
+    name: `sample-${suffix}.pdf`, mimeType: 'application/pdf', buffer: Buffer.from('%PDF-1.4\nsynthetic'),
+  })
+  const responsePromise = page.waitForResponse(response => response.url().endsWith('/api/v1/imports/document/') && response.request().method() === 'POST')
+  await page.getByRole('button', { name: 'Thêm đề', exact: true }).click()
+  const response = await responsePromise
+  expect(response.status()).toBe(502)
+  expect((await response.json()).error.code).toBe('OCR_UNAVAILABLE')
+  await expect(page.getByRole('alert')).toHaveText('Dịch vụ nhận dạng đề hiện chưa được cấu hình.')
+  await expect(page.getByRole('button', { name: 'Thêm đề', exact: true })).toBeEnabled()
+  await expect(page).toHaveURL(/\/imports\/document\/new$/)
+})
+
 test('TXT import is reviewed, confirmed once, and private to the owner', async ({ page }) => {
   const suffix = `${Date.now()}${Math.floor(Math.random() * 1000)}`
   const username = `txtuser${suffix}`
