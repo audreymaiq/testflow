@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom'
-import { DeckMark } from './exam-art'
 
 export const levelNames: Record<string, string> = {
   TIEU_HOC: 'Tiểu học', THCS: 'THCS', THPT: 'THPT', DAI_HOC: 'Đại học', KHAC: 'Khác',
@@ -13,7 +12,7 @@ export const examTypeNames: Record<string, string> = {
 export type ExamCardData = {
   id: string; title: string; subtitle: string; subject: string; level: string; grade: number | null
   exam_type: string; visibility: string; question_count: number; duration_minutes: number | null
-  icon: string; color: string; is_system_sample: boolean; schools: string[]
+  icon: string; color: string; is_system_sample: boolean; schools: string[]; owner_username: string | null
 }
 
 export function ExamCard({ exam }: { exam: ExamCardData }) {
@@ -22,7 +21,7 @@ export function ExamCard({ exam }: { exam: ExamCardData }) {
     <span className="exam-card-cover">
       <span className="exam-card-type">{examTypeNames[exam.exam_type] || 'Đề thi'}</span>
       {exam.visibility === 'PRIVATE' && <span className="exam-card-private">Riêng tư</span>}
-      <span className="exam-card-mark"><DeckMark title={exam.subject} icon={exam.icon} color={exam.color} /></span>
+      <span className="exam-card-uploader" title={exam.owner_username || 'Ẩn danh'}><span className="visually-hidden">Người đăng: </span>{exam.owner_username ? `@${exam.owner_username}` : 'Ẩn danh'}</span>
     </span>
     <span className="exam-card-body">
       <strong className="exam-card-subject">{exam.subject}</strong>
