@@ -43,6 +43,10 @@ function subjectIcon(name: string) {
   return 'geography'
 }
 
+function CtaArrow() {
+  return <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 12h15m-6-6 6 6-6 6" /></svg>
+}
+
 export function Home() {
   const { api, user, loading } = useAuth()
   const [input, setInput] = useState('')
@@ -61,6 +65,7 @@ export function Home() {
   })
   const inProgress = recent.data?.results || []
   const featured = featuredSubjects.map((name) => subjects.data?.find((item) => item.name === name || (name === 'Vật lý' && item.name === 'Vật lí') || (name === 'Địa lý' && item.name === 'Địa lí'))).filter((item): item is Subject => !!item)
+  const moreSearch = new URLSearchParams({ ...(search ? { q: search } : {}), ...(subject ? { subject } : {}) }).toString()
 
   function submit(event: FormEvent) {
     event.preventDefault()
@@ -79,7 +84,7 @@ export function Home() {
           <label className="visually-hidden" htmlFor="home-query">Tìm bộ đề</label>
           <div className="home-search-box">
             <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" strokeWidth="2" /><path d="m16 16 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>
-            <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Tìm đề thi, môn học, chủ đề..." />
+            <input id="home-query" type="search" value={input} onChange={(event) => setInput(event.target.value)} placeholder="Tìm đề, môn học hoặc @username..." />
             <button type="submit">Tìm đề</button>
           </div>
         </form>
@@ -95,10 +100,10 @@ export function Home() {
           <span className="home-resume-play"><Icon kind="play" size={22} /></span>
         </Link>
       })}</div> : <div className="home-resume-empty">{user ? recent.isPending ? 'Đang tải…' : 'Chọn một đề trong thư viện để bắt đầu.' : 'Bài làm của bạn sẽ hiện ở đây sau khi đăng nhập.'}</div>}
-      {user && <Link className="home-resume-all" to="/history">Xem tất cả <span aria-hidden="true">→</span></Link>}
+      {user && <Link className="home-resume-all" to="/history">Xem tất cả <CtaArrow /></Link>}
     </section>
     <section className="home-library" id="home-library" aria-labelledby="home-library-title">
-      <div className="home-library-heading"><div><Icon kind="book" size={39} /><h2 id="home-library-title">Đề nổi bật</h2></div><Link to="/library">Xem thêm <span aria-hidden="true">→</span></Link></div>
+      <div className="home-library-heading"><div><Icon kind="book" size={39} /><h2 id="home-library-title">Đề nổi bật</h2></div><Link to="/library">Xem thêm <CtaArrow /></Link></div>
       <div className="home-subjects" role="group" aria-label="Lọc theo môn học">
         <button type="button" className={!subject ? 'is-active' : ''} aria-pressed={!subject} onClick={() => setSubject('')}>Tất cả</button>
         {featured.map((item) => <button type="button" key={item.code} className={subject === item.code ? 'is-active' : ''} aria-pressed={subject === item.code} onClick={() => setSubject(item.code)}><Icon kind={subjectIcon(item.name)} size={24} />{item.name}</button>)}
@@ -109,7 +114,7 @@ export function Home() {
       {exams.data && exams.data.count > 0 && <div className="home-deck-grid library-results">
         {exams.data.results.map((exam) => <ExamCard key={exam.id} exam={exam} />)}
       </div>}
-      {exams.data?.next && <p className="home-more"><Link to="/library">Xem thêm trong thư viện →</Link></p>}
+      {exams.data?.next && <p className="home-more"><Link to={`/library${moreSearch ? `?${moreSearch}` : ''}`}>Xem thêm trong thư viện →</Link></p>}
     </section>
   </div>
 }
