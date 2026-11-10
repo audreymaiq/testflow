@@ -219,7 +219,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .import-source-heading h2 { margin: 0; font-size: 1.2rem; }
 .import-source-heading label { display: flex; align-items: center; gap: .5rem; }
 .import-source-heading select { min-height: 40px; max-width: 13rem; }
-.import-source-image { min-height: 8rem; margin-top: 1rem; text-align: center; }
+.import-source-image { min-height: 8rem; margin-top: 1rem; overflow: auto; text-align: center; }
 .import-source-image img { display: block; width: 100%; height: auto; border: 1px solid var(--rule); background: white; }
 .import-issue-resolution { display: flex; align-items: end; flex-wrap: wrap; gap: .5rem; padding: .5rem 0 1rem; }
 .import-issue-resolution label { flex: 1 1 16rem; display: grid; gap: .35rem; }
