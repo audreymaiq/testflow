@@ -32,7 +32,7 @@ export function ExamCard({ exam }: { exam: ExamCardData }) {
       <span className="exam-card-foot">
         <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 5v5l3 2" /></svg>{exam.duration_minutes ? `${exam.duration_minutes} phút` : 'Không giới hạn giờ'}</span>
         <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 7 7-4 7 4-7 4-7-4Zm0 4 7 4 7-4M3 15l7 4 7-4" /></svg>{exam.question_count} câu</span>
-        <span className="exam-card-arrow" aria-hidden="true">→</span>
+        <span className="exam-card-arrow" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><path d="M4 12h15m-6-6 6 6-6 6" /></svg></span>
       </span>
     </span>
   </Link>
