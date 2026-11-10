@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useRef, useState, type FormEvent, type ReactNode } from 'react'
 import { Link, NavLink, Navigate, Route, Routes, useLocation, useNavigate, useParams } from 'react-router-dom'
 import { request } from './api'
 import { useAuth } from './auth'
@@ -19,9 +19,12 @@ function Shell({ children }: { children: ReactNode }) {
   const [leaving, setLeaving] = useState(false)
   const [message, setMessage] = useState('')
   const navigate = useNavigate()
+  const { pathname } = useLocation()
   const headerRef = useRef<HTMLElement>(null)
   const closeLogout = useCallback(() => { if (!leaving) setConfirmLogout(false) }, [leaving])
   const closeMessage = useCallback(() => setMessage(''), [])
+
+  useLayoutEffect(() => { window.scrollTo(0, 0) }, [pathname])
 
   useEffect(() => {
     const header = headerRef.current
