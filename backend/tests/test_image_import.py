@@ -470,7 +470,11 @@ def test_figure_is_cropped_and_attached_only_at_private_confirmation(
                                     {"label": "B", "text": "Hai"},
                                 ],
                                 "figure_refs": ["fig-1"],
-                            }
+                            },
+                            {
+                                "type": "answer_key",
+                                "entries": [{"number_label": "Câu 1", "answer": "B"}],
+                            },
                         ],
                     },
                     "source": "VLM",
