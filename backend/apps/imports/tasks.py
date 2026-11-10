@@ -106,16 +106,17 @@ def _extract_pages(task, job: ImportJob) -> bool:
         page.error_code = ""
         page.save(update_fields=["attempts", "status", "error_code", "updated_at"])
         try:
-            inputs = {"text_layer": page.text_layer} if page.text_layer else {}
-            if not inputs:
-                with page.image.open("rb") as image:
-                    inputs["image_png"] = image.read()
+            with page.image.open("rb") as image:
+                image_png = image.read()
+            if not image_png:
+                raise OSError("empty page image")
             extraction = extract_page(
                 service_url=settings.IMPORT_INFERENCE_URL,
                 token=settings.IMPORT_INFERENCE_TOKEN,
                 page_no=page_no,
                 subject_hint=job.subject_hint,
-                **inputs,
+                image_png=image_png,
+                text_layer=page.text_layer,
             )
         except ExtractionError as exc:
             if exc.retryable and page.attempts < 3 and task.request.retries < task.max_retries:
