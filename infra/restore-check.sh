@@ -36,8 +36,15 @@ test "$ready" -eq 1 || { echo 'Isolated PostgreSQL did not start' >&2; exit 1; }
 
 docker exec -i "$container" pg_restore -U postgres -d restorecheck \
     --no-owner --no-privileges < "$backup_dir/database.dump"
+printf 'Restored migrations: '
 docker exec "$container" psql -U postgres -d restorecheck -At \
     -c 'SELECT COUNT(*) FROM django_migrations'
+printf 'Restored users: '
+docker exec "$container" psql -U postgres -d restorecheck -At \
+    -c 'SELECT COUNT(*) FROM accounts_user'
+printf 'Restored exams: '
+docker exec "$container" psql -U postgres -d restorecheck -At \
+    -c 'SELECT COUNT(*) FROM catalog_exam'
 mkdir "$restore_dir/media"
 tar -C "$restore_dir/media" -xf "$backup_dir/media.tar"
 printf 'Restored media files: '
