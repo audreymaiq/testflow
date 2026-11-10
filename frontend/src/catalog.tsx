@@ -276,6 +276,7 @@ export function ExamDetailPage() {
       <div><dt>Thời gian</dt><dd>{exam.data.duration_minutes ? `${exam.data.duration_minutes} phút` : 'Không giới hạn'}</dd></div>
       <div><dt>Hiển thị</dt><dd>{exam.data.visibility === 'PRIVATE' ? 'Riêng tư' : 'Công khai'}</dd></div>
       <div><dt>Đáp án</dt><dd>{exam.data.has_answer_key ? 'Có' : 'Chưa đủ'}</dd></div>
+      <div><dt>Người đăng</dt><dd title={exam.data.owner_username || 'Ẩn danh'}>{exam.data.owner_username ? `@${exam.data.owner_username}` : 'Ẩn danh'}</dd></div>
       {exam.data.schools.length > 0 && <div><dt>Trường</dt><dd>{exam.data.schools.join(', ')}</dd></div>}
       {exam.data.majors.length > 0 && <div><dt>Ngành</dt><dd>{exam.data.majors.join(', ')}</dd></div>}
     </dl>
