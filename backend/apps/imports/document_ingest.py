@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import signal
 import subprocess
 import tempfile
 import zipfile
@@ -87,17 +88,29 @@ def _convert_docx(raw: bytes, workdir: Path, soffice: str) -> bytes:
         str(source),
     ]
     try:
-        result = subprocess.run(
+        process = subprocess.Popen(
             command,
             cwd=workdir,
-            capture_output=True,
-            timeout=CONVERT_TIMEOUT_SECONDS,
-            check=False,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            start_new_session=os.name == "posix",
         )
-    except (OSError, subprocess.TimeoutExpired) as exc:
+        try:
+            returncode = process.wait(timeout=CONVERT_TIMEOUT_SECONDS)
+        except subprocess.TimeoutExpired as exc:
+            if os.name == "posix":
+                try:
+                    os.killpg(process.pid, signal.SIGKILL)  # type: ignore[attr-defined]
+                except ProcessLookupError:
+                    pass
+            else:
+                process.kill()
+            process.wait()
+            raise DocumentRejected("DOCX_CONVERSION_TIMEOUT") from exc
+    except OSError as exc:
         raise DocumentRejected("DOCX_CONVERTER_UNAVAILABLE") from exc
     converted = output_dir / "source.pdf"
-    if result.returncode != 0 or not converted.is_file():
+    if returncode != 0 or not converted.is_file():
         raise DocumentRejected("DOCX_CONVERSION_FAILED")
     if converted.stat().st_size > MAX_DOCUMENT_BYTES:
         raise DocumentRejected("DOCX_CONVERSION_TOO_LARGE")
