@@ -208,6 +208,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .preview-question h3 { font-family: 'IBM Plex Mono', monospace; font-size: .85rem; }
 .preview-question ol { margin: .6rem 0 0; padding-left: 1.8rem; list-style-type: upper-alpha; }
 .preview-question li { padding: .2rem 0; }
+.question-asset { display: block; max-width: min(100%, 760px); max-height: 60vh; width: auto; height: auto; margin: 1rem 0; border: 1px solid var(--rule); border-radius: 8px; object-fit: contain; background: white; }
 .manual-panel { max-width: 860px; margin: auto; padding: clamp(1.5rem, 5vw, 3rem); border-radius: 12px; }
 .manual-panel h1 { font-size: 2.5rem; overflow-wrap: anywhere; }
 .manual-panel input[type="file"] { display: block; width: 100%; min-width: 0; }
