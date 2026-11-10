@@ -126,11 +126,11 @@ def test_docx_conversion_and_corrupt_pdf_failure(
     client, _ = context
     monkeypatch.setattr(tasks.process_document_job, "delay", lambda _job_id: None)
 
-    def converted(_command, *, cwd, capture_output, timeout, check):
+    def converted(_command, *, cwd, stdout, stderr, start_new_session):
         (cwd / "output" / "source.pdf").write_bytes(pdf_bytes())
-        return type("Result", (), {"returncode": 0})()
+        return type("Process", (), {"wait": lambda self, timeout: 0})()
 
-    monkeypatch.setattr(document_ingest.subprocess, "run", converted)
+    monkeypatch.setattr(document_ingest.subprocess, "Popen", converted)
     monkeypatch.setattr(
         inference_client,
         "urlopen",
