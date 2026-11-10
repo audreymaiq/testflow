@@ -67,6 +67,7 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.prod
       HOME: /tmp
+      SOFFICE_BIN: /usr/local/bin/sandboxed-soffice
     volumes:
       - media_data:/app/media/private
     tmpfs: [/tmp]
