@@ -204,7 +204,7 @@ h3 { font-size: 1.05rem; line-height: 1.4; font-weight: 600; margin: 1.2rem 0 .5
 .detail-panel > ul li { padding: .4rem 0; border-bottom: 1px solid var(--rule); }
 .exam-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; border-block: 1px solid var(--border); padding: 1rem 0; }
 .exam-facts dt { color: var(--muted); font-size: .78rem; }
-.exam-facts dd { margin: .3rem 0 0; font-family: 'IBM Plex Mono', monospace; }
+.exam-facts dd { margin: .3rem 0 0; font-family: 'IBM Plex Mono', monospace; overflow-wrap: anywhere; }
 .preview-question { padding: 1rem 0; border-top: 1px solid var(--border); }
 .preview-question p, .preview-question li { font-family: Literata, serif; line-height: 1.65; }
 .preview-question h3 { font-family: 'IBM Plex Mono', monospace; font-size: .85rem; }
