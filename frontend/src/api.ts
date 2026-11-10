@@ -54,3 +54,20 @@ export async function request<T>(path: string, options: RequestInit = {}, access
   if (!response.ok) throw new ApiError(errorMessage(body), response.status)
   return body as T
 }
+
+export async function requestBlob(path: string, access?: string): Promise<Blob> {
+  let response: Response
+  try {
+    response = await fetch(`${baseUrl}${path}`, {
+      credentials: 'include',
+      headers: access ? { Authorization: `Bearer ${access}` } : {},
+    })
+  } catch {
+    throw new ApiError('Không kết nối được máy chủ. Vui lòng thử lại.', 0)
+  }
+  if (!response.ok) {
+    const body: unknown = await response.json().catch(() => null)
+    throw new ApiError(errorMessage(body), response.status)
+  }
+  return response.blob()
+}
