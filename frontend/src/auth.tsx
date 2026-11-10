@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useRef, useState, type ReactNode } from 'react'
 import { useQueryClient } from '@tanstack/react-query'
-import { ApiError, request, type Session, type User } from './api'
+import { ApiError, request, requestBlob, type Session, type User } from './api'
 
 let bootstrapPromise: Promise<Session> | null = null
 let refreshPromise: Promise<{ access: string }> | null = null
@@ -32,6 +32,7 @@ type AuthContextValue = {
   clearSession: () => void
   updateProfile: (profile: Pick<User, 'display_name' | 'school' | 'grade'>) => Promise<void>
   api: <T>(path: string, options?: RequestInit) => Promise<T>
+  apiBlob: (path: string) => Promise<Blob>
 }
 
 const AuthContext = createContext<AuthContextValue | null>(null)
@@ -110,7 +111,24 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
-  return <AuthContext.Provider value={{ user, access, loading, register, login, logout, clearSession, updateProfile, api }}>
+  async function apiBlob(path: string): Promise<Blob> {
+    try {
+      return await requestBlob(path, access || undefined)
+    } catch (cause) {
+      if (!(cause instanceof ApiError) || cause.status !== 401 || !user) throw cause
+      try {
+        const refreshed = await rotateRefresh()
+        setAccess(refreshed.access)
+        return await requestBlob(path, refreshed.access)
+      } catch (refreshError) {
+        queryClient.clear()
+        setAccess(null); setUser(null)
+        throw refreshError
+      }
+    }
+  }
+
+  return <AuthContext.Provider value={{ user, access, loading, register, login, logout, clearSession, updateProfile, api, apiBlob }}>
     {children}
   </AuthContext.Provider>
 }
