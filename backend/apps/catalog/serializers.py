@@ -46,6 +46,7 @@ class ExamFilterSerializer(serializers.Serializer):
 
 class ExamListSerializer(serializers.ModelSerializer):
     subject = serializers.SlugRelatedField(read_only=True, slug_field="name")
+    owner_username = serializers.CharField(source="owner.username", read_only=True, allow_null=True)
     schools = serializers.SlugRelatedField(read_only=True, slug_field="name", many=True)
     majors = serializers.SlugRelatedField(read_only=True, slug_field="name", many=True)
     chapter_count = serializers.SerializerMethodField()
@@ -65,6 +66,7 @@ class ExamListSerializer(serializers.ModelSerializer):
             "level",
             "grade",
             "subject",
+            "owner_username",
             "exam_type",
             "schools",
             "majors",
