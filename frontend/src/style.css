@@ -443,9 +443,9 @@ main:has(.library-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px aut
 .library-layout { display: grid; grid-template-columns: 360px minmax(0, 1fr); gap: 28px; align-items: start; }
 .library-filters { overflow: hidden; padding: 0 0 19px; border: 1px solid #e1e8f4; border-radius: 20px; background: linear-gradient(145deg,#f3f6fc,#f8faff); box-shadow: 0 6px 16px #183d7620; }
 .filter-heading { min-height: 52px; padding: 12px 20px 4px; border: 0; }
-.filter-heading h2 { display: flex; align-items: center; gap: 13px; margin: 0; color: #0b1735; font: 700 1.5rem/1.2 'IBM Plex Sans',sans-serif; }
-.filter-heading h2 svg { width: 27px; height: 27px; color: #075de0; }
-.filter-heading .filter-reset { min-height: 32px; padding: 0; color: #0b2b6b; font-size: .86rem; text-decoration: none; white-space: nowrap; }
+.filter-heading h2 { display: flex; align-items: center; gap: 9px; margin: 0; color: #0b1735; font: 700 1.4rem/1.2 'IBM Plex Sans',sans-serif; }
+.filter-heading h2 svg { display: block; flex: none; width: 20px; height: 20px; color: #075de0; }
+.filter-heading .filter-reset { min-height: 32px; padding: 0; color: #31517f; font-size: .84rem; text-decoration: none; white-space: nowrap; }
 .filter-fields { display: grid; gap: 9px; padding: 9px 20px 0; }
 .filter-fields label { gap: 3px; color: #101a34; font-size: .97rem; font-weight: 700; }
 .filter-fields select, .filter-fields input:not([type=checkbox]):not([type=radio]) { min-height: 37px; padding: .25rem .7rem; border: 1px solid #cad6eb; border-radius: 11px; background: #fff; color: #102044; font-size: .9rem; font-weight: 500; box-shadow: 0 2px 3px #183d761b; }
@@ -456,7 +456,7 @@ main:has(.library-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px aut
 .library-levels button.is-active { border-color: #0a5ce4; background: #0a5ce4; color: #fff; }
 .library-types > div { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 4px 7px; padding-left: 18px; }
 .library-types label { display: flex; align-items: center; gap: 8px; min-height: 22px; font-size: .87rem; font-weight: 500; white-space: nowrap; }
-.filter-fields .library-types input[type=radio] { appearance: none; flex: none; width: 18px; min-height: 18px; height: 18px; margin: 0; border: 1px solid #b8c8e2; border-radius: 50%; background: var(--surface); box-shadow: none; }
+.filter-fields .library-types input[type=radio] { appearance: none; flex: 0 0 18px; width: 18px; min-width: 18px; min-height: 18px; height: 18px; aspect-ratio: 1; padding: 0; margin: 0; border: 1px solid #b8c8e2; border-radius: 50%; background: var(--surface); box-shadow: none; }
 .filter-fields .library-types input[type=radio]:checked { border-color: #0a5ce4; background: #0a5ce4; box-shadow: inset 0 0 0 3px var(--surface); }
 .library-types > button { min-height: 25px; margin: 3px 0 0 18px; padding: 0; border: 0; background: transparent; color: #0a53c4; font-size: .78rem; text-decoration: underline; }
 .library-switches { display: flex; flex-wrap: wrap; gap: 10px 18px; }
@@ -507,8 +507,9 @@ main:has(.library-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px aut
 .library-results .exam-card-foot > span:last-child { color: #0755cc; }
 .library-results .exam-card-foot > span:not(.exam-card-arrow) { display: inline-flex; align-items: center; gap: 5px; }
 .library-results .exam-card-foot svg { width: 18px; height: 18px; }
-.library-results .exam-card-arrow { display: grid; place-items: center; width: 32px; height: 32px; margin-left: auto; border: 1px solid #d8e5f5; border-radius: 10px; background: transparent; color: #075be6; font-size: 1.25rem; line-height: 1; }
-.library-results .exam-card:hover .exam-card-arrow, .library-results .exam-card:focus-visible .exam-card-arrow { border-color: #a5bff1; background: #eaf2ff; }
+.library-results .exam-card-arrow { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; margin-left: auto; color: #075be6; }
+.library-results .exam-card-arrow svg { display: block; width: 22px; height: 22px; }
+.library-results .exam-card:hover .exam-card-arrow, .library-results .exam-card:focus-visible .exam-card-arrow { color: #003f9e; }
 .library-results .pagination { justify-content: center; gap: 8px; margin-top: 23px; padding: 0; border: 0; }
 .library-results .pagination button { display: grid; place-items: center; min-width: 40px; min-height: 40px; padding: 0 8px; border: 1px solid #dce5f4; border-radius: 13px; background: #fff; color: #0a1a3b; font-size: 1rem; box-shadow: 0 2px 4px #1b3e6c19; }
 .library-results .pagination button:hover:not(:disabled) { border-color: #075bea; background: #eaf2ff; }
@@ -531,8 +532,8 @@ main:has(.library-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px aut
 :root[data-mode="dark"] .library-results .exam-card-cover { color: var(--accent); }
 :root[data-mode="dark"] .library-results .exam-card-cover > span:first-child { background: #344f77; color: var(--text); }
 :root[data-mode="dark"] .library-results .exam-card-uploader { color: #bdcde0; }
-:root[data-mode="dark"] .library-results .exam-card-arrow { background: transparent; border-color: #435c79; color: var(--accent); }
-:root[data-mode="dark"] .library-results .exam-card:hover .exam-card-arrow, :root[data-mode="dark"] .library-results .exam-card:focus-visible .exam-card-arrow { background: #375173; }
+:root[data-mode="dark"] .library-results .exam-card-arrow { color: var(--accent); }
+:root[data-mode="dark"] .library-results .exam-card:hover .exam-card-arrow, :root[data-mode="dark"] .library-results .exam-card:focus-visible .exam-card-arrow { color: #dce9ff; }
 :root[data-mode="dark"] .library-results .exam-card-foot > span:last-child { color: var(--accent); }
 @media (max-width: 1200px) {
   .library-layout { grid-template-columns: 300px minmax(0,1fr); gap: 18px; }
@@ -620,7 +621,7 @@ main:has(.home-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px auto 5
 .home-progress-track > span { display: block; height: 100%; border-radius: inherit; background: #095bd4; }
 .home-resume-empty { padding: 0 25px; border-left: 1px solid #c4ccda; color: #38547d; }
 .home-resume-all { display: flex; align-items: center; gap: 10px; min-height: 60px; margin-left: 21px; padding-left: 25px; border-left: 1px solid #c4ccda; color: #0048bc; font-size: 1.05rem; text-decoration: none; white-space: nowrap; }
-.home-resume-all span, .home-library-heading > a span { font-size: 1.6rem; line-height: 1; }
+.home-resume-all svg, .home-library-heading > a svg { display: block; flex: none; width: 22px; height: 22px; }
 .home-library { scroll-margin-top: calc(var(--header-height, 78px) + 1rem); padding: 8px 0 0; border: 0; border-radius: 0; background: transparent; }
 .home-library-heading { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 20px; }
 .home-library-heading > div { display: flex; align-items: center; gap: 26px; }
@@ -716,9 +717,9 @@ main:has(.home-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px auto 5
   background-size: 14px;
 }
 .filter-fields select:hover, .manual-form select:hover, .library-sort:hover { border-color: var(--accent); }
-.filter-heading .filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 6px; flex: none; min-height: 36px; padding: 5px 8px; border-radius: 9px; line-height: 1; }
-.filter-heading .filter-reset svg { display: block; width: 17px; height: 17px; flex: none; }
-.filter-heading .filter-reset:hover { background: color-mix(in srgb, var(--accent) 9%, transparent); color: var(--accent); }
+.filter-heading .filter-reset { display: inline-flex; align-items: center; justify-content: center; gap: 5px; flex: none; min-height: 36px; line-height: 1; }
+.filter-heading .filter-reset svg { display: block; width: 15px; height: 15px; flex: none; }
+.filter-heading .filter-reset:hover { color: var(--accent); text-decoration: underline; text-underline-offset: 3px; }
 .filter-fields select:focus-visible, .library-sort summary:focus-visible, .manual-form select:focus-visible { outline: 2px solid var(--focus); outline-offset: 2px; }
 @media (max-width: 900px) {
   .filter-heading { gap: 8px; }
@@ -728,7 +729,7 @@ main:has(.home-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px auto 5
 @media (max-width: 440px) {
   .filter-heading { padding-inline: 12px; }
   .filter-heading h2 { gap: 7px; font-size: 1.2rem; }
-  .filter-heading h2 svg { width: 22px; height: 22px; flex: none; }
+  .filter-heading h2 svg { width: 18px; height: 18px; flex: none; }
   .filter-heading .filter-reset { padding-inline: 4px; font-size: .78rem; }
   .filter-heading .filter-reset svg { width: 15px; height: 15px; }
   .filter-toggle { padding-inline: 7px; }
