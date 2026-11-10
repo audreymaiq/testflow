@@ -6,6 +6,7 @@ import { Modal } from './shared'
 import { AnswerSheetArt } from './exam-art'
 import { ExamCard, examTypeNames, levelNames, type ExamCardData } from './exam-card'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
+import { PrivateImage } from './private-image'
 import heroDashboard from './assets/hero-dashboard.webp'
 
 type ExamSummary = ExamCardData & { has_answer_key: boolean; year: number | null }
@@ -162,7 +163,7 @@ export function ExamDetailPage() {
   })
   const preview = useQuery({
     queryKey: ['exam-preview', id, user?.id],
-    queryFn: () => api<{ questions: { id: string; text: string; choices: { label: string; text: string }[] }[] }>(`/exams/${id}/preview/`),
+    queryFn: () => api<{ questions: { id: string; text: string; choices: { label: string; text: string }[]; assets: string[] }[] }>(`/exams/${id}/preview/`),
     enabled: !loading && !!exam.data,
   })
   const practiceSummary = useQuery({
@@ -306,6 +307,7 @@ export function ExamDetailPage() {
     {preview.isError && <p role="alert">{preview.error.message}</p>}
     {preview.data?.questions.map((question, index) => <article className="preview-question" key={question.id}>
       <h3>Câu {index + 1}</h3><p>{question.text}</p>
+      {question.assets.map((assetId, assetIndex) => <PrivateImage key={assetId} path={`/exams/${id}/assets/${assetId}/`} alt={`Hình minh họa ${assetIndex + 1} của câu ${index + 1}`} className="question-asset" />)}
       <ol type="A">{question.choices.map((choice) => <li key={choice.label}>{choice.text}</li>)}</ol>
     </article>)}
     {confirmation && <Modal title={confirmationCopy[confirmation].title} onClose={closeConfirmation}>
