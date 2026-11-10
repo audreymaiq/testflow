@@ -15,6 +15,7 @@ from .serializers import (
     DiscardSerializer,
     DraftReplaceSerializer,
     ImageUploadSerializer,
+    IssueResolutionSerializer,
     TxtUploadSerializer,
 )
 from .services import (
@@ -25,6 +26,7 @@ from .services import (
     discard,
     job_payload,
     replace_draft,
+    resolve_review_issue,
     retry_page,
     reviewable_job,
 )
@@ -149,6 +151,19 @@ class RetryPageView(GenericAPIView):
     def post(self, request, job_id, page_no):
         job = retry_page(job_id, page_no, user=request.user)
         return Response(job_payload(job), status=status.HTTP_202_ACCEPTED)
+
+
+class IssueResolutionView(GenericAPIView):
+    serializer_class = IssueResolutionSerializer
+
+    @extend_schema(operation_id="imports_resolve_issue", responses={200: dict})
+    def post(self, request, job_id, issue_index):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        job = resolve_review_issue(
+            job_id, issue_index, user=request.user, reason=serializer.validated_data["reason"]
+        )
+        return Response(job_payload(job, include_draft=True))
 
 
 class ConfirmView(GenericAPIView):
