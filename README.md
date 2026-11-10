@@ -141,7 +141,7 @@ Poll `GET /api/v1/imports/{job_id}/` for status, per-page progress, errors and t
 
 Referenced page figures are cropped into private assets only when the reviewed draft is confirmed. Exam previews expose asset IDs, and `/api/v1/exams/{exam_id}/assets/{asset_id}/` serves them only to viewers of that exam. A student's existing session can retrieve its selected figures through `/api/v1/practice/sessions/{session_id}/assets/{asset_id}/` after a public exam is withdrawn; hidden or deleted exams revoke that access. Unmatched figures remain blocking review errors. Exporting and recreating a figure-bearing exam requires `export_exam` together with `export_figure_payloads`.
 
-The repository does not include a real extraction model, a deployed inference runtime, or the 30-exam annotated evaluation set. Synthetic tests establish transport and state behavior; the real DOCX conversion test establishes converter packaging, not OCR accuracy. Document OCR is **not yet a production-ready feature**. Do not expose document upload to end users until the model contract, real-document quality and operating environment are verified.
+The repository does not include a real extraction model, a deployed inference runtime, or the 30-exam annotated evaluation set. Synthetic tests establish transport and state behavior; the real DOCX conversion test establishes converter packaging, not OCR accuracy. Document OCR is **not yet a production-ready feature**. Without `IMPORT_INFERENCE_URL`, the server rejects document uploads with `OCR_UNAVAILABLE`; enable the runtime only after its contract, real-document quality and operating environment are verified.
 
 ## Production deployment
 
