@@ -31,7 +31,10 @@ def restrict_network() -> None:
     seccomp.seccomp_syscall_resolve_name.argtypes = [ctypes.c_char_p]
     seccomp.seccomp_syscall_resolve_name.restype = ctypes.c_int
     seccomp.seccomp_rule_add_array.argtypes = [
-        ctypes.c_void_p, ctypes.c_uint32, ctypes.c_int, ctypes.c_uint,
+        ctypes.c_void_p,
+        ctypes.c_uint32,
+        ctypes.c_int,
+        ctypes.c_uint,
         ctypes.POINTER(ScmpArgCmp),
     ]
     seccomp.seccomp_rule_add_array.restype = ctypes.c_int
