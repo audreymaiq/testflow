@@ -110,14 +110,14 @@ export function LibraryPage() {
         <p>Đề thi, đề kiểm tra và đề ôn tập từ cấp 1 đến đại học do cộng đồng chia sẻ.</p>
         <form className="library-hero-search" role="search" onSubmit={(event: FormEvent) => { event.preventDefault(); updateFilter('q', heroQuery) }}>
           <label className="visually-hidden" htmlFor="library-hero-query">Tìm đề thi</label>
-          <div className="home-search-box"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" strokeWidth="2" /><path d="m16 16 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg><input id="library-hero-query" type="search" value={heroQuery} onChange={(event) => setHeroQuery(event.target.value)} placeholder="Tìm đề thi, mã đề, chủ đề, trường, ngành..." /><button type="submit">Tìm đề</button></div>
+          <div className="home-search-box"><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="10.5" cy="10.5" r="7" stroke="currentColor" strokeWidth="2" /><path d="m16 16 5 5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg><input id="library-hero-query" type="search" value={heroQuery} onChange={(event) => setHeroQuery(event.target.value)} placeholder="Tìm đề thi, trường hoặc @username..." /><button type="submit">Tìm đề</button></div>
         </form>
       </div>
     </section>
     <section className="library-layout">
     <aside className={`library-filters paper${filtersOpen ? '' : ' is-collapsed'}`} aria-label="Bộ lọc đề">
-      <div className="filter-heading"><h2><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 5h18M6 10h12m-9 5h6m-4 0v5l2-1.5V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" /></svg>Bộ lọc</h2>
-        <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M3 11a9 9 0 1 1 2.4 7M3 17v-6h6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg>Đặt lại</button>
+      <div className="filter-heading"><h2><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 6h16M7 12h10m-7 6h4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" /></svg>Bộ lọc</h2>
+        <button type="button" className="filter-reset" onClick={() => setUrlParams(new URLSearchParams(), { replace: true })}><svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M4 11a8 8 0 1 1 2.3 5.6M4 5v6h6" stroke="currentColor" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" /></svg>Đặt lại</button>
         <button type="button" className="filter-toggle" aria-controls="library-filter-fields" aria-expanded={filtersOpen} onClick={() => setFiltersOpen((open) => !open)}>{filtersOpen ? 'Ẩn bộ lọc' : 'Hiện bộ lọc'}</button>
       </div>
       <div className="filter-fields" id="library-filter-fields">
@@ -128,7 +128,7 @@ export function LibraryPage() {
         <label>Trường<select value={school} onChange={(event) => updateFilter('school', event.target.value)}><option value="">Chọn trường...</option>{facets.data?.schools.map((name) => <option key={name} value={name}>{name} ({facets.data?.school_counts[name] || 0})</option>)}</select></label>
         <label>Ngành<select value={major} onChange={(event) => updateFilter('major', event.target.value)}><option value="">Chọn ngành...</option>{facets.data?.majors.map((name) => <option key={name} value={name}>{name} ({facets.data?.major_counts[name] || 0})</option>)}</select></label>
         <details className="library-extra-filters"><summary>Lọc thêm theo lớp, năm</summary><div><label>Lớp<select value={grade} onChange={(event) => updateFilter('grade', event.target.value)}><option value="">Tất cả</option>{Array.from({ length: 12 }, (_, index) => index + 1).map((item) => <option key={item} value={item}>{item}</option>)}</select></label><label>Năm<input type="number" min={2000} max={2100} value={year} onChange={(event) => updateFilter('year', event.target.value)} /></label></div></details>
-        <label className="filter-search">Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tên đề hoặc môn…" /></label>
+        <label className="filter-search">Tìm kiếm<input type="search" value={query} onChange={(event) => updateFilter('q', event.target.value)} placeholder="Tìm đề hoặc @username…" /></label>
         {facets.isError && <p role="alert">Không tải được các lựa chọn lọc. <button type="button" onClick={() => facets.refetch()}>Thử lại</button></p>}
       </div>
     </aside>
