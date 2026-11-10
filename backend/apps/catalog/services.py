@@ -408,6 +408,7 @@ def export_exam(exam: Exam) -> ExamDraft:
             "sections__questions__statements",
             "sections__questions__chapter",
             "sections__questions__passage",
+            "sections__questions__questionasset_set",
         )
         .get(pk=exam.pk)
     )
@@ -469,6 +470,9 @@ def export_exam(exam: Exam) -> ExamDraft:
                             else None,
                             "text": question.text,
                             "explanation": question.explanation,
+                            "figure_refs": [
+                                str(link.asset_id) for link in question.questionasset_set.all()
+                            ],
                             "choices": [
                                 {
                                     "label": choice.label,
@@ -495,3 +499,13 @@ def export_exam(exam: Exam) -> ExamDraft:
             ],
         }
     )
+
+
+def export_figure_payloads(exam: Exam) -> dict[str, bytes]:
+    """Supply the private figure bytes needed to recreate an exported exam."""
+    assets = Asset.objects.filter(questionasset__question__section__exam_id=exam.pk).distinct()
+    payloads = {}
+    for asset in assets:
+        with asset.file.open("rb") as image:
+            payloads[str(asset.pk)] = image.read(10 * 1024 * 1024 + 1)
+    return payloads
