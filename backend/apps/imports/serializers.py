@@ -27,5 +27,9 @@ class DraftReplaceSerializer(serializers.Serializer):
     draft = serializers.JSONField()
 
 
+class IssueResolutionSerializer(serializers.Serializer):
+    reason = serializers.CharField(min_length=10, max_length=500, trim_whitespace=True)
+
+
 class DiscardSerializer(serializers.Serializer):
     reason = serializers.CharField(required=False, allow_blank=True, max_length=500)
