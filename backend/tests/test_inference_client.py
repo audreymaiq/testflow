@@ -147,3 +147,20 @@ def test_text_layer_request_does_not_send_image_and_requires_text_source(monkeyp
         inference_client.extract_page(
             service_url="http://inference.internal:8001", text_layer="PDF text", page_no=2
         )
+
+
+def test_text_layer_and_rendered_page_can_be_combined(monkeypatch):
+    def accepted(request, timeout):
+        payload = json.loads(request.data)
+        assert payload["text_layer"] == "PDF text"
+        assert payload["image_b64"]
+        return response(source="VLM")
+
+    monkeypatch.setattr(inference_client, "urlopen", accepted)
+    output = inference_client.extract_page(
+        service_url="http://inference.internal:8001",
+        image_png=b"\x89PNG synthetic",
+        text_layer="PDF text",
+        page_no=2,
+    )
+    assert output.source == "VLM"
