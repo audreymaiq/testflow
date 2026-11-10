@@ -1,19 +1,21 @@
 """S1 package 1: finalized exam writes and privacy across all catalog reads."""
 
 import copy
+from io import BytesIO
 
 import pytest
 from django.contrib.auth import get_user_model
 from django.db import connection
 from django.test.utils import CaptureQueriesContext
 from django.urls import reverse
+from PIL import Image
 from pydantic import ValidationError as ContractValidationError
 from rest_framework.test import APIClient
 from testflow_contracts.exam import ExamDraft
 
 from apps.catalog.models import Exam, Major, School, Subject, Visibility
 from apps.catalog.selectors import list_exams
-from apps.catalog.services import create_exam, export_exam
+from apps.catalog.services import create_exam, export_exam, export_figure_payloads
 from apps.common.errors import ValidationFailed
 
 
@@ -154,6 +156,32 @@ def test_unpersisted_figure_cannot_be_silently_dropped(users):
         create_exam(ExamDraft.model_validate(draft), owner=owner)
     assert error.value.code == "FIGURE_ASSETS_UNAVAILABLE"
     assert Exam.objects.count() == 0
+
+
+@pytest.mark.django_db
+def test_figure_survives_private_exam_export_and_clone(users, settings, tmp_path):
+    settings.MEDIA_ROOT = tmp_path
+    owner, _ = users
+    draft = draft_data()
+    draft["sections"][0]["questions"][0]["figure_refs"] = ["p1:figure-1"]
+    image = BytesIO()
+    Image.new("RGB", (8, 8), "white").save(image, format="PNG")
+    original = image.getvalue()
+
+    exam = create_exam(
+        ExamDraft.model_validate(draft),
+        owner=owner,
+        figure_payloads={"p1:figure-1": original},
+    )
+    exported = export_exam(exam)
+    refs = exported.sections[0].questions[0].figure_refs
+    assert len(refs) == 1
+    payloads = export_figure_payloads(exam)
+    assert payloads == {refs[0]: original}
+
+    clone = create_exam(exported, owner=owner, figure_payloads=payloads)
+    assert export_exam(clone).sections[0].questions[0].figure_refs
+    assert list(export_figure_payloads(clone).values()) == [original]
 
 
 @pytest.mark.django_db
