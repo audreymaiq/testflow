@@ -302,7 +302,7 @@ export function ImportReviewPage() {
     } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không tải được tệp gốc.') }
   }
 
-  return <section className="paper manual-panel">
+  return <section className="paper manual-panel import-review-panel">
     <p className="eyebrow">THƯ VIỆN / KIỂM TRA BẢN NHÁP</p>
     <h1>{job?.draft_summary?.title || job?.original_filename || 'Lần nhập đề'}</h1>
     <ErrorText message={error} />
