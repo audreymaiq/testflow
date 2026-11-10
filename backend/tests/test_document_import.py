@@ -91,7 +91,7 @@ def test_mixed_pdf_import_routes_text_and_image_and_resumes(
             raise URLError("synthetic transient outage")
         if page_no == 1:
             assert "A question on this page" in body["text_layer"]
-            assert "image_b64" not in body
+            assert body["image_b64"]
             source = "TEXT_LAYER"
         else:
             assert body["image_b64"]
