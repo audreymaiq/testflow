@@ -71,3 +71,16 @@ jobs:
           npm run build
           npx playwright install --with-deps chromium
           npm run e2e
+      - name: Production image gates
+        run: |
+          docker build --target api -t testflow-api:ci -f backend/Dockerfile .
+          docker build --target worker -t testflow-worker:ci -f backend/Dockerfile .
+          docker build -t testflow-web:ci -f frontend/Dockerfile .
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,size=512m \
+            --entrypoint /usr/local/bin/sandboxed-soffice testflow-worker:ci --self-test-network
+          docker run --rm --network none --read-only --tmpfs /tmp:rw,nosuid,size=512m \
+            -e HOME=/tmp -e SOFFICE_BIN=/usr/local/bin/sandboxed-soffice \
+            -v "$PWD/infra/verify_docx_worker.py:/app/backend/verify_docx_worker.py:ro" \
+            testflow-worker:ci python verify_docx_worker.py
+          docker run --rm -e SITE_DOMAIN=ci.example.test --entrypoint caddy \
+            testflow-web:ci validate --config /etc/caddy/Caddyfile
