@@ -14,6 +14,8 @@ test('TXT import is reviewed, confirmed once, and private to the owner', async (
   await page.getByRole('link', { name: 'Thêm đề', exact: true }).click()
   await expect(page.getByRole('link', { name: /Tạo đề mới/ })).toBeVisible()
   await page.getByRole('link', { name: /Thêm đề có sẵn/ }).click()
+  await expect(page.getByRole('heading', { name: 'Thêm đề từ tài liệu' })).toBeVisible()
+  await page.getByRole('link', { name: 'Nhập tệp TXT' }).click()
   await page.getByRole('button', { name: 'Xem hướng dẫn định dạng TXT' }).click()
   const guide = page.getByRole('dialog', { name: 'Định dạng tệp TXT' })
   await expect(guide).toContainText('#TITLE: Ôn tập')
