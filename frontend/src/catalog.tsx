@@ -28,16 +28,23 @@ type Facets = {
   major_counts: Record<string, number>; level_counts: Record<string, number>
   grade_counts: Record<string, number>
 }
+const sortOptions = [
+  { value: '-created_at', label: 'Mới nhất' },
+  { value: '-attempt_count', label: 'Phổ biến' },
+  { value: 'year', label: 'Theo năm' },
+]
 
 export function LibraryPage() {
   const { user, api } = useAuth()
   const [heroQuery, setHeroQuery] = useState('')
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
+  const sortRef = useRef<HTMLDetailsElement>(null)
   const [filtersOpen, setFiltersOpen] = useState(() =>
     typeof window.matchMedia === 'function' && window.matchMedia('(min-width: 901px)').matches)
   const [urlParams, setUrlParams] = useSearchParams()
   const query = urlParams.get('q') || ''
   const ordering = urlParams.get('ordering') || '-created_at'
+  const sortLabel = sortOptions.find((option) => option.value === ordering)?.label || sortOptions[0].label
   const mine = urlParams.get('mine') === 'true'
   const level = urlParams.get('level') || ''
   const grade = urlParams.get('grade') || ''
@@ -49,6 +56,13 @@ export function LibraryPage() {
   const hasKey = urlParams.get('has_answer_key') === 'true'
   const page = Math.max(1, Number.parseInt(urlParams.get('page') || '1', 10) || 1)
   useEffect(() => setHeroQuery(query), [query])
+  useEffect(() => {
+    const closeSort = (event: PointerEvent) => {
+      if (sortRef.current && !sortRef.current.contains(event.target as Node)) sortRef.current.open = false
+    }
+    document.addEventListener('pointerdown', closeSort)
+    return () => document.removeEventListener('pointerdown', closeSort)
+  }, [])
   function updateFilter(key: string, value: string, clearGrade = false) {
     const next = new URLSearchParams(urlParams)
     if (value.trim()) next.set(key, value.trim())
@@ -62,6 +76,13 @@ export function LibraryPage() {
     if (nextPage > 1) next.set('page', String(nextPage))
     else next.delete('page')
     setUrlParams(next)
+  }
+  function chooseSort(value: string) {
+    updateFilter('ordering', value)
+    if (sortRef.current) {
+      sortRef.current.open = false
+      sortRef.current.querySelector('summary')?.focus()
+    }
   }
   const facets = useQuery({ queryKey: ['facets', user?.id], queryFn: () => api<Facets>('/facets/') })
   const params = new URLSearchParams(urlParams)
@@ -112,7 +133,7 @@ export function LibraryPage() {
       </div>
     </aside>
     <div className="library-results paper">
-      <div className="library-results-heading"><div className="library-results-title"><svg viewBox="0 0 32 32" width="39" height="39" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M16 28c-4-3-8-4-13-3V6c5-1 9 0 13 3 4-3 8-4 13-3v19c-5-1-9 0-13 3ZM16 9v19" /></svg><h2>Thư viện đề</h2></div><div className="library-toolbar"><div className="library-view-mode" role="group" aria-label="Kiểu hiển thị"><button type="button" aria-label="Dạng lưới" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg></button><button type="button" aria-label="Dạng danh sách" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 5h2m4 0h10M4 12h2m4 0h10M4 19h2m4 0h10" /></svg></button></div><label className="library-sort">Sắp xếp: <select aria-label="Sắp xếp" value={ordering} onChange={(event) => updateFilter('ordering', event.target.value)}><option value="-created_at">Mới nhất</option><option value="-attempt_count">Phổ biến</option><option value="year">Theo năm</option></select></label></div></div>
+      <div className="library-results-heading"><div className="library-results-title"><svg viewBox="0 0 32 32" width="39" height="39" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true"><path d="M16 28c-4-3-8-4-13-3V6c5-1 9 0 13 3 4-3 8-4 13-3v19c-5-1-9 0-13 3ZM16 9v19" /></svg><h2>Thư viện đề</h2></div><div className="library-toolbar"><div className="library-view-mode" role="group" aria-label="Kiểu hiển thị"><button type="button" aria-label="Dạng lưới" aria-pressed={viewMode === 'grid'} onClick={() => setViewMode('grid')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true"><rect x="3" y="3" width="7" height="7" rx="1" /><rect x="14" y="3" width="7" height="7" rx="1" /><rect x="3" y="14" width="7" height="7" rx="1" /><rect x="14" y="14" width="7" height="7" rx="1" /></svg></button><button type="button" aria-label="Dạng danh sách" aria-pressed={viewMode === 'list'} onClick={() => setViewMode('list')}><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><path d="M4 5h2m4 0h10M4 12h2m4 0h10M4 19h2m4 0h10" /></svg></button></div><details className="library-sort" ref={sortRef} onKeyDown={(event) => { if (event.key === 'Escape') { event.currentTarget.open = false; event.currentTarget.querySelector('summary')?.focus() } }}><summary aria-label={`Sắp xếp: ${sortLabel}`}><span>Sắp xếp:</span><strong>{sortLabel}</strong><svg viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="m3 6 5 5 5-5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" /></svg></summary><div className="library-sort-options" role="group" aria-label="Sắp xếp đề thi">{sortOptions.map((option) => <button type="button" key={option.value} aria-pressed={ordering === option.value} onClick={() => chooseSort(option.value)}><span aria-hidden="true">{ordering === option.value ? '✓' : ''}</span>{option.label}</button>)}</div></details></div></div>
       {activeFilters.length > 0 && <div className="active-filters" aria-label="Bộ lọc đang áp dụng">
         {activeFilters.map(([key, , label]) => <button type="button" key={key}
           onClick={() => updateFilter(key, '', key === 'level')} aria-label={`Bỏ lọc ${label}`}>
