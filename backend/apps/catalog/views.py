@@ -113,7 +113,9 @@ class ExamPreviewView(GenericAPIView):
 
     def get(self, request, exam_id):
         exam = get_object_or_404(visible_exams(request.user), pk=exam_id)
-        sections = exam.sections.order_by("order").prefetch_related("questions__choices")
+        sections = exam.sections.order_by("order").prefetch_related(
+            "questions__choices", "questions__questionasset_set"
+        )
         preview = []
         for section in sections:
             for question in section.questions.all():
@@ -126,6 +128,7 @@ class ExamPreviewView(GenericAPIView):
                             {"label": choice.label, "text": choice.text}
                             for choice in question.choices.all()
                         ],
+                        "assets": [str(link.asset_id) for link in question.questionasset_set.all()],
                     }
                 )
                 if len(preview) == 3:
