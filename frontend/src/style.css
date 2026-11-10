@@ -496,7 +496,7 @@ main:has(.library-page) { width: min(1760px, calc(100% - 8vw)); margin: 26px aut
 .library-results .exam-card-cover { display: flex; justify-content: flex-start; align-items: center; gap: 8px; min-height: 45px; padding: 7px 18px 0; background: linear-gradient(90deg,#f9fbff,#f2f6fe); color: #0755cc; }
 .library-results .exam-card-cover::after { display: none; }
 .library-results .exam-card-type { display: inline-flex; padding: 2px 10px; border-radius: 9px; background: #e2edff; color: #0755cc; font-size: .73rem; font-weight: 700; }
-.library-results .exam-card-uploader { min-width: 0; max-width: 52%; margin-left: auto; overflow: hidden; color: #506688; font-size: .73rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.library-results .exam-card-uploader { min-width: 0; max-width: min(52%, 18ch); margin-left: auto; overflow: hidden; color: #506688; font-size: .73rem; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
 .library-results .exam-card-private { font-size: .7rem; }
 .library-results .exam-card-body { display: flex; flex-direction: column; gap: 5px; padding: 10px 20px 16px; }
 .library-results .exam-card-subject { font-size: 1.28rem; line-height: 1.2; color: #0b1735; }
