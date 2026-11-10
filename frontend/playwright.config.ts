@@ -30,6 +30,7 @@ export default defineConfig({
       env: {
         CORS_ALLOWED_ORIGINS: 'http://localhost:15173', THROTTLE_REGISTER: '100/min',
         CELERY_TASK_ALWAYS_EAGER: '1',
+        IMPORT_INFERENCE_URL: '',
         EMAIL_BACKEND: 'django.core.mail.backends.filebased.EmailBackend',
         EMAIL_FILE_PATH: mailDir, PUBLIC_WEB_ORIGIN: 'http://localhost:15173',
       },
