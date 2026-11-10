@@ -156,6 +156,7 @@ class PreviewQuestionSerializer(serializers.Serializer):
     kind = serializers.CharField()
     text = serializers.CharField()
     choices = PreviewChoiceSerializer(many=True)
+    assets = serializers.ListField(child=serializers.UUIDField())
 
 
 class PreviewResponseSerializer(serializers.Serializer):
