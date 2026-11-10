@@ -13,7 +13,7 @@ export const examTypeNames: Record<string, string> = {
 export type ExamCardData = {
   id: string; title: string; subtitle: string; subject: string; level: string; grade: number | null
   exam_type: string; visibility: string; question_count: number; duration_minutes: number | null
-  icon: string; color: string; is_system_sample: boolean
+  icon: string; color: string; is_system_sample: boolean; schools: string[]
 }
 
 export function ExamCard({ exam }: { exam: ExamCardData }) {
@@ -28,6 +28,7 @@ export function ExamCard({ exam }: { exam: ExamCardData }) {
       <span className="exam-card-meta">{exam.grade ? `Lớp ${exam.grade}` : levelNames[exam.level] || exam.level}</span>
       <strong className="exam-card-title">{exam.title} {exam.is_system_sample && <span className="sample-badge">Bộ mẫu</span>}</strong>
       {exam.subtitle && <small>{exam.subtitle}</small>}
+      {exam.schools.length > 0 && <span className="exam-card-school"><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M2 8h16M4 8l6-5 6 5M5 8v8m4-8v8m4-8v8m3-8v8M2 17h16" /></svg><span>Trường: {exam.schools.join(', ')}</span></span>}
       <span className="exam-card-foot">
         <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><circle cx="10" cy="10" r="7" /><path d="M10 5v5l3 2" /></svg>{exam.duration_minutes ? `${exam.duration_minutes} phút` : 'Không giới hạn giờ'}</span>
         <span><svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true"><path d="m3 7 7-4 7 4-7 4-7-4Zm0 4 7 4 7-4M3 15l7 4 7-4" /></svg>{exam.question_count} câu</span>
