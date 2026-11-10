@@ -435,7 +435,7 @@ def resolve_review_issue(job_id, issue_index: int, *, user, reason: str):
     issue = {
         **issue,
         "resolved_at": timezone.now().isoformat(),
-        "resolved_by": user.pk,
+        "resolved_by": str(user.pk),
         "resolution_reason": reason.strip(),
     }
     issues[issue_index] = issue
