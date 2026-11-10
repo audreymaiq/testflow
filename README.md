@@ -105,8 +105,8 @@ Settings are read from `.env` in the project root. See [.env.example](.env.examp
 | `CORS_ALLOWED_ORIGINS` | Origins allowed to call the API |
 | `IMPORT_DAILY_JOB_LIMIT` | Maximum number of imports per user per day (default: 20) |
 | `IMPORT_INFERENCE_URL` | Internal HTTP(S) page extraction service; document upload is unavailable without it |
-| `IMPORT_INFERENCE_TOKEN` | Optional bearer token for the internal extractor |
-| `SOFFICE_BIN` | LibreOffice executable for DOCX conversion (default: `soffice`) |
+| `IMPORT_INFERENCE_TOKEN` | Bearer token for the extractor; required when OCR is enabled in production |
+| `SOFFICE_BIN` | LibreOffice executable for DOCX conversion (production worker uses the restricted wrapper) |
 | `BUILD_SHA` | Revision shown in the admin operations summary (default: `local`) |
 | `VITE_API_BASE_URL` | API address used by the web app |
 
@@ -129,17 +129,25 @@ B. 4
 
 Invalid questions are skipped and listed with a reason, so one bad question does not stop the whole import. Files must be UTF-8 encoded.
 
-## Document import backend
+## Document import
 
 Authenticated clients can upload JPEG/PNG/WebP, PDF, or DOCX to `POST /api/v1/imports/document/` with multipart fields `file` and optional `subject_hint`. The existing `/api/v1/imports/image/` path remains image-only. Images are limited to 10 MB; PDF and DOCX to 20 MB and 30 pages. Content is validated independently of the filename and declared MIME type. Upload returns a job ID with HTTP 202; the private original and normalized page images stay behind owner/Reviewer authorization.
 
-The Celery worker extracts embedded PDF text per page when sufficient text exists and renders every page for review. It sends the page image and any usable text layer together to the configured `/v1/extract-page` runtime, so visual context remains available for figures and layout. That runtime must return a validated `PageSchema` v1, source (`TEXT_LAYER`, `OCR`, or `VLM`), and model provenance. A PDF can mix text and scan pages. DOCX uses LibreOffice headless conversion with a separate temporary profile; install LibreOffice on the worker and set `SOFFICE_BIN` when it is not on `PATH`. Run the converter in an isolated worker environment with resource and network controls before accepting untrusted DOCX in production.
+The **Thêm đề** flow lets a signed-in user choose a document, upload it, follow per-page progress, compare the draft with its private source pages, correct errors and confirm a private exam. The Celery worker extracts embedded PDF text per page when sufficient text exists and renders every page for review. It sends the page image and any usable text layer together to the configured `/v1/extract-page` runtime, so visual context remains available for figures and layout. That runtime must return a validated `PageSchema` v1, source (`TEXT_LAYER`, `OCR`, or `VLM`), and model provenance. A PDF can mix text and scan pages.
+
+DOCX is converted to PDF by LibreOffice in the production worker. The wrapper at `infra/sandboxed_soffice.py` denies non-Unix sockets and limits address space, CPU time, output file size and open files; the caller kills the converter process group on timeout. CI is configured to exercise an actual DOCX conversion and PDF page render inside the worker image. The converter still shares the worker's private media volume, so the wrapper is a process restriction rather than a separate filesystem security boundary.
 
 Poll `GET /api/v1/imports/{job_id}/` for status, per-page progress, errors and the review draft. A permanently failed page remains visible as a blocking review error; `POST /api/v1/imports/{job_id}/pages/{page_no}/retry/` retries that page before any manual draft edits. For a reparable source issue, first correct the draft against its private source page, then call `POST /api/v1/imports/{job_id}/issues/{issue_index}/resolve/` with a 10–500 character `reason`. The resolution is audited and invalidated by a later draft change. Page failures and gaps cannot be acknowledged away. The worker skips completed pages after a retry or restart. Schedule `python backend/manage.py recover_import_jobs` at least every five minutes to requeue stale jobs after worker or broker loss. The command and duplicate-delivery guard require PostgreSQL. Confirmation always validates the draft and creates a private exam through the catalog service.
 
 Referenced page figures are cropped into private assets only when the reviewed draft is confirmed. Exam previews expose asset IDs, and `/api/v1/exams/{exam_id}/assets/{asset_id}/` serves them only to viewers of that exam. A student's existing session can retrieve its selected figures through `/api/v1/practice/sessions/{session_id}/assets/{asset_id}/` after a public exam is withdrawn; hidden or deleted exams revoke that access. Unmatched figures remain blocking review errors. Exporting and recreating a figure-bearing exam requires `export_exam` together with `export_figure_payloads`.
 
-The repository does not include a real extraction model, a deployed inference runtime, or the 30-exam annotated evaluation set. Synthetic tests establish transport and state behavior only. Document OCR is **not yet a production-ready feature**. Do not expose the document upload path to end users until the model, real-document quality, DOCX sandbox, and operating environment are verified.
+The repository does not include a real extraction model, a deployed inference runtime, or the 30-exam annotated evaluation set. Synthetic tests establish transport and state behavior; the real DOCX conversion test establishes converter packaging, not OCR accuracy. Document OCR is **not yet a production-ready feature**. Do not expose document upload to end users until the model contract, real-document quality and operating environment are verified.
+
+## Production deployment
+
+`compose.prod.yml` builds revision-tagged API, worker and web images. Copy `production.env.example` to the untracked `.env.production` on an authorized Linux host, replace every placeholder, and keep the file readable only by the operator. Configure a working SMTP service, an authorized domain with DNS pointed at the host, and a separately deployed extractor that implements `PageSchema` v1. The deploy script requires the configured `BUILD_SHA` to match the checked-out commit.
+
+Run `infra/deploy.sh preflight` with `TESTFLOW_ENV_FILE` set to the environment file. Preflight builds images and starts PostgreSQL and Redis in the selected Compose project, then checks Django, migrations and extractor configuration; it does not publish the web service. After the owner authorizes the release, set `BACKUP_DIR` and run `infra/deploy.sh --execute`. This takes a database/media backup before migration, starts the services and runs read-only HTTPS smoke checks. Use `infra/restore-check.sh` to restore into a temporary isolated PostgreSQL container and media directory; schedule `infra/testflow-backup.timer` only after configuring protected backup storage and failure alerts. Local packaging and staging checks do not establish a live production release.
 
 ## API
 
