@@ -3,11 +3,12 @@ import { useQuery } from '@tanstack/react-query'
 import { Link, useBeforeUnload, useBlocker, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
+import { PrivateImage } from './private-image'
 
 type Choice = { label: string; text: string }
 type Question = {
   id: string; number_label: string; kind: string; text: string; passage: string | null
-  choices: Choice[]; statements: Choice[]; feedback?: Feedback
+  choices: Choice[]; statements: Choice[]; assets: string[]; feedback?: Feedback
 }
 type Feedback = { status: string; earned: string; max_points: string; correct_answer: Record<string, unknown>; explanation: string }
 type Answer = { question_id: string; value: Record<string, unknown>; flagged: boolean }
@@ -266,6 +267,7 @@ export function PracticePage() {
       <p className="eyebrow">CÂU {active + 1} / {questions.length}</p>
       <h2>{question.number_label}</h2>{question.passage && <blockquote>{question.passage}</blockquote>}
       <p className="question-text">{question.text}</p>
+      {question.assets.map((assetId, index) => <PrivateImage key={assetId} path={`/practice/sessions/${sessionId}/assets/${assetId}/`} alt={`Hình minh họa ${index + 1} của câu ${active + 1}`} className="question-asset" />)}
       <QuestionInput question={question} value={value} disabled={closed || !!question.feedback || busy}
         onChange={changeAnswer} />
       {session.data.mode === 'TIMED' && !closed && <label className="flag-control">
