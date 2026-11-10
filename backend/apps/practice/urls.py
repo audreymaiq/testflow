@@ -5,6 +5,7 @@ from .views import (
     ExamPracticeSummaryView,
     HistoryView,
     ResultView,
+    SessionAssetView,
     SessionDetailView,
     SessionListCreateView,
     SkipView,
@@ -22,6 +23,11 @@ urlpatterns = [
         name="practice-exam-summary",
     ),
     path("sessions/<uuid:session_id>/", SessionDetailView.as_view(), name="practice-session"),
+    path(
+        "sessions/<uuid:session_id>/assets/<uuid:asset_id>/",
+        SessionAssetView.as_view(),
+        name="practice-session-asset",
+    ),
     path(
         "sessions/<uuid:session_id>/answers/<uuid:question_id>/",
         AnswerView.as_view(),
