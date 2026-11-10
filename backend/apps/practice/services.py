@@ -7,7 +7,7 @@ from django.db import transaction
 from django.db.models import F
 from django.utils import timezone
 
-from apps.catalog.models import Exam, Question, Visibility
+from apps.catalog.models import Exam, Question, QuestionAsset, Visibility
 from apps.catalog.selectors import visible_exams
 from apps.common.errors import Conflict, NotFound, ValidationFailed
 
@@ -35,6 +35,23 @@ def _require_session(session_id, user, *, lock=False) -> Session:
 
 def _selected_ids(session: Session) -> list[str]:
     return [question_id for ids in session.question_order.values() for question_id in ids]
+
+
+def session_asset(session_id, asset_id, user):
+    """Return only a figure used by an accessible student's selected questions."""
+    session = _require_session(session_id, user)
+    link = (
+        QuestionAsset.objects.select_related("asset")
+        .filter(
+            asset_id=asset_id,
+            question_id__in=_selected_ids(session),
+            question__section__exam_id=session.exam_id,
+        )
+        .first()
+    )
+    if link is None:
+        raise NotFound("ASSET_NOT_FOUND", "Không tìm thấy hình minh họa trong phiên làm bài.")
+    return link.asset
 
 
 def _question(session: Session, question_id) -> Question:
@@ -232,7 +249,7 @@ def session_payload(session_id, user) -> dict:
     questions = (
         Question.objects.filter(id__in=ids)
         .select_related("section", "passage")
-        .prefetch_related("choices", "statements")
+        .prefetch_related("choices", "statements", "questionasset_set")
     )
     by_id = {str(question.id): question for question in questions}
     answer_by_id = {str(answer.question_id): answer for answer in session.answers.all()}
@@ -249,6 +266,7 @@ def session_payload(session_id, user) -> dict:
                 "kind": question.kind,
                 "text": question.text,
                 "passage": question.passage.text if question.passage else None,
+                "assets": [str(link.asset_id) for link in question.questionasset_set.all()],
                 "choices": [
                     {"label": label, "text": choice_by_label[label].text} for label in labels
                 ],
