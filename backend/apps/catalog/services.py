@@ -471,7 +471,10 @@ def export_exam(exam: Exam) -> ExamDraft:
                             "text": question.text,
                             "explanation": question.explanation,
                             "figure_refs": [
-                                str(link.asset_id) for link in question.questionasset_set.all()
+                                str(link.asset_id)
+                                for link in sorted(
+                                    question.questionasset_set.all(), key=lambda item: item.order
+                                )
                             ],
                             "choices": [
                                 {
