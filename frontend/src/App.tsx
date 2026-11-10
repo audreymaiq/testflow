@@ -9,6 +9,7 @@ import { ExamDetailPage, LibraryPage, ManualExamPage } from './catalog'
 import { HistoryPage, PracticePage, ResultPage } from './practice'
 import { PublicationDetailPage, PublicationQueuePage } from './publication'
 import { AddExamPage, ImportReviewPage, ImportsPage, TxtImportPage } from './imports'
+import { DocumentImportPage } from './document-import'
 import { OperationsPage } from './ops'
 import { Home } from './home'
 
@@ -273,6 +274,7 @@ export default function App() {
     <Route path="/exams/new" element={<Protected><ManualExamPage /></Protected>} />
     <Route path="/imports" element={<Protected><ImportsPage /></Protected>} />
     <Route path="/imports/new" element={<Protected><TxtImportPage /></Protected>} />
+    <Route path="/imports/document/new" element={<Protected><DocumentImportPage /></Protected>} />
     <Route path="/imports/:jobId" element={<Protected><ImportReviewPage /></Protected>} />
     <Route path="/exams/:id" element={<ExamDetailPage />} />
     <Route path="/practice/:sessionId" element={<Protected><PracticePage /></Protected>} />
