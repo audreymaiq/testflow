@@ -38,7 +38,12 @@ def list_exams(user, filters):
             queryset.filter(owner_id=user.pk) if user and user.is_authenticated else queryset.none()
         )
     if filters.get("q"):
-        queryset = queryset.filter(search_text__contains=search_fold(filters["q"]))
+        query = filters["q"]
+        matches = Q(search_text__contains=search_fold(query))
+        username = query[1:] if query.startswith("@") else query
+        if username:
+            matches |= Q(owner__username__icontains=username)
+        queryset = queryset.filter(matches)
     ordering = filters.get("ordering", "-created_at")
     if ordering not in {"-created_at", "-attempt_count", "year"}:
         ordering = "-created_at"
