@@ -40,6 +40,5 @@ compose up -d api worker recovery web
 compose ps
 
 site_domain=$(sed -n 's/^SITE_DOMAIN=//p' "$env_file" | tail -n 1)
-curl --fail --silent --show-error --max-time 20 "https://$site_domain/healthz"
-echo
+/bin/sh "$repo_dir/infra/smoke.sh" "https://$site_domain"
 printf 'Deployment health probe passed for revision %s\n' "$revision"
