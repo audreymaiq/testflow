@@ -2,22 +2,39 @@ import { useEffect, useState, type FormEvent } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
 import { useAuth } from './auth'
 import { Modal } from './shared'
+import { PrivateImage } from './private-image'
 import { TaxonomyEntry, TaxonomyNames } from './taxonomy'
 
-type Issue = { line: number; code: string; message: string; severity: 'ERROR' | 'WARNING' }
+type Issue = { line?: number; page_no?: number; code: string; message: string; severity: 'ERROR' | 'WARNING'; resolved_at?: string }
 type DraftChoice = { label: string; text: string; is_correct: boolean }
 type DraftQuestion = { tmp_id: string; order: number; kind: string; text: string; explanation: string; choices: DraftChoice[] }
 type ImportDraft = { metadata: Record<string, unknown>; sections: { title: string; questions: DraftQuestion[] }[] }
 type Job = {
   id: string
   status: string
+  source_kind: 'TXT' | 'OCR'
   original_filename: string
+  page_count: number | null
+  error_code?: string
+  pages?: { page_no: number; status: string; error_code?: string | null }[]
   exam_id: string | null
   discard_reason?: string
-  report: { valid: number; skipped: number; issues: Issue[] }
-  draft_summary: { title: string | null; questions: number; chapters: number }
+  report?: { valid: number; skipped: number; issues: Issue[] }
+  draft_summary?: { title: string | null; questions: number; chapters: number }
   draft?: ImportDraft
 }
+
+const processingStatuses = new Set(['UPLOADED', 'INGESTING', 'EXTRACTING', 'ASSEMBLING'])
+const statusLabels: Record<string, string> = {
+  UPLOADED: 'Đã nhận tệp', INGESTING: 'Đang chuẩn bị trang', EXTRACTING: 'Đang nhận dạng trang',
+  ASSEMBLING: 'Đang ghép bản nháp', NEEDS_REVIEW: 'Cần kiểm tra', APPROVED: 'Đã lưu đề',
+  REJECTED: 'Đã bỏ bản nháp', FAILED: 'Xử lý thất bại',
+}
+const resolvableCodes = new Set([
+  'E_ANSWER_CONFLICT', 'E_ANSWER_INVALID', 'E_ANSWER_UNMATCHED', 'E_ANSWER_UNSUPPORTED',
+  'E_CONTINUATION_UNMATCHED', 'E_FIGURE_UNMATCHED', 'E_HEADER_CONFLICT', 'E_NO_QUESTIONS',
+  'E_PASSAGE_UNANCHORED', 'E_PASSAGE_UNMATCHED', 'E_QUESTION_INVALID',
+])
 
 function ErrorText({ message }: { message: string }) {
   return message ? <p role="alert" className="form-error">{message}</p> : null
@@ -29,7 +46,7 @@ export function AddExamPage() {
     <h1>Thêm đề</h1>
     <div className="add-exam-options">
       <Link to="/exams/new"><span className="add-exam-option-index">01</span><strong>Tạo đề mới</strong><span>Viết câu hỏi và đáp án trực tiếp.</span><span aria-hidden="true">↗</span></Link>
-      <Link to="/imports/new"><span className="add-exam-option-index">02</span><strong>Thêm đề có sẵn</strong><span>Nhập tệp TXT, xem lại câu hỏi rồi lưu đề.</span><span aria-hidden="true">↗</span></Link>
+      <Link to="/imports/document/new"><span className="add-exam-option-index">02</span><strong>Thêm đề có sẵn</strong><span>Nhập PDF, DOCX hoặc ảnh; kiểm tra nội dung trước khi lưu.</span><span aria-hidden="true">↗</span></Link>
     </div>
   </section>
 }
@@ -76,7 +93,7 @@ export function TxtImportPage() {
       <ErrorText message={error} />
       <button className="button primary" type="submit" disabled={!file || pending}>{pending ? 'Đang phân tích…' : 'Xác nhận'}</button>
     </form>
-    <p><Link to="/imports">Xem các tệp đã nhập</Link></p>
+    <p><Link to="/imports/document/new">Nhập PDF, DOCX hoặc ảnh</Link> · <Link to="/imports">Xem các tệp đã nhập</Link></p>
     {showGuide && <Modal title="Định dạng tệp TXT" onClose={() => setShowGuide(false)}>
       <p>Mỗi câu hỏi nằm trong một chương. Viết câu hỏi, các lựa chọn A–F, rồi một dòng đáp án bắt đầu bằng <code>=&gt;</code>. Ví dụ tương thích Quiz Rush v1:</p>
       <pre className="txt-format-example"><code>{`#TITLE: Ôn tập
@@ -115,7 +132,7 @@ export function ImportsPage() {
 
 export function ImportReviewPage() {
   const { jobId } = useParams()
-  const { api } = useAuth()
+  const { api, apiBlob } = useAuth()
   const navigate = useNavigate()
   const [job, setJob] = useState<Job | null>(null)
   const [editor, setEditor] = useState('')
@@ -129,23 +146,41 @@ export function ImportReviewPage() {
   const [error, setError] = useState('')
   const [message, setMessage] = useState('')
   const [discardReason, setDiscardReason] = useState('')
+  const [selectedPage, setSelectedPage] = useState(1)
+  const [resolutionReasons, setResolutionReasons] = useState<Record<number, string>>({})
+  const [retryVersion, setRetryVersion] = useState(0)
 
   useEffect(() => {
     if (!jobId) return
     let active = true
-    api<Job>(`/imports/${jobId}/`).then((value) => {
-      if (!active) return
-      setJob(value)
-      setEditor(JSON.stringify(value.draft, null, 2))
-      setMetadata((value.draft?.metadata || {}) as Record<string, unknown>)
-      setMetadataDirty(false)
-      setQuestionsDirty(false)
-      setSelectedQuestion(value.draft?.sections.flatMap((section) => section.questions)[0]?.tmp_id || '')
-    }).catch((cause) => {
-      if (active) setError(cause instanceof Error ? cause.message : 'Không tải được bản nháp.')
-    })
-    return () => { active = false }
-  }, [jobId])
+    let initializedDraft = false
+    let inFlight = false
+    let timer: number | undefined
+    async function load() {
+      if (inFlight) return
+      inFlight = true
+      try {
+        const value = await api<Job>(`/imports/${jobId}/`)
+        if (!active) return
+        setJob(value)
+        setError('')
+        if (value.draft && !initializedDraft) {
+          initializedDraft = true
+          setEditor(JSON.stringify(value.draft, null, 2))
+          setMetadata(value.draft.metadata || {})
+          setMetadataDirty(false)
+          setQuestionsDirty(false)
+          setSelectedQuestion(value.draft.sections.flatMap((section) => section.questions)[0]?.tmp_id || '')
+        }
+        if (['NEEDS_REVIEW', 'APPROVED', 'REJECTED', 'FAILED'].includes(value.status) && timer !== undefined) window.clearInterval(timer)
+      } catch (cause) {
+        if (active) setError(cause instanceof Error ? cause.message : 'Không tải được lần nhập đề.')
+      } finally { inFlight = false }
+    }
+    void load()
+    timer = window.setInterval(() => { void load() }, 2500)
+    return () => { active = false; window.clearInterval(timer) }
+  }, [jobId, retryVersion])
 
   useEffect(() => {
     api<{ code: string; name: string }[]>('/subjects/').then(setSubjects).catch(() => setSubjects([]))
@@ -229,14 +264,71 @@ export function ImportReviewPage() {
     finally { setPending(false) }
   }
 
+  async function retryPage(pageNo: number) {
+    if (!jobId) return
+    setPending(true); setError(''); setMessage('')
+    try {
+      await api(`/imports/${jobId}/pages/${pageNo}/retry/`, { method: 'POST' })
+      setJob(await api<Job>(`/imports/${jobId}/`))
+      setRetryVersion((version) => version + 1)
+      setMessage(`Đã gửi lại trang ${pageNo} để phân tích.`)
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không thể thử lại trang.') }
+    finally { setPending(false) }
+  }
+
+  async function resolveIssue(index: number) {
+    if (!jobId) return
+    setPending(true); setError(''); setMessage('')
+    try {
+      const value = await api<Job>(`/imports/${jobId}/issues/${index}/resolve/`, {
+        method: 'POST', body: JSON.stringify({ reason: resolutionReasons[index] || '' }),
+      })
+      setJob(value)
+      setMessage('Đã ghi nhận việc đối chiếu trang nguồn và sửa bản nháp.')
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không thể xác nhận lỗi.') }
+    finally { setPending(false) }
+  }
+
+  async function downloadOriginal() {
+    if (!jobId || !job) return
+    try {
+      const blob = await apiBlob(`/imports/${jobId}/original/`)
+      const url = URL.createObjectURL(blob)
+      const anchor = document.createElement('a')
+      anchor.href = url
+      anchor.download = job.original_filename
+      anchor.click()
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000)
+    } catch (cause) { setError(cause instanceof Error ? cause.message : 'Không tải được tệp gốc.') }
+  }
+
   return <section className="paper manual-panel">
     <p className="eyebrow">THƯ VIỆN / KIỂM TRA BẢN NHÁP</p>
-    <h1>{job?.draft_summary?.title || job?.original_filename || 'Bản nháp TXT'}</h1>
+    <h1>{job?.draft_summary?.title || job?.original_filename || 'Lần nhập đề'}</h1>
     <ErrorText message={error} />
     {message && <p role="status">{message}</p>}
     {job && <>
-      <p>Tệp: {job.original_filename}. Trạng thái: {job.status}. Nhận {job.report.valid} câu, bỏ qua {job.report.skipped} câu, {job.draft_summary.chapters} chương.</p>
-      {job.report.issues.length > 0 && <div role="region" aria-label="Báo cáo nhập TXT"><h2>Báo cáo</h2><ul>{job.report.issues.map((issue, index) => <li key={index}>Dòng {issue.line}: {issue.code} — {issue.message}</li>)}</ul></div>}
+      <p>Tệp: {job.original_filename}. Trạng thái: {statusLabels[job.status] || job.status}.
+        {job.report && <> Nhận {job.report.valid} câu, bỏ qua {job.report.skipped} câu, {job.draft_summary?.chapters || 0} chương.</>}
+      </p>
+      <button type="button" className="text-button" onClick={() => { void downloadOriginal() }}>Tải tệp gốc</button>
+      {processingStatuses.has(job.status) && <p role="status">Hệ thống đang xử lý từng trang. Trang này tự cập nhật khi bản nháp sẵn sàng.</p>}
+      {job.status === 'FAILED' && <p role="alert">Không thể xử lý tệp ({job.error_code || 'không rõ nguyên nhân'}). Bạn có thể kiểm tra tệp gốc và nhập lại một tệp đã sửa.</p>}
+      {job.source_kind === 'OCR' && !!job.pages?.length && <div className="import-source" role="region" aria-label="Trang nguồn">
+        <div className="import-source-heading"><h2>Trang nguồn</h2><label>Trang <select value={selectedPage} onChange={(event) => setSelectedPage(Number(event.target.value))}>{job.pages.map((page) => <option key={page.page_no} value={page.page_no}>{page.page_no} · {page.status}</option>)}</select></label></div>
+        {job.pages.find((page) => page.page_no === selectedPage)?.status === 'FAILED' && <p role="alert">Trang {selectedPage} chưa xử lý được: {job.pages.find((page) => page.page_no === selectedPage)?.error_code || 'Lỗi không xác định'}.
+          {job.status === 'NEEDS_REVIEW' && <button type="button" className="button secondary" disabled={pending} onClick={() => { void retryPage(selectedPage) }}>Thử lại trang</button>}
+        </p>}
+        <div className="import-source-image"><PrivateImage path={`/imports/${job.id}/pages/${selectedPage}/image/`} alt={`Trang ${selectedPage} của ${job.original_filename}`} /></div>
+      </div>}
+      {!!job.report?.issues.length && <div role="region" aria-label="Báo cáo nhập đề"><h2>Báo cáo phân tích</h2><ul>{job.report.issues.map((issue, index) => <li key={index}>
+        {issue.page_no ? `Trang ${issue.page_no}` : issue.line ? `Dòng ${issue.line}` : 'Toàn đề'}: {issue.code} — {issue.message}
+        {issue.resolved_at && <span> · Đã đối chiếu</span>}
+        {job.source_kind === 'OCR' && job.status === 'NEEDS_REVIEW' && issue.severity === 'ERROR' && !issue.resolved_at && resolvableCodes.has(issue.code) && <div className="import-issue-resolution">
+          <label>Lý do xác nhận sau khi sửa bản nháp<input minLength={10} maxLength={500} value={resolutionReasons[index] || ''} onChange={(event) => setResolutionReasons((current) => ({ ...current, [index]: event.target.value }))} /></label>
+          <button type="button" className="button secondary" disabled={pending || (resolutionReasons[index] || '').trim().length < 10 || questionsDirty || metadataDirty} onClick={() => { void resolveIssue(index) }}>Xác nhận đã sửa</button>
+        </div>}
+      </li>)}</ul></div>}
       {job.status === 'NEEDS_REVIEW' && <>
         <p>Kiểm tra nội dung và thông tin đề trước khi lưu. Nếu có lỗi, sửa bản nháp rồi lưu lại.</p>
         <form className="manual-form" onSubmit={saveMetadata}>
@@ -273,7 +365,7 @@ export function ImportReviewPage() {
           <button type="button" className="button secondary" onClick={() => { setEditor(JSON.stringify(job.draft, null, 2)); setEditing(!editing) }}>{editing ? 'Đóng trình sửa' : 'Sửa bản nháp JSON'}</button>
           {editing && <div><label>Bản nháp JSON<textarea className="draft-editor" value={editor} onChange={(event) => setEditor(event.target.value)} /></label><button type="button" className="button secondary" disabled={pending} onClick={save}>Lưu bản nháp</button></div>}
           <label>Lý do bỏ bản nháp (không bắt buộc)<input maxLength={500} value={discardReason} onChange={(event) => setDiscardReason(event.target.value)} /></label>
-          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || job.report.issues.some((item) => item.severity === 'ERROR') || !String(metadata.title || '').trim() || !String(metadata.subject || '').trim() || !Array.isArray(metadata.schools) || metadata.schools.length === 0 || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
+          <div className="form-actions"><button type="button" className="button primary" disabled={pending || metadataDirty || questionsDirty || !!job.report?.issues.some((item) => item.severity === 'ERROR' && !item.resolved_at) || !String(metadata.title || '').trim() || !String(metadata.subject || '').trim() || !Array.isArray(metadata.schools) || metadata.schools.length === 0 || !metadata.level || !metadata.exam_type || (['TIEU_HOC', 'THCS', 'THPT'].includes(String(metadata.level)) && !metadata.grade)} onClick={confirm}>Lưu đề riêng tư</button><button type="button" className="button secondary" disabled={pending} onClick={discard}>Bỏ bản nháp</button></div>
         </div>
       </>}
       {job.status === 'REJECTED' && job.discard_reason && <p>Lý do bỏ: {job.discard_reason}</p>}
