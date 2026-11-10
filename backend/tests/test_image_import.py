@@ -11,7 +11,8 @@ from django.core.files.uploadedfile import SimpleUploadedFile
 from PIL import Image
 from rest_framework.test import APIClient
 
-from apps.catalog.models import Asset, Exam, QuestionAsset, School, Subject
+from apps.catalog.models import Asset, Exam, QuestionAsset, School, Subject, Visibility
+from apps.catalog.services import make_private
 from apps.imports import inference_client, tasks
 from apps.imports.models import Draft, ImportJob, PageResult, ReviewEdit
 
@@ -508,3 +509,34 @@ def test_figure_is_cropped_and_attached_only_at_private_confirmation(
     assert link.asset.width > 2 and link.asset.height > 2
     with link.asset.file.open("rb") as image:
         assert image.read(8) == b"\x89PNG\r\n\x1a\n"
+
+    preview = client.get(f"/api/v1/exams/{exam.id}/preview/")
+    assert preview.status_code == 200
+    assert preview.data["questions"][0]["assets"] == [str(link.asset_id)]
+
+    catalog_asset_url = f"/api/v1/exams/{exam.id}/assets/{link.asset_id}/"
+    owner_image = client.get(catalog_asset_url)
+    assert owner_image.status_code == 200
+    assert b"".join(owner_image.streaming_content).startswith(b"\x89PNG\r\n\x1a\n")
+
+    student = get_user_model().objects.create_user("figure_student")
+    student_client = APIClient()
+    student_client.force_authenticate(student)
+    assert student_client.get(catalog_asset_url).status_code == 404
+
+    Exam.objects.filter(pk=exam.pk).update(visibility=Visibility.PUBLIC)
+    created = student_client.post(
+        "/api/v1/practice/sessions/",
+        {"exam_id": str(exam.id), "mode": "PRACTICE"},
+        format="json",
+    )
+    assert created.status_code == 201, created.data
+    assert created.data["sections"][0]["questions"][0]["assets"] == [str(link.asset_id)]
+    session_asset_url = f"/api/v1/practice/sessions/{created.data['id']}/assets/{link.asset_id}/"
+
+    make_private(exam.id, owner=owner)
+    assert student_client.get(catalog_asset_url).status_code == 404
+    session_image = student_client.get(session_asset_url)
+    assert session_image.status_code == 200
+    assert b"".join(session_image.streaming_content).startswith(b"\x89PNG\r\n\x1a\n")
+    assert client.get(session_asset_url).status_code == 404
