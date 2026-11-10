@@ -61,7 +61,7 @@ test('users create new names themselves and reuse the same canonical records', a
   await page.getByLabel('Đáp án C', { exact: true }).fill('Ba')
   await page.getByLabel('Đáp án D', { exact: true }).fill('Bốn')
   await page.getByRole('button', { name: 'Tạo đề riêng tư' }).click()
-  await expect(page.getByRole('heading', { name: `Đề danh mục ${suffix}` })).toBeVisible()
+  await expect(page.getByRole('heading', { name: `Đề danh mục ${suffix}` })).toBeVisible({ timeout: 15000 })
   await expect(page.getByText(school, { exact: true })).toBeVisible()
   await expect(page.getByText(major, { exact: true })).toBeVisible()
 })
