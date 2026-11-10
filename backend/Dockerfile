@@ -28,5 +28,7 @@ USER root
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libreoffice-writer fonts-dejavu-core \
     && rm -rf /var/lib/apt/lists/*
+COPY infra/sandboxed_soffice.py /usr/local/bin/sandboxed-soffice
+RUN chmod 755 /usr/local/bin/sandboxed-soffice
 USER testflow
 CMD ["celery", "-A", "config", "worker", "--loglevel=INFO", "--concurrency=2", "--max-tasks-per-child=50"]
