@@ -273,6 +273,16 @@ def test_worker_exhausts_transient_provider_retries(
     assert page.error_code == "INFERENCE_UNAVAILABLE"
     assert any(issue["code"] == "E_PAGE_FAILED" for issue in job.draft.warnings)
     assert client.post(f"/api/v1/imports/{job.id}/confirm/").status_code == 400
+    failed_index = next(
+        index for index, issue in enumerate(job.draft.warnings) if issue["code"] == "E_PAGE_FAILED"
+    )
+    assert (
+        client.post(
+            f"/api/v1/imports/{job.id}/issues/{failed_index}/resolve/",
+            {"reason": "Đã xem trang nguồn nhưng OCR chưa hoàn thành."},
+        ).status_code
+        == 400
+    )
 
     retry_url = f"/api/v1/imports/{job.id}/pages/1/retry/"
     dispatched = []
@@ -544,3 +554,89 @@ def test_figure_is_cropped_and_attached_only_at_private_confirmation(
     assert session_image.status_code == 200
     assert b"".join(session_image.streaming_content).startswith(b"\x89PNG\r\n\x1a\n")
     assert client.get(session_asset_url).status_code == 404
+
+
+@pytest.mark.django_db
+def test_reparable_ocr_issue_requires_audited_correction_before_confirmation(
+    context, monkeypatch, django_capture_on_commit_callbacks
+):
+    client, _owner = context
+    monkeypatch.setattr(tasks.process_image_job, "delay", lambda _job_id: None)
+    with django_capture_on_commit_callbacks(execute=True):
+        uploaded = upload(client)
+    job_id = uploaded.data["id"]
+
+    def unmatched_answer(_request, timeout):
+        return BytesIO(
+            json.dumps(
+                {
+                    "page_json": {
+                        "schema_version": 1,
+                        "page_no": 1,
+                        "blocks": [
+                            {
+                                "type": "question",
+                                "number_label": "Câu 1",
+                                "kind": "MCQ",
+                                "text": "Hai cộng hai bằng mấy?",
+                                "choices": [
+                                    {"label": "A", "text": "Ba"},
+                                    {"label": "B", "text": "Bốn"},
+                                ],
+                            },
+                            {
+                                "type": "answer_key",
+                                "entries": [{"number_label": "Câu 2", "answer": "B"}],
+                            },
+                        ],
+                    },
+                    "source": "VLM",
+                    "model_name": "synthetic-unmatched",
+                }
+            ).encode("utf-8")
+        )
+
+    monkeypatch.setattr(inference_client, "urlopen", unmatched_answer)
+    tasks.process_image_job.apply(args=(job_id,), throw=True)
+    detail = client.get(f"/api/v1/imports/{job_id}/")
+    assert detail.status_code == 200
+    issue_index = next(
+        index
+        for index, issue in enumerate(detail.data["report"]["issues"])
+        if issue["code"] == "E_ANSWER_UNMATCHED"
+    )
+    issue_url = f"/api/v1/imports/{job_id}/issues/{issue_index}/resolve/"
+    assert client.post(f"/api/v1/imports/{job_id}/confirm/").status_code == 400
+    assert client.post(issue_url, {"reason": "Đã đối chiếu đáp án với ảnh gốc."}).status_code == 400
+
+    draft = detail.data["draft"]
+    draft["metadata"].update(
+        {
+            "title": "Đề kiểm tra Toán",
+            "level": "THPT",
+            "grade": 12,
+            "subject": "toan",
+            "exam_type": "KIEM_TRA",
+            "schools": ["Trường Mẫu"],
+        }
+    )
+    draft["sections"][0]["questions"][0]["choices"][1]["is_correct"] = True
+    assert (
+        client.patch(f"/api/v1/imports/{job_id}/", {"draft": draft}, format="json").status_code
+        == 200
+    )
+    resolved = client.post(issue_url, {"reason": "Đã đối chiếu đáp án với ảnh gốc."})
+    assert resolved.status_code == 200, resolved.data
+    assert resolved.data["report"]["issues"][issue_index]["resolved_at"]
+    assert ReviewEdit.objects.filter(job_id=job_id, path=f"/warnings/{issue_index}").exists()
+
+    draft["metadata"]["subtitle"] = "Bản đã kiểm tra"
+    assert (
+        client.patch(f"/api/v1/imports/{job_id}/", {"draft": draft}, format="json").status_code
+        == 200
+    )
+    assert client.post(f"/api/v1/imports/{job_id}/confirm/").status_code == 400
+    assert (
+        client.post(issue_url, {"reason": "Đã kiểm tra lại đáp án với ảnh gốc."}).status_code == 200
+    )
+    assert client.post(f"/api/v1/imports/{job_id}/confirm/").status_code == 200
