@@ -75,7 +75,7 @@ class ExamDetailView(GenericAPIView):
     def get(self, request, exam_id):
         exam = get_object_or_404(
             visible_exams(request.user)
-            .select_related("subject")
+            .select_related("subject", "owner")
             .prefetch_related("schools", "majors", "chapters", "sections"),
             pk=exam_id,
         )
