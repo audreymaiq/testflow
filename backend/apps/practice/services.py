@@ -266,7 +266,12 @@ def session_payload(session_id, user) -> dict:
                 "kind": question.kind,
                 "text": question.text,
                 "passage": question.passage.text if question.passage else None,
-                "assets": [str(link.asset_id) for link in question.questionasset_set.all()],
+                "assets": [
+                    str(link.asset_id)
+                    for link in sorted(
+                        question.questionasset_set.all(), key=lambda item: item.order
+                    )
+                ],
                 "choices": [
                     {"label": label, "text": choice_by_label[label].text} for label in labels
                 ],
