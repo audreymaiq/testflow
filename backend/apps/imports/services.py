@@ -374,11 +374,81 @@ def replace_draft(job_id, *, user, data):
         # restored the missing question count, the edited draft supersedes them.
         draft.warnings = [item for item in draft.warnings if item["severity"] != "ERROR"]
         draft.skipped_count = 0
-    # OCR errors can describe lost figures, page gaps or conflicting metadata.
-    # A generic JSON edit cannot prove those source-level defects were repaired.
+    elif before != after:
+        # A later correction invalidates human sign-off against the prior draft.
+        draft.warnings = [
+            {
+                key: value
+                for key, value in item.items()
+                if key not in {"resolved_at", "resolved_by", "resolution_reason"}
+            }
+            for item in draft.warnings
+        ]
     draft.updated_by = user
     draft.save(update_fields=["data", "warnings", "skipped_count", "updated_by", "updated_at"])
     ReviewEdit.objects.create(job=job, reviewer=user, path="/", before=before, after=after)
+    return job
+
+
+REVIEW_RESOLVABLE_CODES = {
+    "E_ANSWER_CONFLICT",
+    "E_ANSWER_INVALID",
+    "E_ANSWER_UNMATCHED",
+    "E_ANSWER_UNSUPPORTED",
+    "E_CONTINUATION_UNMATCHED",
+    "E_FIGURE_UNMATCHED",
+    "E_HEADER_CONFLICT",
+    "E_NO_QUESTIONS",
+    "E_PASSAGE_UNANCHORED",
+    "E_PASSAGE_UNMATCHED",
+    "E_QUESTION_INVALID",
+}
+
+
+@transaction.atomic
+def resolve_review_issue(job_id, issue_index: int, *, user, reason: str):
+    """Record a source-page review after a material draft correction."""
+    job = _owned_job(job_id, user, lock=True)
+    if job.source_kind != "OCR" or job.status != ImportJob.Status.NEEDS_REVIEW:
+        raise Conflict("IMPORT_STATE_CONFLICT", "Bản nháp OCR không còn cho phép duyệt lỗi.")
+    issues = list(job.draft.warnings)
+    if not 0 <= issue_index < len(issues):
+        raise NotFound("IMPORT_ISSUE_NOT_FOUND", "Không tìm thấy lỗi cần duyệt.")
+    issue = issues[issue_index]
+    if issue.get("severity") != "ERROR" or issue.get("code") not in REVIEW_RESOLVABLE_CODES:
+        raise ValidationFailed("ISSUE_NOT_RESOLVABLE", "Lỗi này cần xử lý tại trang nguồn.")
+    if issue.get("resolved_at"):
+        raise Conflict("ISSUE_ALREADY_RESOLVED", "Lỗi đã được duyệt.")
+    if not 10 <= len(reason.strip()) <= 500:
+        raise ValidationFailed("ISSUE_REASON_REQUIRED", "Cần ghi lý do duyệt từ 10 đến 500 ký tự.")
+    if job.draft.data == job.draft.original_data:
+        raise ValidationFailed("DRAFT_EDIT_REQUIRED", "Cần sửa bản nháp trước khi duyệt lỗi nguồn.")
+    page_no = issue.get("page_no")
+    if (
+        page_no
+        and not PageResult.objects.filter(
+            job=job, page_no=page_no, status=PageResult.Status.DONE
+        ).exists()
+    ):
+        raise ValidationFailed("ISSUE_PAGE_UNAVAILABLE", "Trang nguồn chưa được trích xuất đầy đủ.")
+    before = dict(issue)
+    issue = {
+        **issue,
+        "resolved_at": timezone.now().isoformat(),
+        "resolved_by": user.pk,
+        "resolution_reason": reason.strip(),
+    }
+    issues[issue_index] = issue
+    job.draft.warnings = issues
+    job.draft.updated_by = user
+    job.draft.save(update_fields=["warnings", "updated_by", "updated_at"])
+    ReviewEdit.objects.create(
+        job=job,
+        reviewer=user,
+        path=f"/warnings/{issue_index}",
+        before=before,
+        after=issue,
+    )
     return job
 
 
@@ -388,7 +458,7 @@ def confirm(job_id, *, user):
     job = _owned_job(job_id, user, lock=True)
     if job.status != ImportJob.Status.NEEDS_REVIEW:
         raise Conflict("IMPORT_STATE_CONFLICT", "Lần nhập đề đã được xử lý.")
-    if any(item["severity"] == "ERROR" for item in _issues(job)):
+    if any(item["severity"] == "ERROR" and not item.get("resolved_at") for item in _issues(job)):
         raise ValidationFailed("DRAFT_HAS_ERRORS", "Cần sửa lỗi bản nháp trước khi lưu đề.")
     draft = ExamDraft.model_validate(job.draft.data)
     figure_payloads = {}
