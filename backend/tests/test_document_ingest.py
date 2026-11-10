@@ -89,15 +89,41 @@ def test_docx_rejects_active_or_external_content():
 
 
 def test_docx_conversion_uses_isolated_profile_and_pdf_result(monkeypatch):
-    def converted(command, *, cwd, capture_output, timeout, check):
+    def converted(command, *, cwd, stdout, stderr, start_new_session):
         assert command[1].startswith("-env:UserInstallation=file:")
         assert command[2:4] == ["--headless", "--convert-to"]
-        assert timeout == ingest.CONVERT_TIMEOUT_SECONDS
-        assert capture_output and not check
+        assert stdout == stderr == ingest.subprocess.DEVNULL
+        assert start_new_session == (ingest.os.name == "posix")
         (cwd / "output" / "source.pdf").write_bytes(pdf_bytes())
-        return type("Result", (), {"returncode": 0})()
+        return type("Process", (), {"wait": lambda self, timeout: 0})()
 
-    monkeypatch.setattr(ingest.subprocess, "run", converted)
+    monkeypatch.setattr(ingest.subprocess, "Popen", converted)
     with ingest.DocumentPages(docx_bytes(), ingest.DOCX_MIME) as document:
         assert document.page_count == 1
         assert document.render(1).text_layer
+
+
+def test_docx_timeout_terminates_converter(monkeypatch):
+    class StalledProcess:
+        pid = 31415
+        waits = 0
+        killed = False
+
+        def wait(self, timeout=None):
+            self.waits += 1
+            if self.waits == 1:
+                assert timeout == ingest.CONVERT_TIMEOUT_SECONDS
+                raise ingest.subprocess.TimeoutExpired("soffice", timeout)
+            assert timeout is None
+            return -1
+
+        def kill(self):
+            self.killed = True
+
+    process = StalledProcess()
+    monkeypatch.setattr(ingest.subprocess, "Popen", lambda *args, **kwargs: process)
+    if ingest.os.name == "posix":
+        monkeypatch.setattr(ingest.os, "killpg", lambda pid, sig: process.kill())
+    with pytest.raises(ingest.DocumentRejected, match="DOCX_CONVERSION_TIMEOUT"):
+        ingest.DocumentPages(docx_bytes(), ingest.DOCX_MIME)
+    assert process.killed and process.waits == 2
