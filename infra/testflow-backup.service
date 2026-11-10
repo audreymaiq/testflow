@@ -1,0 +1,10 @@
+[Unit]
+Description=Back up TestFlow PostgreSQL and private media
+Requires=docker.service
+After=docker.service
+
+[Service]
+Type=oneshot
+WorkingDirectory=/opt/testflow
+EnvironmentFile=/etc/testflow/backup.env
+ExecStart=/bin/sh /opt/testflow/infra/backup.sh
