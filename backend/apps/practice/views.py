@@ -2,6 +2,7 @@
 
 import secrets
 
+from django.http import FileResponse
 from drf_spectacular.utils import extend_schema
 from pydantic import ValidationError as ConfigValidationError
 from rest_framework import status
@@ -9,6 +10,8 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.generics import GenericAPIView
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+
+from apps.common.errors import NotFound
 
 from .schemas import SessionConfig
 from .selectors import exam_practice_summary, personal_stats, visible_history
@@ -27,6 +30,7 @@ from .services import (
     create_session,
     result_payload,
     save_answer,
+    session_asset,
     session_payload,
     skip_question,
     submit_session,
@@ -58,6 +62,22 @@ class SessionDetailView(GenericAPIView):
 
     def get(self, request, session_id):
         return Response(session_payload(session_id, request.user))
+
+
+class SessionAssetView(GenericAPIView):
+    permission_classes = (IsAuthenticated,)
+
+    @extend_schema(operation_id="sessions_asset", responses={200: bytes})
+    def get(self, request, session_id, asset_id):
+        asset = session_asset(session_id, asset_id, request.user)
+        try:
+            image = asset.file.open("rb")
+        except (FileNotFoundError, OSError) as exc:
+            raise NotFound("ASSET_NOT_FOUND", "Không tìm thấy hình minh họa.") from exc
+        response = FileResponse(image, content_type="image/png")
+        response["Cache-Control"] = "private, no-store"
+        response["X-Content-Type-Options"] = "nosniff"
+        return response
 
 
 class AnswerView(GenericAPIView):
