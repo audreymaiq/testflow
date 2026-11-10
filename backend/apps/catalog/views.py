@@ -128,7 +128,12 @@ class ExamPreviewView(GenericAPIView):
                             {"label": choice.label, "text": choice.text}
                             for choice in question.choices.all()
                         ],
-                        "assets": [str(link.asset_id) for link in question.questionasset_set.all()],
+                        "assets": [
+                            str(link.asset_id)
+                            for link in sorted(
+                                question.questionasset_set.all(), key=lambda item: item.order
+                            )
+                        ],
                     }
                 )
                 if len(preview) == 3:
